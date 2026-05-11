@@ -405,7 +405,7 @@
             <div class="flex items-center gap-3">
                 <button onclick="quitGame()" class="w-10 h-10 bg-[#F2F7F4] rounded-full flex items-center justify-center text-app-dark hover:bg-gray-200 transition-colors"><i class="fa-solid fa-arrow-left"></i></button>
                 <div>
-                    <h2 class="font-bold text-app-dark text-base tracking-tight" id="game-stage-title">ด่าน 1: ในอาคาร</h2>
+                    <h2 class="font-bold text-app-dark text-base tracking-tight" id="game-stage-title">ด่าน 1: ในอาคารผลิต</h2>
                     <p class="text-[10px] text-gray-500 font-medium">ลากขยะลงถังให้ถูกต้อง</p>
                 </div>
             </div>
@@ -443,14 +443,14 @@
                 <div class="absolute -right-6 -top-6 text-gray-100 opacity-50"><i class="fa-solid fa-clipboard-check text-8xl"></i></div>
                 
                 <div class="flex justify-between items-center border-b border-gray-200 pb-4 mb-4 relative z-10">
-                    <span class="text-gray-600 text-[13px] font-medium"><i class="fa-solid fa-building mr-2 text-gray-400"></i>ด่าน 1 (ในอาคาร)</span>
+                    <span class="text-gray-600 text-[13px] font-medium"><i class="fa-solid fa-building mr-2 text-gray-400"></i>ด่าน 1 (ในอาคารผลิต)</span>
                     <div class="text-right">
                         <span class="font-bold text-app-primary block text-base" id="res-s1-score">0 pts</span>
                         <span class="text-[10px] text-gray-400" id="res-s1-time">เวลา: 00:00</span>
                     </div>
                 </div>
                 <div class="flex justify-between items-center border-b border-gray-200 pb-4 mb-4 relative z-10">
-                    <span class="text-gray-600 text-[13px] font-medium"><i class="fa-solid fa-tree mr-2 text-gray-400"></i>ด่าน 2 (นอกอาคาร)</span>
+                    <span class="text-gray-600 text-[13px] font-medium"><i class="fa-solid fa-tree mr-2 text-gray-400"></i>ด่าน 2 (นอกอาคารผลิต)</span>
                     <div class="text-right">
                         <span class="font-bold text-app-primary block text-base" id="res-s2-score">0 pts</span>
                         <span class="text-[10px] text-gray-400" id="res-s2-time">เวลา: 00:00</span>
@@ -617,7 +617,7 @@
                     <div class="bg-white border border-gray-200 rounded-[16px] overflow-hidden text-[13px] overflow-x-auto">
                         <table class="w-full text-left whitespace-nowrap">
                             <thead class="bg-[#F8FAF9] text-gray-500 text-[11px] uppercase tracking-wider border-b border-gray-100">
-                                <tr><th class="p-4 font-semibold">ชื่อแคมเปญ</th><th class="p-4 font-semibold">แจกคะแนน (Pts)</th><th class="p-4 font-semibold">สถานะ</th><th class="p-4 text-right font-semibold">จัดการ</th></tr>
+                                <tr><th class="p-4 font-semibold">ชื่อแคมเปญ</th><th class="p-4 font-semibold">แจกคะแนน (Pts)</th><th class="p-4 font-semibold">เงื่อนไขการสแกน</th><th class="p-4 text-right font-semibold">จัดการ</th></tr>
                             </thead>
                             <tbody id="admin-table-qrs" class="divide-y divide-gray-50"></tbody>
                         </table>
@@ -703,6 +703,10 @@
             database.users.forEach(u => {
                 if(typeof u.playCount === 'undefined') u.playCount = 0;
             });
+            // Ensure QR format
+            database.qrs.forEach(q => {
+                if(!q.scanType) q.scanType = 'single';
+            });
 
             if (!database.users.find(u => u.empId === 'admin')) {
                 database.users.push({ empId: "admin", name: "Admin", role: "admin", points: 9999, history: [], checkIn: { lastDate: null, streak: 0 }, playedWeek: 0, playCount: 0 });
@@ -755,7 +759,6 @@
                     db = enforceDBStructure(res.data);
                     localStorage.setItem('wcw_db', JSON.stringify(db));
                     
-                    // สำคัญมาก: อัปเดตข้อมูล currentUser ในเครื่องให้ตรงกับบน Cloud ป้องกันการเซฟทับ
                     if(currentUser) {
                         let updatedUser = db.users.find(u => u.empId === currentUser.empId);
                         if(updatedUser) currentUser = updatedUser;
@@ -773,7 +776,7 @@
             if(idx > -1) {
                 db.users[idx] = currentUser;
             } else {
-                db.users.push(currentUser); // ป้องกันข้อมูล user ใน session หลุดหายจาก Array
+                db.users.push(currentUser);
             }
             saveDB();
         }
@@ -917,7 +920,7 @@
             
             if(modalId === 'checkin-modal') renderCheckIn();
             if(modalId === 'point-modal') renderPointHistory();
-            if(modalId === 'ranking-modal') renderRanking('weekly'); // Default tab is weekly
+            if(modalId === 'ranking-modal') renderRanking('weekly'); 
             if(modalId === 'setting-modal') renderAdminTables();
             if(modalId === 'weekly-summary-modal') renderWeeklySummary();
         }
@@ -949,13 +952,11 @@
 
             if(!empId) return Swal.fire({title: 'Error', text:'กรุณากรอกรหัสพนักงาน', icon:'error', customClass:{confirmButton:'rounded-xl bg-app-primary'}});
 
-            // Validation: ตรวจสอบสิทธิ์ Admin
             if (empId === 'admin123' || nickname.toLowerCase() === 'admin') {
                 if (empId !== 'admin123' || nickname !== 'admin') {
                     return Swal.fire({title: 'Error', text:'สิทธิ์แอดมินต้องใช้ชื่อเล่น "admin" และรหัส "admin123" เป๊ะๆ เท่านั้น', icon:'error', customClass:{confirmButton:'rounded-xl bg-app-primary'}});
                 }
             } 
-            // Validation: ตรวจสอบ User ทั่วไป (ต้องเป็นเลข 7 หลัก)
             else {
                 const empIdRegex = /^\d{7}$/;
                 if (!empIdRegex.test(empId)) {
@@ -966,7 +967,6 @@
                 }
             }
 
-            // ดึงข้อมูลล่าสุดจาก Cloud ก่อนเสมอ เพื่อป้องกันการสร้าง User ทับกัน
             Swal.fire({ title: 'กำลังเชื่อมต่อ...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
             await loadFromCloud();
 
@@ -1003,7 +1003,7 @@
             currentUser = null;
             document.getElementById('login-empid').value = '';
             document.getElementById('login-nickname').value = '';
-            closeAllModals(); // ปิด Modal ทั้งหมดก่อนเด้งกลับหน้าหลัก
+            closeAllModals(); 
             showPage('page-landing');
         }
 
@@ -1050,6 +1050,14 @@
             document.getElementById('level-progress').style.width = `${progress}%`;
         }
 
+        function addPoints(pts, detail) {
+            currentUser.points += pts;
+            if(!currentUser.history) currentUser.history = [];
+            currentUser.history.unshift({ date: new Date().toISOString().replace('T',' ').substring(0,16), pts, detail });
+            saveUser();
+            updatePointsUI();
+        }
+
         // ================= FEATURES =================
         const checkInPoints = [20, 20, 30, 30, 50, 50, 100];
         function renderCheckIn() {
@@ -1080,7 +1088,6 @@
             let yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
             let yStr = yesterday.toISOString().split('T')[0];
 
-            // ดึงข้อมูลล่าสุดก่อนบันทึกคะแนน ป้องกันการทับข้อมูลของคนอื่น
             Swal.fire({ title: 'กำลังบันทึกข้อมูล...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
             await loadFromCloud();
 
@@ -1090,7 +1097,6 @@
             currentUser.checkIn.streak++;
             currentUser.checkIn.lastDate = today;
             
-            // บวกคะแนน
             currentUser.points += ptsEarned;
             if(!currentUser.history) currentUser.history = [];
             currentUser.history.unshift({ date: new Date().toISOString().replace('T',' ').substring(0,16), pts: ptsEarned, detail: `Check-in วันที่ ${currentUser.checkIn.streak}` });
@@ -1138,7 +1144,6 @@
                 if (type === 'alltime') {
                     pts = u.points;
                 } else {
-                    // คำนวณคะแนนเฉพาะในสัปดาห์นี้
                     const start = db.settings.weekStartDate;
                     const end = db.settings.weekEndDate;
                     if (u.history && start && end) {
@@ -1209,14 +1214,12 @@
         function startGameFlow() {
             closeAllModals(); 
             
-            // เช็คและอัปเดตสิทธิ์การเล่นตามรอบสัปดาห์
             if(currentUser.playedWeek !== db.settings.currentWeek) {
                 currentUser.playedWeek = db.settings.currentWeek;
                 currentUser.playCount = 0;
                 saveUser();
             }
 
-            // จำกัดการเล่น 2 รอบต่อสัปดาห์
             if(currentUser.playCount >= 2 && currentUser.role !== 'admin') {
                 return openModal('weekly-summary-modal');
             }
@@ -1229,14 +1232,14 @@
             }
             if(!db.bins || db.bins.length === 0 || !db.wastes || db.wastes.length === 0) return Swal.fire('Oops!', 'ยังไม่มีข้อมูลถังขยะหรือขยะในระบบ', 'error');
             
-            Swal.fire({ title: 'พร้อมลุยไหม?', html: `<p class="text-sm text-gray-500 mb-2">ด่าน 1: ขยะในอาคาร (2 นาที)</p><p class="text-xs text-app-primary font-bold mt-2">สิทธิ์การเล่นรอบนี้: ${2 - currentUser.playCount} ครั้ง</p>`, icon: 'question', showCancelButton: true, confirmButtonText: 'Start Game', cancelButtonText: 'Later', confirmButtonColor: '#5C8D67', cancelButtonColor:'#cbd5e1', customClass: { confirmButton: 'rounded-[16px] px-8', cancelButton: 'rounded-[16px] px-6 text-gray-600' } }).then((res) => {
+            Swal.fire({ title: 'พร้อมลุยไหม?', html: `<p class="text-sm text-gray-500 mb-2">ด่าน 1: ขยะในอาคารผลิต (2 นาที)</p><p class="text-xs text-app-primary font-bold mt-2">สิทธิ์การเล่นรอบนี้: ${2 - currentUser.playCount} ครั้ง</p>`, icon: 'question', showCancelButton: true, confirmButtonText: 'Start Game', cancelButtonText: 'Later', confirmButtonColor: '#5C8D67', cancelButtonColor:'#cbd5e1', customClass: { confirmButton: 'rounded-[16px] px-8', cancelButton: 'rounded-[16px] px-6 text-gray-600' } }).then((res) => {
                 if(res.isConfirmed) initGameStage(1);
             });
         }
 
         function initGameStage(stage) {
-            gameStage = stage; gameTimeLeft = 120; gameScore = 0; // ลดเวลาเหลือ 120 วิ
-            document.getElementById('game-stage-title').innerText = stage === 1 ? 'ด่าน 1: ในอาคาร' : 'ด่าน 2: นอกอาคาร';
+            gameStage = stage; gameTimeLeft = 120; gameScore = 0;
+            document.getElementById('game-stage-title').innerText = stage === 1 ? 'ด่าน 1: ในอาคารผลิต' : 'ด่าน 2: นอกอาคารผลิต';
             document.getElementById('game-score').innerText = '0';
             updateTimerUI();
             showPage('game-container');
@@ -1356,16 +1359,13 @@
             document.getElementById('res-s2-score').innerText = `${stageScores.s2} pts`; document.getElementById('res-s2-time').innerText = `เวลา: ${fmt(stageScores.t2)}`;
             document.getElementById('res-total-score').innerText = total;
 
-            // ดึงข้อมูลล่าสุดก่อนบันทึกคะแนนเกม ป้องกันการทับข้อมูลของคนอื่น
             Swal.fire({ title: 'กำลังบันทึกคะแนน...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
             await loadFromCloud();
 
-            // บวกคะแนน
             currentUser.points += total;
             if(!currentUser.history) currentUser.history = [];
             currentUser.history.unshift({ date: new Date().toISOString().replace('T',' ').substring(0,16), pts: total, detail: `กิจกรรมสัปดาห์ที่ ${db.settings.currentWeek}` });
             
-            // อัปเดตสิทธิ์การเล่น
             currentUser.playedWeek = db.settings.currentWeek;
             currentUser.playCount = (currentUser.playCount || 0) + 1;
             
@@ -1452,7 +1452,11 @@
             document.getElementById('admin-table-users').innerHTML = [...db.users].sort((a,b)=>b.points-a.points).map((u, i) => `<tr><td class="p-4 font-bold text-gray-400 text-center">${i+1}</td><td class="p-4 text-gray-500 font-medium">${u.empId}</td><td class="p-4 font-bold text-app-dark">${u.name}</td><td class="p-4 text-right font-black text-app-primary text-[14px]">${u.points}</td></tr>`).join('');
             
             if(!db.qrs) db.qrs = [];
-            document.getElementById('admin-table-qrs').innerHTML = db.qrs.map(q => `<tr><td class="p-4 font-bold text-app-dark">${q.name}</td><td class="p-4 text-app-accent font-black text-[14px]">${q.pts}</td><td class="p-4"><span class="bg-[#E6F0E8] text-app-primary text-[11px] px-3 py-1.5 rounded-full font-bold">Active</span></td><td class="p-4 text-right"><button onclick="viewQR('${q.url}')" class="w-8 h-8 bg-gray-100 text-gray-600 rounded-lg mr-1.5 hover:bg-gray-200 transition-colors"><i class="fa-solid fa-qrcode text-[11px]"></i></button><button onclick="deleteQR('${q.id}')" class="w-8 h-8 bg-red-50 text-red-500 rounded-lg hover:bg-red-100 transition-colors"><i class="fa-solid fa-trash text-[11px]"></i></button></td></tr>`).join('');
+            // อัปเดตตารางแสดงผลชนิดของการสแกน QR
+            document.getElementById('admin-table-qrs').innerHTML = db.qrs.map(q => {
+                let scanText = q.scanType === 'multi' ? 'หลายครั้ง/คน' : '1 ครั้ง/คน';
+                return `<tr><td class="p-4 font-bold text-app-dark">${q.name}</td><td class="p-4 text-app-accent font-black text-[14px]">${q.pts}</td><td class="p-4"><span class="bg-[#E6F0E8] text-app-primary text-[11px] px-3 py-1.5 rounded-full font-bold">${scanText}</span></td><td class="p-4 text-right"><button onclick="viewQR('${q.url}')" class="w-8 h-8 bg-gray-100 text-gray-600 rounded-lg mr-1.5 hover:bg-gray-200 transition-colors"><i class="fa-solid fa-qrcode text-[11px]"></i></button><button onclick="deleteQR('${q.id}')" class="w-8 h-8 bg-red-50 text-red-500 rounded-lg hover:bg-red-100 transition-colors"><i class="fa-solid fa-trash text-[11px]"></i></button></td></tr>`
+            }).join('');
         }
 
         function generateId() { return Math.random().toString(36).substr(2, 9); }
@@ -1475,7 +1479,7 @@
                     if(!url || !start || !end) { Swal.showValidationMessage('กรุณากรอกข้อมูลให้ครบถ้วน'); return false; }
                     return { url, startTime: start, endTime: end };
                 },
-                customClass: {confirmButton: 'rounded-xl bg-app-primary w-[95%]'}
+                customClass: {confirmButton: 'rounded-xl bg-app-primary w-[95%] py-3 text-white font-bold text-lg'}
             });
             if (formValues) {
                 if(action === 'add') db.settings.mainImages.push(formValues); else db.settings.mainImages[idx] = formValues;
@@ -1490,7 +1494,7 @@
                 title: action==='add'?'เพิ่มระดับผู้เล่น':'แก้ไขระดับผู้เล่น', 
                 html: `<input id="swal-l1" class="swal2-input text-sm rounded-xl border-gray-200 w-[95%]" placeholder="ชื่อ Level" value="${item.level}"><input id="swal-l2" type="number" class="swal2-input text-sm rounded-xl border-gray-200 mt-4 w-[95%]" placeholder="คะแนนเริ่มต้น" value="${item.points}"><input id="swal-l3" class="swal2-input text-sm rounded-xl border-gray-200 mt-4 w-[95%]" placeholder="Image URL (ลิงก์รูปด่าน)" value="${item.img}"><div class="flex items-center gap-4 mt-6 px-3 justify-center bg-gray-50 p-4 rounded-[16px] w-[95%] mx-auto"><span class="text-[13px] font-bold text-gray-700">สีพื้นหลังด่านนี้:</span><input id="swal-l4" type="color" class="h-10 w-24 rounded-lg cursor-pointer border-0 p-0 shadow-sm" value="${item.bgColor || '#F2F7F4'}"></div>`, 
                 focusConfirm: false, 
-                preConfirm: () => { return { level: document.getElementById('swal-l1').value, points: parseInt(document.getElementById('swal-l2').value), img: document.getElementById('swal-l3').value, bgColor: document.getElementById('swal-l4').value } }, customClass: {confirmButton: 'rounded-xl bg-app-primary w-[95%] py-3'} 
+                preConfirm: () => { return { level: document.getElementById('swal-l1').value, points: parseInt(document.getElementById('swal-l2').value), img: document.getElementById('swal-l3').value, bgColor: document.getElementById('swal-l4').value } }, customClass: {confirmButton: 'rounded-xl bg-app-primary w-[95%] py-3 text-white font-bold text-lg'} 
             });
             if (formValues) { 
                 if(action==='add') db.levels.push({id: generateId(), ...formValues}); else Object.assign(item, formValues); 
@@ -1512,12 +1516,12 @@
                     </div>
                     <select id="swal-b3" class="swal2-select text-sm rounded-xl border-gray-200 mt-4 w-[95%]">
                         <option value="all" ${item.stage==='all'?'selected':''}>แสดงทุกด่าน</option>
-                        <option value="indoor" ${item.stage==='indoor'?'selected':''}>เฉพาะด่านในอาคาร</option>
-                        <option value="outdoor" ${item.stage==='outdoor'?'selected':''}>เฉพาะด่านนอกอาคาร</option>
+                        <option value="indoor" ${item.stage==='indoor'?'selected':''}>เฉพาะด่านในอาคารผลิต</option>
+                        <option value="outdoor" ${item.stage==='outdoor'?'selected':''}>เฉพาะด่านนอกอาคารผลิต</option>
                     </select>
                 `, 
                 focusConfirm: false, 
-                preConfirm: () => { return { name: document.getElementById('swal-b1').value, color: document.getElementById('swal-b2').value, stage: document.getElementById('swal-b3').value, img: document.getElementById('swal-b4').value } }, customClass: {confirmButton: 'rounded-xl bg-app-primary w-[95%] py-3'} 
+                preConfirm: () => { return { name: document.getElementById('swal-b1').value, color: document.getElementById('swal-b2').value, stage: document.getElementById('swal-b3').value, img: document.getElementById('swal-b4').value } }, customClass: {confirmButton: 'rounded-xl bg-app-primary w-[95%] py-3 text-white font-bold text-lg'} 
             });
             if (formValues) { if(action==='add') db.bins.push({id: generateId(), ...formValues}); else Object.assign(item, formValues); saveDB(); renderAdminTables(); }
         }
@@ -1534,12 +1538,12 @@
                     <select id="swal-w2" class="swal2-select text-sm rounded-xl border-gray-200 mt-4 w-[95%]">${binOptions}</select>
                     <select id="swal-w3" class="swal2-select text-sm rounded-xl border-gray-200 mt-4 w-[95%]">
                         <option value="all" ${item.stage==='all'?'selected':''}>โผล่ทุกด่าน</option>
-                        <option value="indoor" ${item.stage==='indoor'?'selected':''}>โผล่เฉพาะด่านในอาคาร</option>
-                        <option value="outdoor" ${item.stage==='outdoor'?'selected':''}>โผล่เฉพาะด่านนอกอาคาร</option>
+                        <option value="indoor" ${item.stage==='indoor'?'selected':''}>โผล่เฉพาะด่านในอาคารผลิต</option>
+                        <option value="outdoor" ${item.stage==='outdoor'?'selected':''}>โผล่เฉพาะด่านนอกอาคารผลิต</option>
                     </select>
                 `, 
                 focusConfirm: false, 
-                preConfirm: () => { return { name: document.getElementById('swal-w1').value, binId: document.getElementById('swal-w2').value, stage: document.getElementById('swal-w3').value, img: document.getElementById('swal-w4').value } }, customClass: {confirmButton: 'rounded-xl bg-app-primary w-[95%] py-3'} 
+                preConfirm: () => { return { name: document.getElementById('swal-w1').value, binId: document.getElementById('swal-w2').value, stage: document.getElementById('swal-w3').value, img: document.getElementById('swal-w4').value } }, customClass: {confirmButton: 'rounded-xl bg-app-primary w-[95%] py-3 text-white font-bold text-lg'} 
             });
             if (formValues) { if(action==='add') db.wastes.push({id: generateId(), ...formValues}); else Object.assign(item, formValues); saveDB(); renderAdminTables(); }
         }
@@ -1599,7 +1603,6 @@
             if(formValues) {
                 db.settings.currentWeek = weekNum; db.settings.weekStartDate = formValues.start; db.settings.weekEndDate = formValues.end;
                 
-                // ถ้ารีเซ็ตรอบใหม่ ให้ล้าง playCount ของทุกคนกลับเป็น 0
                 if (titleStr === 'เริ่มรอบใหม่') {
                     db.users.forEach(u => {
                         u.playCount = 0;
@@ -1612,12 +1615,41 @@
             }
         }
 
+        // ================= อัปเดตฟังก์ชันสร้าง QR CODE ให้ตรงกับภาพ =================
         async function createQR() {
-            const { value: formValues } = await Swal.fire({ title: 'สร้าง QR Code ใหม่', html: `<input id="swal-q1" class="swal2-input text-sm rounded-xl border-gray-200 w-[95%]" placeholder="ชื่อกิจกรรม/แคมเปญ"><input id="swal-q2" type="number" class="swal2-input text-sm rounded-xl border-gray-200 mt-4 w-[95%]" placeholder="คะแนนที่แจก (Pts)">`, focusConfirm: false, preConfirm: () => { return { name: document.getElementById('swal-q1').value, pts: parseInt(document.getElementById('swal-q2').value) } }, customClass: {confirmButton: 'rounded-xl bg-app-primary py-3 w-[95%] text-white'} });
+            const { value: formValues } = await Swal.fire({ 
+                title: '<h2 class="text-2xl font-bold text-gray-700">สร้าง QR Code ใหม่</h2>', 
+                html: `
+                    <div class="space-y-4 mt-2 text-left">
+                        <input id="swal-q1" class="swal2-input text-sm rounded-xl border-gray-200 w-full mx-0" placeholder="ชื่อกิจกรรม/แคมเปญ">
+                        <input id="swal-q2" type="number" class="swal2-input text-sm rounded-xl border-gray-200 w-full mx-0" placeholder="คะแนนที่แจก (Pts)">
+                        <select id="swal-q3" class="swal2-select text-sm rounded-xl border-gray-200 w-full mx-0">
+                            <option value="single">1 คนสแกนได้ 1 ครั้ง</option>
+                            <option value="multi">1 คนสแกนได้หลายครั้ง</option>
+                        </select>
+                        <div class="h-1 w-full bg-[#A5C7A9] rounded-full mt-6 mb-2"></div>
+                    </div>
+                `, 
+                focusConfirm: false, 
+                showCancelButton: false,
+                confirmButtonText: 'OK',
+                customClass: {
+                    popup: 'rounded-[24px] px-6 py-8',
+                    confirmButton: 'rounded-xl bg-app-primary px-10 py-2.5 text-white font-bold text-lg hover:bg-opacity-90 transition-all'
+                },
+                preConfirm: () => { 
+                    return { 
+                        name: document.getElementById('swal-q1').value, 
+                        pts: parseInt(document.getElementById('swal-q2').value),
+                        scanType: document.getElementById('swal-q3').value
+                    } 
+                } 
+            });
+
             if (formValues && formValues.name && formValues.pts) {
                 let id = generateId();
                 let url = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=WCW_SCAN_${id}_${formValues.pts}`;
-                db.qrs.unshift({ id, name: formValues.name, pts: formValues.pts, url });
+                db.qrs.unshift({ id, name: formValues.name, pts: formValues.pts, scanType: formValues.scanType, url });
                 saveDB(); renderAdminTables();
             }
         }
