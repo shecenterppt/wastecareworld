@@ -347,9 +347,16 @@
             <p class="text-center text-gray-500 text-[12px] mb-5 font-light">อันดับผู้เล่นที่ดูแลโลกใบนี้ได้ดีที่สุด</p>
             
             <!-- Rank Tabs -->
-            <div class="flex bg-gray-100 p-1.5 rounded-full mb-6 relative">
+            <div class="flex bg-gray-100 p-1.5 rounded-full mb-4 relative">
                 <button id="tab-rank-weekly" onclick="switchRankTab('weekly')" class="flex-1 py-2.5 text-[13px] font-bold rounded-full bg-white text-app-dark shadow-sm transition-all">สรุปรายสัปดาห์</button>
                 <button id="tab-rank-alltime" onclick="switchRankTab('alltime')" class="flex-1 py-2.5 text-[13px] font-bold rounded-full text-gray-500 hover:text-gray-700 transition-all">ภาพรวมทั้งหมด</button>
+            </div>
+
+            <!-- Week Selector for Weekly Ranking -->
+            <div id="rank-week-selector-container" class="mb-5 text-center hidden">
+                <select id="rank-week-selector" onchange="renderRanking('weekly')" class="bg-[#F8FAF9] border border-gray-200 text-app-dark text-[12px] font-semibold rounded-[12px] px-4 py-2 outline-none focus:border-app-primary w-full max-w-[280px]">
+                    <!-- Populated via JS -->
+                </select>
             </div>
             
             <div class="bg-app-dark text-white rounded-[20px] p-4 flex items-center justify-between shadow-float mb-6 sticky top-0 z-10 border border-white/10">
@@ -603,11 +610,8 @@
                         <h3 class="font-bold text-app-dark text-base flex items-center"><i class="fa-solid fa-rotate-right text-app-primary mr-3"></i> 4.1 รอบเกม (รีเซ็ตสัปดาห์)</h3>
                         <button onclick="startNewWeek()" class="text-[12px] font-bold bg-[#5C8D67] text-white px-5 py-2.5 rounded-[12px] shadow-soft hover:bg-opacity-90 transition-all"><i class="fa-solid fa-calendar-plus mr-1"></i> เริ่มรอบใหม่</button>
                     </div>
-                    <div class="flex justify-between items-center bg-[#F8FAF9] border border-gray-200 rounded-[16px] p-5 text-app-dark font-medium">
-                        <div class="text-[14px] flex flex-wrap items-center gap-2" id="current-week-display">
-                            <i class="fa-regular fa-calendar text-gray-400"></i> รอบปัจจุบัน: สัปดาห์ล่าสุด
-                        </div>
-                        <button onclick="editCurrentWeek()" class="flex items-center gap-2 bg-white border border-blue-200 text-blue-600 px-4 py-2 rounded-xl hover:bg-blue-50 transition-colors text-[12px] font-bold shadow-sm"><i class="fa-solid fa-pen"></i> แก้ไข</button>
+                    <div id="admin-weeks-list" class="space-y-3">
+                        <!-- Rendered via JS -->
                     </div>
                 </div>
 
@@ -701,6 +705,18 @@
             if (!database.wastes || database.wastes.length === 0) database.wastes = defaultData.wastes;
             if (!database.qrs) database.qrs = defaultData.qrs;
             
+            // Migrate old week format to new weeks array
+            if (!database.settings.weeks) {
+                database.settings.weeks = [];
+                if (database.settings.currentWeek && database.settings.weekStartDate && database.settings.weekEndDate) {
+                    database.settings.weeks.push({
+                        weekNum: database.settings.currentWeek,
+                        start: database.settings.weekStartDate,
+                        end: database.settings.weekEndDate
+                    });
+                }
+            }
+
             // Ensure fields exist for users
             database.users.forEach(u => {
                 if(typeof u.playCount === 'undefined') u.playCount = 0;
@@ -929,7 +945,10 @@
             }
             if(modalId === 'checkin-modal') renderCheckIn();
             if(modalId === 'point-modal') renderPointHistory();
-            if(modalId === 'ranking-modal') renderRanking('weekly'); 
+            if(modalId === 'ranking-modal') {
+                populateRankingWeeks();
+                renderRanking('weekly'); 
+            }
             if(modalId === 'setting-modal') renderAdminTables();
             if(modalId === 'weekly-summary-modal') renderWeeklySummary();
         }
@@ -1151,6 +1170,30 @@
         }
 
         // ================= RANKING TABS LOGIC =================
+        function populateRankingWeeks() {
+            const selector = document.getElementById('rank-week-selector');
+            if(!selector) return;
+            
+            let currentVal = selector.value;
+            selector.innerHTML = '';
+            
+            if(db.settings.weeks && db.settings.weeks.length > 0) {
+                [...db.settings.weeks].sort((a,b) => b.weekNum - a.weekNum).forEach(w => {
+                    let opt = document.createElement('option');
+                    opt.value = w.weekNum;
+                    opt.text = `สัปดาห์ที่ ${w.weekNum} (${formatDateThai(w.start)} - ${formatDateThai(w.end)})`;
+                    selector.appendChild(opt);
+                });
+                if(currentVal && db.settings.weeks.find(w => w.weekNum == currentVal)) {
+                    selector.value = currentVal;
+                } else {
+                    selector.value = db.settings.currentWeek || db.settings.weeks[0].weekNum;
+                }
+            } else {
+                selector.innerHTML = '<option value="">ยังไม่มีข้อมูลสัปดาห์</option>';
+            }
+        }
+
         function switchRankTab(type) {
             document.getElementById('tab-rank-weekly').className = type === 'weekly' 
                 ? "flex-1 py-2.5 text-[13px] font-bold rounded-full bg-white text-app-dark shadow-sm transition-all" 
@@ -1167,13 +1210,28 @@
             currentRankTab = type;
             if(!db.users) return;
 
+            if (type === 'weekly') {
+                document.getElementById('rank-week-selector-container').style.display = 'block';
+            } else {
+                document.getElementById('rank-week-selector-container').style.display = 'none';
+            }
+
+            let selectedWeek = null;
+            if (type === 'weekly') {
+                const selector = document.getElementById('rank-week-selector');
+                if (selector.options.length > 0 && db.settings.weeks) {
+                    let selectedWeekNum = parseInt(selector.value);
+                    selectedWeek = db.settings.weeks.find(w => w.weekNum === selectedWeekNum);
+                }
+            }
+
             let usersWithScores = db.users.map(u => {
                 let pts = 0;
                 if (type === 'alltime') {
                     pts = u.points;
-                } else {
-                    const start = db.settings.weekStartDate;
-                    const end = db.settings.weekEndDate;
+                } else if (selectedWeek) {
+                    const start = selectedWeek.start;
+                    const end = selectedWeek.end;
                     if (u.history && start && end) {
                         pts = u.history.reduce((sum, item) => {
                             let itemDate = item.date.substring(0, 10);
@@ -1467,6 +1525,22 @@
             let bgHtml = db.settings.mainImages.map((img, idx) => `<tr class="hover:bg-gray-50 transition-colors"><td class="p-3"><div class="w-14 h-9 rounded-lg bg-cover bg-center shadow-sm border border-gray-200" style="background-image: url('${img.url}')"></div></td><td class="p-3 text-app-dark font-mono text-[12px]">${img.startTime}</td><td class="p-3 text-app-dark font-mono text-[12px]">${img.endTime}</td><td class="p-3 text-right"><button onclick="crudMainImage('edit', ${idx})" class="w-7 h-7 bg-blue-50 text-blue-500 rounded-md hover:bg-blue-100 mr-1 transition-colors"><i class="fa-solid fa-pen text-[10px]"></i></button><button onclick="crudMainImage('delete', ${idx})" class="w-7 h-7 bg-red-50 text-red-500 rounded-md hover:bg-red-100 transition-colors"><i class="fa-solid fa-trash text-[10px]"></i></button></td></tr>`).join('');
             document.getElementById('admin-table-main-images').innerHTML = bgHtml || '<tr><td colspan="4" class="p-5 text-center text-gray-400">ยังไม่มีข้อมูลรูปภาพ</td></tr>';
 
+            // Render Weeks
+            if(!db.settings.weeks) db.settings.weeks = [];
+            document.getElementById('admin-weeks-list').innerHTML = db.settings.weeks.sort((a,b) => b.weekNum - a.weekNum).map(w => {
+                let isCurrent = w.weekNum === db.settings.currentWeek;
+                let badge = isCurrent ? `<span class="bg-app-primary text-white text-[9px] px-2 py-0.5 rounded-full ml-1">รอบปัจจุบัน</span>` : '';
+                return `
+                    <div class="flex justify-between items-center bg-[#F8FAF9] border ${isCurrent ? 'border-app-primary' : 'border-gray-200'} rounded-[16px] p-4 text-app-dark font-medium">
+                        <div class="text-[13px] flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                            <div><i class="fa-regular fa-calendar ${isCurrent ? 'text-app-primary' : 'text-gray-400'} mr-1"></i> สัปดาห์ที่ ${w.weekNum} ${badge}</div>
+                            <span class="text-gray-500 font-normal bg-white px-2 py-0.5 rounded border text-[11px] w-max">${formatDateThai(w.start)} - ${formatDateThai(w.end)}</span>
+                        </div>
+                        <button onclick="editWeek(${w.weekNum})" class="shrink-0 flex items-center gap-2 bg-white border border-blue-200 text-blue-600 px-3 py-1.5 rounded-xl hover:bg-blue-50 transition-colors text-[11px] font-bold shadow-sm"><i class="fa-solid fa-pen"></i> แก้ไข</button>
+                    </div>
+                `;
+            }).join('') || '<div class="text-center text-sm text-gray-400 py-4">ยังไม่มีรอบเกม</div>';
+
             if(!db.levels) db.levels = [];
             document.getElementById('admin-table-levels').innerHTML = db.levels.sort((a,b)=>a.points-b.points).map(l => `<tr><td class="p-4 flex items-center gap-3 font-medium"><div class="w-4 h-4 rounded-full border border-gray-300 shadow-inner" style="background:${l.bgColor || '#F2F7F4'}"></div><img src="${l.img}" class="w-8 h-8 object-contain drop-shadow-sm">${l.level}</td><td class="p-4 text-app-primary font-bold text-[14px]">${l.points}</td><td class="p-4 text-right"><button onclick="crudLevel('edit','${l.id}')" class="w-8 h-8 bg-blue-50 text-blue-500 rounded-lg mr-1.5 hover:bg-blue-100 transition-colors"><i class="fa-solid fa-pen text-[11px]"></i></button><button onclick="crudLevel('delete','${l.id}')" class="w-8 h-8 bg-red-50 text-red-500 rounded-lg hover:bg-red-100 transition-colors"><i class="fa-solid fa-trash text-[11px]"></i></button></td></tr>`).join('');
             
@@ -1607,12 +1681,13 @@
         }
 
         async function startNewWeek() {
-            let nextWeek = (db.settings.currentWeek || 0) + 1;
+            let nextWeek = (db.settings.weeks && db.settings.weeks.length > 0) ? (Math.max(...db.settings.weeks.map(w=>w.weekNum)) + 1) : 1;
             promptWeekDates(nextWeek, 'เริ่มรอบใหม่', '', '');
         }
 
-        async function editCurrentWeek() {
-            promptWeekDates(db.settings.currentWeek, 'แก้ไขเวลาของรอบปัจจุบัน', db.settings.weekStartDate, db.settings.weekEndDate);
+        async function editWeek(weekNum) {
+            let w = db.settings.weeks.find(x => x.weekNum === weekNum);
+            if(w) promptWeekDates(weekNum, `แก้ไขสัปดาห์ที่ ${weekNum}`, w.start, w.end);
         }
 
         async function promptWeekDates(weekNum, titleStr, defaultStart, defaultEnd) {
@@ -1628,7 +1703,22 @@
                 }
             });
             if(formValues) {
-                db.settings.currentWeek = weekNum; db.settings.weekStartDate = formValues.start; db.settings.weekEndDate = formValues.end;
+                if (!db.settings.weeks) db.settings.weeks = [];
+                let existing = db.settings.weeks.find(x => x.weekNum === weekNum);
+                
+                if (existing) {
+                    existing.start = formValues.start;
+                    existing.end = formValues.end;
+                    if (db.settings.currentWeek === weekNum) {
+                        db.settings.weekStartDate = formValues.start;
+                        db.settings.weekEndDate = formValues.end;
+                    }
+                } else {
+                    db.settings.weeks.push({ weekNum: weekNum, start: formValues.start, end: formValues.end });
+                    db.settings.currentWeek = weekNum;
+                    db.settings.weekStartDate = formValues.start;
+                    db.settings.weekEndDate = formValues.end;
+                }
                 
                 if (titleStr === 'เริ่มรอบใหม่') {
                     db.users.forEach(u => {
@@ -1638,7 +1728,7 @@
                 }
                 
                 saveDB(); applySettings();
-                Swal.fire({title:'บันทึกสำเร็จ!', text:`รอบสัปดาห์ที่ ${weekNum} ถูกตั้งเวลาใหม่เรียบร้อยแล้ว`, icon:'success', customClass:{confirmButton:'bg-app-primary rounded-xl px-6'}});
+                Swal.fire({title:'บันทึกสำเร็จ!', text:`ข้อมูลสัปดาห์ที่ ${weekNum} ถูกตั้งเวลาใหม่เรียบร้อยแล้ว`, icon:'success', customClass:{confirmButton:'bg-app-primary rounded-xl px-6'}});
             }
         }
 
