@@ -611,8 +611,15 @@
         </div>
     </div>
 
-
     <script>
+        // =========================================================================
+        // 🚀 ส่วนตั้งค่าฐานข้อมูลหลัก (GLOBAL CONFIG)
+        // นำ Sheet ID และ GAS URL มาใส่ตรงนี้ เพื่อให้ทุกเครื่องที่เข้าเว็บเชื่อมต่ออัตโนมัติ
+        // =========================================================================
+        const GLOBAL_SHEET_ID = "1Gcx9OxOa9ndgOXajdDi9FUCucxi7UaV7Ld7Y2-JzV3E"; 
+        const GLOBAL_GAS_URL = "https://script.google.com/macros/s/AKfycbxt9GmVN6EpEiL-P4_aiShJ6kK2Ku-YBnZDpo7pvhK2FrlJSlr6AoCCqThbfElcQtUZ/exec"; 
+        // =========================================================================
+
         // ================= DATABASE (State Management) =================
         const defaultData = {
             settings: {
@@ -652,17 +659,16 @@
             qrs: []
         };
 
-        // Safeguard Data Structure
+        // Safeguard Data Structure ป้องกันปุ่มไม่ทำงาน
         function enforceDBStructure(database) {
             if (!database) database = {};
             if (!database.settings) database.settings = defaultData.settings;
-            if (!database.users) database.users = defaultData.users;
+            if (!database.users || database.users.length === 0) database.users = defaultData.users;
             if (!database.levels || database.levels.length === 0) database.levels = defaultData.levels;
             if (!database.bins || database.bins.length === 0) database.bins = defaultData.bins;
             if (!database.wastes || database.wastes.length === 0) database.wastes = defaultData.wastes;
             if (!database.qrs) database.qrs = defaultData.qrs;
             
-            // Ensure Admin user always exists
             if (!database.users.find(u => u.empId === 'admin')) {
                 database.users.push({ empId: "admin", name: "Admin", role: "admin", points: 9999, history: [], checkIn: { lastDate: null, streak: 0 }, playedWeek: 0 });
             }
@@ -742,6 +748,12 @@
 
         // ================= INIT & UI =================
         async function init() {
+            // บังคับใช้ค่า Global ถ้ามีการตั้งค่าไว้ เพื่อให้เครื่องใหม่ๆ รู้จักฐานข้อมูลทันที
+            if (GLOBAL_SHEET_ID && GLOBAL_GAS_URL) {
+                db.settings.sheetId = GLOBAL_SHEET_ID;
+                db.settings.gasUrl = GLOBAL_GAS_URL;
+            }
+
             // Data Migration
             if (!db.settings.mainImages) db.settings.mainImages = [{ url: db.settings.mainImg || "https://images.unsplash.com/photo-1542273917363-3b1817f69a5d?auto=format&fit=crop&w=800&q=80", startTime: "06:00", endTime: "18:00" }, { url: "https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=800&q=80", startTime: "18:00", endTime: "06:00" }];
             if (typeof db.settings.weekStartDate === 'undefined') { db.settings.weekStartDate = ""; db.settings.weekEndDate = ""; }
@@ -892,7 +904,6 @@
 
             if(!empId) return Swal.fire({title: 'Error', text:'กรุณากรอกรหัสพนักงาน', icon:'error', customClass:{confirmButton:'rounded-xl bg-app-primary'}});
 
-            // Double Safety check ensuring we never crash on missing db arrays
             if(!db.users) db.users = [];
 
             if (nickname === 'admin' && empId === 'admin123') {
@@ -1336,6 +1347,7 @@
             }
         }
 
+        // เพิ่มช่องกรอก Image URL ให้ถังขยะ
         async function crudBin(action, id) {
             if(action === 'delete') { db.bins = db.bins.filter(x => x.id !== id); saveDB(); renderAdminTables(); return; }
             let item = action === 'edit' ? db.bins.find(x => x.id === id) : {name:'', color:'#5C8D67', stage:'all', img:''};
@@ -1360,6 +1372,7 @@
             if (formValues) { if(action==='add') db.bins.push({id: generateId(), ...formValues}); else Object.assign(item, formValues); saveDB(); renderAdminTables(); }
         }
 
+        // เพิ่มช่องกรอก Image URL ให้ขยะ
         async function crudWaste(action, id) {
             if(action === 'delete') { db.wastes = db.wastes.filter(x => x.id !== id); saveDB(); renderAdminTables(); return; }
             let item = action === 'edit' ? db.wastes.find(x => x.id === id) : {name:'', binId: db.bins[0]?.id, stage:'all', img:''};
