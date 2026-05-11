@@ -306,7 +306,7 @@
                 </div>
                 <div>
                     <label id="lbl-empid" class="block text-[13px] font-semibold text-app-dark mb-2 pl-1">รหัสพนักงาน (Employee ID)</label>
-                    <input type="text" id="login-empid" maxlength="8" class="w-full bg-[#F8FAF9] border border-gray-200 rounded-[16px] px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-app-secondary focus:border-app-primary transition-all placeholder-gray-400" placeholder="ตัวเลข 7 หลัก หรือ admin123">
+                    <input type="text" id="login-empid" maxlength="8" class="w-full bg-[#F8FAF9] border border-gray-200 rounded-[16px] px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-app-secondary focus:border-app-primary transition-all placeholder-gray-400" placeholder="รหัสพนักงาน 7 หลัก">
                     <p id="lbl-hint" class="text-[11px] text-gray-400 mt-2 pl-1 font-light"><i class="fa-solid fa-circle-info mr-1"></i> สำหรับการเข้าระบบครั้งถัดไป กรอกแค่รหัสพนักงาน</p>
                 </div>
             </div>
@@ -343,7 +343,7 @@
             <div id="checkin-step-1" class="w-full flex-col items-center hidden relative pb-10">
                 <h2 class="text-2xl font-bold text-app-dark mb-4 tracking-tight">ประกาศ / กิจกรรม</h2>
                 
-                <div class="w-full max-w-[320px] aspect-square rounded-[24px] overflow-hidden shadow-sm border border-gray-100 bg-gray-50 relative mx-auto" id="popup-slider-wrapper">
+                <div class="w-full max-w-[320px] aspect-[4/5] rounded-[24px] overflow-hidden shadow-sm border border-gray-100 bg-gray-50 relative mx-auto" id="popup-slider-wrapper">
                     <div id="popup-slider" class="slider-container">
                         <!-- Populated by JS -->
                     </div>
@@ -599,7 +599,7 @@
                             <div class="flex justify-between items-center mb-2">
                                 <label class="text-[13px] font-bold text-app-dark ml-1 flex items-center gap-2">
                                     รูปภาพ Popup ก่อนเช็คอิน 
-                                    <span class="bg-gray-100 text-gray-500 text-[10px] px-2 py-0.5 rounded">แนะนำ 1040x1040 px</span>
+                                    <span class="bg-gray-100 text-gray-500 text-[10px] px-2 py-0.5 rounded">แนะนำ 1080x1350 px</span>
                                 </label>
                                 <button onclick="crudPopupImage('add')" class="text-[11px] bg-[#5C8D67] text-white px-3 py-2 rounded-[10px] shadow-sm font-bold hover:bg-opacity-90 transition-all"><i class="fa-solid fa-plus mr-1"></i> เพิ่มรูป Popup</button>
                             </div>
@@ -631,7 +631,7 @@
                         </div>
                         <div class="flex gap-3 mt-4">
                             <button onclick="connectDB()" id="btn-db-connect" class="bg-blue-600 text-white text-[13px] font-bold px-5 py-3.5 rounded-[16px] flex-1 hover:bg-blue-700 transition-all shadow-md">บันทึกและเชื่อมต่อ DB</button>
-                            <button onclick="resetSystemData()" class="bg-[#FFF0F0] text-red-500 text-[13px] font-bold px-5 py-3.5 rounded-[16px] hover:bg-red-50 transition-all border border-red-100"><i class="fa-solid fa-trash-can mr-1"></i> รีเซ็ต</button>
+                            <button onclick="resetSystemData()" class="bg-[#FFF0F0] text-red-500 text-[13px] font-bold px-5 py-3.5 rounded-[16px] hover:bg-red-50 transition-all border border-red-100"><i class="fa-solid fa-trash-can mr-1"></i> รีเซ็ตฐานข้อมูล (สลับชีท)</button>
                         </div>
                         <p class="text-[11px] text-gray-400 mt-2 bg-gray-50 p-3 rounded-xl border border-gray-100"><i class="fa-solid fa-circle-info mr-1"></i> เมื่อกดเชื่อมต่อ ระบบจะสร้างโครงสร้างข้อมูลลงใน Google Sheets ให้โดยอัตโนมัติ (หากยังไม่มี)</p>
                     </div>
@@ -727,14 +727,17 @@
 
             <!-- Tab 5: Users -->
             <div id="tab-users" class="admin-tab-content hidden space-y-6 max-w-5xl mx-auto">
-                <div class="flex justify-between items-center mb-4 bg-white p-5 rounded-[20px] border border-gray-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)]">
-                    <h3 class="font-bold text-app-dark text-base flex items-center"><i class="fa-solid fa-users text-app-primary mr-3"></i> 5. รายชื่อผู้เล่นทั้งหมด</h3>
-                    <button onclick="exportCSV('users')" class="text-[12px] font-bold bg-[#E6F0E8] text-[#5C8D67] px-5 py-2.5 rounded-[12px] hover:bg-[#D4E4D7] transition-colors"><i class="fa-solid fa-file-csv mr-1"></i> Export Data (CSV)</button>
+                <div class="flex flex-col sm:flex-row justify-between items-center gap-4 mb-4 bg-white p-5 rounded-[20px] border border-gray-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)]">
+                    <h3 class="font-bold text-app-dark text-base flex items-center w-full sm:w-auto"><i class="fa-solid fa-users text-app-primary mr-3"></i> 5. รายชื่อผู้เล่นทั้งหมด</h3>
+                    <div class="flex gap-2 w-full sm:w-auto justify-end">
+                        <button onclick="exportCSV('users')" class="text-[12px] font-bold bg-[#E6F0E8] text-[#5C8D67] px-4 py-2.5 rounded-[12px] hover:bg-[#D4E4D7] transition-colors"><i class="fa-solid fa-file-csv mr-1"></i> Export Data</button>
+                        <button onclick="deleteAllUsers()" class="text-[12px] font-bold bg-[#FFF0F0] text-[#E07A5F] px-4 py-2.5 rounded-[12px] hover:bg-[#FFE0E0] transition-colors"><i class="fa-solid fa-trash-can mr-1"></i> ล้างข้อมูลผู้เล่นทั้งหมด</button>
+                    </div>
                 </div>
                 <div class="bg-white border border-gray-100 rounded-[20px] shadow-sm overflow-hidden text-[13px] overflow-x-auto">
                     <table class="w-full text-left whitespace-nowrap">
                         <thead class="bg-[#F8FAF9] text-gray-500 text-[12px] uppercase tracking-wider border-b border-gray-100">
-                            <tr><th class="p-4 font-semibold w-16 text-center">Rank</th><th class="p-4 font-semibold">รหัสพนักงาน (EmpID)</th><th class="p-4 font-semibold">ชื่อ (Name)</th><th class="p-4 text-right font-semibold">คะแนน (Points)</th></tr>
+                            <tr><th class="p-4 font-semibold w-16 text-center">Rank</th><th class="p-4 font-semibold">รหัสพนักงาน (EmpID)</th><th class="p-4 font-semibold">ชื่อ (Name)</th><th class="p-4 font-semibold">คะแนน (Points)</th><th class="p-4 text-right font-semibold">จัดการ</th></tr>
                         </thead>
                         <tbody id="admin-table-users" class="divide-y divide-gray-50"></tbody>
                     </table>
@@ -1772,7 +1775,7 @@
         function saveGeneralSettings() {
             db.settings.logoImg = document.getElementById('cfg-logo-img').value;
             saveDB(); applySettings();
-            Swal.fire({ title: 'บันทึกการตั้งค่ารูปภาพสำเร็จ', icon: 'success', timer: 1500, showConfirmButton:false });
+            Swal.fire({ title: 'บันทึกการตั้งค่าระบบสำเร็จ', icon: 'success', timer: 1500, showConfirmButton:false });
         }
 
         async function connectDB() {
@@ -1865,7 +1868,7 @@
             document.getElementById('admin-table-wastes').innerHTML = db.wastes.map(w => `<tr><td class="p-4 text-center"><img src="${w.img || 'https://cdn-icons-png.flaticon.com/512/839/839088.png'}" class="w-8 h-8 object-contain mx-auto"></td><td class="p-4 font-semibold text-app-dark">${w.name}</td><td class="p-4 text-gray-600 font-medium">${db.bins.find(b=>b.id===w.binId)?.name || '-'}</td><td class="p-4 text-right"><button onclick="crudWaste('edit','${w.id}')" class="w-8 h-8 bg-blue-50 text-blue-500 rounded-lg mr-1.5 hover:bg-blue-100 transition-colors"><i class="fa-solid fa-pen text-[11px]"></i></button><button onclick="crudWaste('delete','${w.id}')" class="w-8 h-8 bg-red-50 text-red-500 rounded-lg hover:bg-red-100 transition-colors"><i class="fa-solid fa-trash text-[11px]"></i></button></td></tr>`).join('');
             
             let validUsers = db.users.filter(u => u.empId !== 'admin' && u.empId !== 'admin123');
-            document.getElementById('admin-table-users').innerHTML = [...validUsers].sort((a,b)=>b.points-a.points).map((u, i) => `<tr><td class="p-4 font-bold text-gray-400 text-center">${i+1}</td><td class="p-4 text-gray-500 font-medium">${u.empId}</td><td class="p-4 font-bold text-app-dark">${u.name}</td><td class="p-4 text-right font-black text-app-primary text-[14px]">${u.points}</td></tr>`).join('');
+            document.getElementById('admin-table-users').innerHTML = [...validUsers].sort((a,b)=>b.points-a.points).map((u, i) => `<tr><td class="p-4 font-bold text-gray-400 text-center">${i+1}</td><td class="p-4 text-gray-500 font-medium">${u.empId}</td><td class="p-4 font-bold text-app-dark">${u.name}</td><td class="p-4 font-black text-app-primary text-[14px]">${u.points}</td><td class="p-4 text-right"><button onclick="editUser('${u.empId}')" class="w-8 h-8 bg-blue-50 text-blue-500 rounded-lg mr-1.5 hover:bg-blue-100 transition-colors"><i class="fa-solid fa-pen text-[11px]"></i></button><button onclick="deleteUser('${u.empId}')" class="w-8 h-8 bg-red-50 text-red-500 rounded-lg hover:bg-red-100 transition-colors"><i class="fa-solid fa-trash text-[11px]"></i></button></td></tr>`).join('') || `<tr><td colspan="5" class="p-5 text-center text-gray-400">ยังไม่มีข้อมูลผู้เล่น</td></tr>`;
             
             if(!db.qrs) db.qrs = [];
             document.getElementById('admin-table-qrs').innerHTML = db.qrs.map(q => {
@@ -1876,6 +1879,75 @@
 
         function generateId() { return Math.random().toString(36).substr(2, 9); }
         
+        async function editUser(empId) {
+            let user = db.users.find(u => String(u.empId) === String(empId));
+            if(!user) return;
+            const { value: newName } = await Swal.fire({
+                title: 'แก้ไขชื่อผู้เล่น',
+                input: 'text',
+                inputValue: user.name,
+                showCancelButton: true,
+                confirmButtonText: 'บันทึก',
+                cancelButtonText: 'ยกเลิก',
+                customClass: {
+                    confirmButton: 'rounded-xl bg-app-primary px-8 py-2.5 text-white font-bold',
+                    cancelButton: 'rounded-xl px-8 py-2.5 bg-gray-200 text-gray-700 font-bold',
+                    input: 'text-sm rounded-xl border-gray-200'
+                },
+                inputValidator: (value) => {
+                    if (!value || value.trim() === '') {
+                        return 'กรุณากรอกชื่อผู้เล่น'
+                    }
+                }
+            });
+            if(newName && newName.trim() !== '') {
+                user.name = newName.trim();
+                saveDB();
+                renderAdminTables();
+                Swal.fire({title: 'สำเร็จ!', text: 'อัปเดตชื่อผู้เล่นเรียบร้อยแล้ว', icon: 'success', timer: 1500, showConfirmButton: false});
+            }
+        }
+
+        function deleteUser(empId) {
+            Swal.fire({
+                title: 'ยืนยันการลบ?',
+                text: "ข้อมูลผู้เล่นคนนี้ รวมถึงคะแนนและประวัติทั้งหมดจะถูกลบอย่างถาวร!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#E07A5F',
+                confirmButtonText: 'ใช่, ลบเลย',
+                cancelButtonText: 'ยกเลิก',
+                customClass: { confirmButton: 'rounded-xl', cancelButton: 'rounded-xl text-gray-700 bg-gray-200 border-none' }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    db.users = db.users.filter(u => String(u.empId) !== String(empId));
+                    saveDB();
+                    renderAdminTables();
+                    Swal.fire({title: 'ลบแล้ว!', text: 'ข้อมูลผู้เล่นถูกลบเรียบร้อย', icon: 'success', timer: 1500, showConfirmButton: false});
+                }
+            });
+        }
+
+        function deleteAllUsers() {
+            Swal.fire({
+                title: 'ล้างข้อมูลผู้เล่นทั้งหมด?',
+                text: "โปรดระวัง! ข้อมูลผู้เล่น, คะแนน และประวัติการเล่นทั้งหมด (ยกเว้นแอดมิน) จะถูกลบอย่างถาวร ไม่สามารถกู้คืนได้!",
+                icon: 'error',
+                showCancelButton: true,
+                confirmButtonColor: '#E07A5F',
+                confirmButtonText: 'ยืนยันลบทั้งหมด',
+                cancelButtonText: 'ยกเลิก',
+                customClass: { confirmButton: 'rounded-xl', cancelButton: 'rounded-xl text-gray-700 bg-gray-200 border-none' }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    db.users = db.users.filter(u => u.empId === 'admin' || u.empId === 'admin123');
+                    saveDB();
+                    renderAdminTables();
+                    Swal.fire({title: 'สำเร็จ!', text: 'รีเซ็ตข้อมูลผู้เล่นทั้งหมดเรียบร้อยแล้ว', icon: 'success', timer: 1500, showConfirmButton: false});
+                }
+            });
+        }
+
         async function crudMainImage(action, idx) {
             if(action === 'delete') { 
                 if(db.settings.mainImages.length <= 1) return Swal.fire('ไม่สามารถลบได้', 'ต้องมีรูปพื้นหลังอย่างน้อย 1 รูป', 'warning');
@@ -2034,7 +2106,7 @@
             Swal.fire({
                 title: `ลบสัปดาห์ที่ ${weekNum}?`, text: "คุณต้องการลบรอบเวลานี้ใช่หรือไม่?", icon: 'warning',
                 showCancelButton: true, confirmButtonColor: '#E07A5F', confirmButtonText: 'ลบ', cancelButtonText: 'ยกเลิก',
-                customClass: { confirmButton: 'rounded-xl', cancelButton: 'rounded-xl' }
+                customClass: { confirmButton: 'rounded-xl', cancelButton: 'rounded-xl bg-gray-200 text-gray-700 border-none' }
             }).then((res) => {
                 if(res.isConfirmed) {
                     db.settings.weeks = db.settings.weeks.filter(w => w.weekNum !== weekNum);
@@ -2102,7 +2174,7 @@
                 customClass: {
                     popup: 'rounded-[24px] px-6 py-8',
                     confirmButton: 'rounded-xl bg-app-primary px-8 py-2.5 text-white font-bold text-sm hover:bg-opacity-90 transition-all',
-                    cancelButton: 'rounded-xl px-8 py-2.5 text-gray-600 bg-gray-200 font-bold text-sm'
+                    cancelButton: 'rounded-xl px-8 py-2.5 text-gray-600 bg-gray-200 font-bold text-sm border-none'
                 },
                 preConfirm: () => { 
                     return { 
