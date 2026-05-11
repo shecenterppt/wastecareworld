@@ -271,7 +271,7 @@
                 </div>
                 <div>
                     <label id="lbl-empid" class="block text-[13px] font-semibold text-app-dark mb-2 pl-1">รหัสพนักงาน (Employee ID)</label>
-                    <input type="text" id="login-empid" maxlength="20" class="w-full bg-[#F8FAF9] border border-gray-200 rounded-[16px] px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-app-secondary focus:border-app-primary transition-all placeholder-gray-400" placeholder="ตัวเลข 7 หลัก หรือ admin123">
+                    <input type="text" id="login-empid" maxlength="8" class="w-full bg-[#F8FAF9] border border-gray-200 rounded-[16px] px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-app-secondary focus:border-app-primary transition-all placeholder-gray-400" placeholder="ตัวเลข 7 หลัก หรือ admin123">
                     <p id="lbl-hint" class="text-[11px] text-gray-400 mt-2 pl-1 font-light"><i class="fa-solid fa-circle-info mr-1"></i> สำหรับการเข้าระบบครั้งถัดไป กรอกแค่รหัสพนักงาน</p>
                 </div>
             </div>
@@ -945,8 +945,26 @@
         async function handleLogin() {
             const empId = document.getElementById('login-empid').value.trim();
             const nickname = document.getElementById('login-nickname').value.trim();
+            const isNewUser = document.getElementById('nickname-group').style.display !== 'none';
 
             if(!empId) return Swal.fire({title: 'Error', text:'กรุณากรอกรหัสพนักงาน', icon:'error', customClass:{confirmButton:'rounded-xl bg-app-primary'}});
+
+            // Validation: ตรวจสอบสิทธิ์ Admin
+            if (empId === 'admin123' || nickname.toLowerCase() === 'admin') {
+                if (empId !== 'admin123' || nickname !== 'admin') {
+                    return Swal.fire({title: 'Error', text:'สิทธิ์แอดมินต้องใช้ชื่อเล่น "admin" และรหัส "admin123" เป๊ะๆ เท่านั้น', icon:'error', customClass:{confirmButton:'rounded-xl bg-app-primary'}});
+                }
+            } 
+            // Validation: ตรวจสอบ User ทั่วไป (ต้องเป็นเลข 7 หลัก)
+            else {
+                const empIdRegex = /^\d{7}$/;
+                if (!empIdRegex.test(empId)) {
+                    return Swal.fire({title: 'Error', text:'รหัสพนักงานต้องเป็นตัวเลข 7 หลักเท่านั้น', icon:'error', customClass:{confirmButton:'rounded-xl bg-app-primary'}});
+                }
+                if (isNewUser && !nickname) {
+                    return Swal.fire({title: 'Error', text:'กรุณากรอกชื่อเล่นสำหรับการเข้าระบบครั้งแรก', icon:'error', customClass:{confirmButton:'rounded-xl bg-app-primary'}});
+                }
+            }
 
             // ดึงข้อมูลล่าสุดจาก Cloud ก่อนเสมอ เพื่อป้องกันการสร้าง User ทับกัน
             Swal.fire({ title: 'กำลังเชื่อมต่อ...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
@@ -966,7 +984,6 @@
                 if(existing) {
                     currentUser = existing;
                 } else {
-                    if(!nickname) return Swal.fire({title: 'Error', text:'กรุณากรอกชื่อเล่นสำหรับการเข้าระบบครั้งแรก', icon:'error', customClass:{confirmButton:'rounded-xl bg-app-primary'}});
                     currentUser = { empId, name: nickname, role: 'user', points: 0, history: [], checkIn: { lastDate: null, streak: 0 }, playedWeek: 0, playCount: 0 };
                     db.users.push(currentUser);
                     saveDB();
