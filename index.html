@@ -265,9 +265,11 @@
             </div>
 
             <div class="space-y-5 flex-1">
-                <div id="nickname-group">
+                <!-- ซ่อนช่องชื่อเล่นไว้ก่อน -->
+                <div id="nickname-group" style="display: none;">
                     <label id="lbl-nickname" class="block text-[13px] font-semibold text-app-dark mb-2 pl-1">ชื่อเล่น (Nickname)</label>
                     <input type="text" id="login-nickname" class="w-full bg-[#F8FAF9] border border-gray-200 rounded-[16px] px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-app-secondary focus:border-app-primary transition-all placeholder-gray-400" placeholder="ระบุชื่อเล่นของคุณ">
+                    <p class="text-[11px] text-app-primary mt-2 pl-1 font-medium"><i class="fa-solid fa-circle-check mr-1"></i> กรุณากรอกชื่อเล่นเพื่อลงทะเบียนครั้งแรก</p>
                 </div>
                 <div>
                     <label id="lbl-empid" class="block text-[13px] font-semibold text-app-dark mb-2 pl-1">รหัสพนักงาน (Employee ID)</label>
@@ -717,7 +719,8 @@
         let db = enforceDBStructure(JSON.parse(localStorage.getItem('wcw_db')));
         let currentUser = null;
         let isCloudLoading = false;
-        let currentRankTab = 'weekly'; // state for ranking modal
+        let currentRankTab = 'weekly'; 
+        let loginStep = 1; // 1 = Check ID, 2 = Check Nickname
 
         // ================= CLOUD SYNC LOGIC =================
         async function syncToCloud() {
@@ -918,6 +921,12 @@
             document.getElementById('modal-backdrop').classList.add('active');
             document.getElementById(modalId).classList.add('active');
             
+            if(modalId === 'login-modal') {
+                loginStep = 1;
+                document.getElementById('nickname-group').style.display = 'none';
+                document.getElementById('login-empid').value = '';
+                document.getElementById('login-nickname').value = '';
+            }
             if(modalId === 'checkin-modal') renderCheckIn();
             if(modalId === 'point-modal') renderPointHistory();
             if(modalId === 'ranking-modal') renderRanking('weekly'); 
@@ -928,73 +937,92 @@
         function closeAllModals() {
             document.getElementById('modal-backdrop').classList.remove('active');
             document.querySelectorAll('.modal-bottom').forEach(m => m.classList.remove('active'));
+            loginStep = 1; // Reset login step just in case
+            document.getElementById('nickname-group').style.display = 'none';
         }
 
         // ================= AUTH =================
-        document.getElementById('login-empid').addEventListener('input', function(e) {
-            const val = this.value.trim();
-            if(!db.users) db.users = []; 
-            if(val !== 'admin123' && val.length > 0) {
-                let exists = db.users.find(u => u.empId === val);
-                document.getElementById('nickname-group').style.display = exists ? 'none' : 'block';
-            } else {
-                 document.getElementById('nickname-group').style.display = 'block';
-            }
-        });
-
         document.getElementById('login-nickname').addEventListener('keypress', function(e) { if(e.key === 'Enter') handleLogin(); });
         document.getElementById('login-empid').addEventListener('keypress', function(e) { if(e.key === 'Enter') handleLogin(); });
 
         async function handleLogin() {
             const empId = document.getElementById('login-empid').value.trim();
             const nickname = document.getElementById('login-nickname').value.trim();
-            const isNewUser = document.getElementById('nickname-group').style.display !== 'none';
 
             if(!empId) return Swal.fire({title: 'Error', text:'กรุณากรอกรหัสพนักงาน', icon:'error', customClass:{confirmButton:'rounded-xl bg-app-primary'}});
 
-            if (empId === 'admin123' || nickname.toLowerCase() === 'admin') {
-                if (empId !== 'admin123' || nickname !== 'admin') {
-                    return Swal.fire({title: 'Error', text:'สิทธิ์แอดมินต้องใช้ชื่อเล่น "admin" และรหัส "admin123" เป๊ะๆ เท่านั้น', icon:'error', customClass:{confirmButton:'rounded-xl bg-app-primary'}});
-                }
-            } 
-            else {
+            // Validate ID format
+            if (empId !== 'admin123') {
                 const empIdRegex = /^\d{7}$/;
                 if (!empIdRegex.test(empId)) {
                     return Swal.fire({title: 'Error', text:'รหัสพนักงานต้องเป็นตัวเลข 7 หลักเท่านั้น', icon:'error', customClass:{confirmButton:'rounded-xl bg-app-primary'}});
                 }
-                if (isNewUser && !nickname) {
+            }
+
+            if (loginStep === 1) {
+                // Step 1: Check Employee ID
+                Swal.fire({ title: 'กำลังตรวจสอบข้อมูล...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                await loadFromCloud();
+                if(!db.users) db.users = [];
+
+                let existing = db.users.find(u => u.empId === empId);
+
+                if (existing) {
+                    // ID exists -> Log them in!
+                    currentUser = existing;
+                    completeLogin();
+                } else {
+                    // ID not found -> Show nickname input
+                    Swal.close();
+                    loginStep = 2;
+                    document.getElementById('nickname-group').style.display = 'block';
+                    document.getElementById('login-nickname').focus();
+                }
+            } else if (loginStep === 2) {
+                // Step 2: Validate Nickname & Create User
+                if (!nickname) {
                     return Swal.fire({title: 'Error', text:'กรุณากรอกชื่อเล่นสำหรับการเข้าระบบครั้งแรก', icon:'error', customClass:{confirmButton:'rounded-xl bg-app-primary'}});
                 }
-            }
 
-            Swal.fire({ title: 'กำลังเชื่อมต่อ...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-            await loadFromCloud();
-
-            if(!db.users) db.users = [];
-
-            if (nickname === 'admin' && empId === 'admin123') {
-                currentUser = db.users.find(u => u.empId === 'admin');
-                if(!currentUser) {
-                    currentUser = { empId: 'admin', name: 'Admin', role: 'admin', points: 9999, history: [], checkIn: { lastDate: null, streak: 0 }, playedWeek: 0, playCount: 0 };
-                    db.users.push(currentUser);
-                    saveDB();
+                if (empId === 'admin123' && nickname.toLowerCase() !== 'admin') {
+                    return Swal.fire({title: 'Error', text:'สิทธิ์แอดมินต้องใช้ชื่อเล่น "admin" เท่านั้น', icon:'error', customClass:{confirmButton:'rounded-xl bg-app-primary'}});
                 }
-            } else {
+
+                Swal.fire({ title: 'กำลังลงทะเบียน...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                await loadFromCloud(); // Double check
+                if(!db.users) db.users = [];
+
                 let existing = db.users.find(u => u.empId === empId);
                 if(existing) {
+                    // Someone else registered this ID in the meantime? Just login.
                     currentUser = existing;
                 } else {
-                    currentUser = { empId, name: nickname, role: 'user', points: 0, history: [], checkIn: { lastDate: null, streak: 0 }, playedWeek: 0, playCount: 0 };
+                    // Create new user
+                    let role = (empId === 'admin123' && nickname.toLowerCase() === 'admin') ? 'admin' : 'user';
+                    currentUser = { 
+                        empId, 
+                        name: nickname, 
+                        role: role, 
+                        points: role==='admin'?9999:0, 
+                        history: [], 
+                        checkIn: { lastDate: null, streak: 0 }, 
+                        playedWeek: 0, 
+                        playCount: 0 
+                    };
                     db.users.push(currentUser);
                     saveDB();
                 }
+                completeLogin();
             }
+        }
 
+        function completeLogin() {
             if(!currentUser) return Swal.fire('Error', 'เกิดข้อผิดพลาด ไม่สามารถโหลดข้อมูลผู้ใช้ได้', 'error');
 
             localStorage.setItem('wcw_user_session', currentUser.empId);
             closeAllModals();
             loadUserDashboard();
+            
             Swal.fire({ title: 'Welcome Back!', text: `สวัสดีคุณ ${currentUser.name}`, icon: 'success', timer: 1500, showConfirmButton: false }).then(() => { showPage('page-main'); });
         }
 
@@ -1452,7 +1480,6 @@
             document.getElementById('admin-table-users').innerHTML = [...db.users].sort((a,b)=>b.points-a.points).map((u, i) => `<tr><td class="p-4 font-bold text-gray-400 text-center">${i+1}</td><td class="p-4 text-gray-500 font-medium">${u.empId}</td><td class="p-4 font-bold text-app-dark">${u.name}</td><td class="p-4 text-right font-black text-app-primary text-[14px]">${u.points}</td></tr>`).join('');
             
             if(!db.qrs) db.qrs = [];
-            // อัปเดตตารางแสดงผลชนิดของการสแกน QR
             document.getElementById('admin-table-qrs').innerHTML = db.qrs.map(q => {
                 let scanText = q.scanType === 'multi' ? 'หลายครั้ง/คน' : '1 ครั้ง/คน';
                 return `<tr><td class="p-4 font-bold text-app-dark">${q.name}</td><td class="p-4 text-app-accent font-black text-[14px]">${q.pts}</td><td class="p-4"><span class="bg-[#E6F0E8] text-app-primary text-[11px] px-3 py-1.5 rounded-full font-bold">${scanText}</span></td><td class="p-4 text-right"><button onclick="viewQR('${q.url}')" class="w-8 h-8 bg-gray-100 text-gray-600 rounded-lg mr-1.5 hover:bg-gray-200 transition-colors"><i class="fa-solid fa-qrcode text-[11px]"></i></button><button onclick="deleteQR('${q.id}')" class="w-8 h-8 bg-red-50 text-red-500 rounded-lg hover:bg-red-100 transition-colors"><i class="fa-solid fa-trash text-[11px]"></i></button></td></tr>`
@@ -1615,7 +1642,6 @@
             }
         }
 
-        // ================= อัปเดตฟังก์ชันสร้าง QR CODE ให้ตรงกับภาพ =================
         async function createQR() {
             const { value: formValues } = await Swal.fire({ 
                 title: '<h2 class="text-2xl font-bold text-gray-700">สร้าง QR Code ใหม่</h2>', 
