@@ -18,6 +18,9 @@
     
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <!-- HTML5 QR Code Scanner -->
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 
     <script>
         tailwind.config = {
@@ -78,6 +81,11 @@
         .swal2-popup { border-radius: 24px !important; padding: 2rem !important; }
         .swal2-input, .swal2-select { border-radius: 16px !important; border: 1px solid #e2e8f0 !important; font-size: 14px !important; padding: 12px 16px !important; }
         .swal2-input:focus, .swal2-select:focus { border-color: #5C8D67 !important; box-shadow: 0 0 0 3px rgba(92,141,103,0.2) !important; }
+
+        /* QR Scanner Overrides */
+        #reader { border: none !important; border-radius: 24px; overflow: hidden; background: #f8faf9; }
+        #reader__dashboard_section_csr span { display: none !important; }
+        #reader__dashboard_section_csr button { background: #5C8D67 !important; color: white !important; border-radius: 12px !important; padding: 8px 16px !important; border: none !important; font-family: 'Prompt', sans-serif !important; font-size: 13px !important; }
     </style>
 </head>
 <body class="antialiased h-screen flex flex-col">
@@ -121,12 +129,16 @@
 
         <!-- Header -->
         <header class="p-6 pt-10 flex justify-between items-center z-10">
-            <div class="flex items-center gap-4 bg-white/60 backdrop-blur-md py-2 px-4 rounded-[20px] shadow-sm border border-white/40">
+            <div class="flex items-center gap-4 bg-white/60 backdrop-blur-md py-2 px-4 rounded-[20px] shadow-sm border border-white/40 relative">
                 <img id="dashboard-logo" src="https://cdn-icons-png.flaticon.com/512/2913/2913426.png" class="w-10 h-10 object-contain drop-shadow-sm" alt="Logo">
                 <div class="flex flex-col justify-center">
-                    <h2 id="user-nickname" class="font-bold text-app-dark text-sm leading-tight">User Name</h2>
+                    <h2 id="user-nickname" class="font-bold text-app-dark text-sm leading-tight pr-4">User Name</h2>
                     <p id="user-empid" class="text-[10px] text-gray-500 font-medium mt-0.5">ID: 0000000</p>
                 </div>
+                <!-- ปุ่มรีเฟรชข้อมูล -->
+                <button onclick="manualRefresh()" id="btn-refresh" class="absolute -right-2 -top-2 w-7 h-7 bg-white rounded-full shadow-md text-app-primary flex items-center justify-center hover:bg-gray-50 transition-all z-20">
+                    <i class="fa-solid fa-arrows-rotate text-[11px]"></i>
+                </button>
             </div>
             <div class="bg-white/80 backdrop-blur-md px-4 py-2 rounded-[20px] flex flex-col items-center shadow-sm border border-white/40 relative">
                 <i id="cloud-sync-icon" class="hidden absolute -top-1 -right-1" title="Sync Status"></i>
@@ -190,6 +202,8 @@
         <div class="w-16 h-1.5 bg-gray-200 rounded-full mx-auto mt-4 mb-4"></div>
         <div class="px-6 flex flex-col h-full modal-content-scroll pt-2">
             <div class="grid grid-cols-2 gap-4" id="main-menu-grid">
+                
+                <!-- Game Button -->
                 <button onclick="startGameFlow()" class="col-span-2 bg-app-primary text-white p-5 rounded-[24px] flex items-center justify-between shadow-soft hover:shadow-float transition-all transform active:scale-95 relative overflow-hidden group">
                     <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
                     <div class="flex items-center gap-4 relative z-10">
@@ -203,6 +217,22 @@
                     </div>
                     <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm relative z-10">
                         <i class="fa-solid fa-play text-sm ml-0.5"></i>
+                    </div>
+                </button>
+
+                <!-- QR Scan Button -->
+                <button onclick="openModal('qr-scan-modal')" class="col-span-2 bg-[#253E2B] text-white p-5 rounded-[24px] flex items-center justify-between shadow-sm hover:shadow-md transition-all transform active:scale-95 relative overflow-hidden">
+                    <div class="flex items-center gap-4 relative z-10">
+                        <div class="w-14 h-14 bg-white/10 rounded-[18px] flex items-center justify-center backdrop-blur-sm border border-white/10">
+                            <i class="fa-solid fa-qrcode text-2xl drop-shadow-sm"></i>
+                        </div>
+                        <div class="text-left">
+                            <h3 class="font-bold text-base tracking-wide">สแกน QR รับแต้ม</h3>
+                            <p class="text-[11px] opacity-80 font-light mt-0.5">สแกน QR Code เพื่อรับคะแนนพิเศษ</p>
+                        </div>
+                    </div>
+                    <div class="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm relative z-10">
+                        <i class="fa-solid fa-camera text-sm"></i>
                     </div>
                 </button>
 
@@ -220,22 +250,13 @@
                     <span class="font-semibold text-sm text-app-dark">My Points</span>
                 </button>
 
-                <button onclick="openModal('ranking-modal')" class="bg-[#F8FAF9] border border-gray-100 p-5 rounded-[24px] flex flex-col items-center justify-center gap-3 shadow-sm hover:shadow-md hover:bg-white transition-all active:scale-95">
-                    <div class="w-12 h-12 bg-[#E3F2FD] text-[#4A90E2] rounded-[16px] flex items-center justify-center mb-1">
-                        <i class="fa-solid fa-ranking-star text-2xl"></i>
-                    </div>
-                    <span class="font-semibold text-sm text-app-dark">Ranking</span>
-                </button>
-
-                <button id="btn-setting" onclick="openModal('setting-modal')" class="hidden bg-[#2D3748] text-white p-5 rounded-[24px] flex flex-col items-center justify-center gap-3 shadow-md hover:shadow-lg transition-all active:scale-95">
-                    <div class="w-12 h-12 bg-white/10 rounded-[16px] flex items-center justify-center mb-1">
-                        <i class="fa-solid fa-sliders text-2xl"></i>
-                    </div>
-                    <span class="font-semibold text-sm">Admin Area</span>
+                <button id="btn-setting" onclick="openModal('setting-modal')" class="hidden col-span-2 bg-[#F2F7F4] text-app-dark p-4 rounded-[20px] flex items-center justify-center gap-3 shadow-sm hover:shadow-md transition-all active:scale-95 border border-gray-200">
+                    <i class="fa-solid fa-sliders text-app-primary"></i>
+                    <span class="font-bold text-sm">จัดการระบบ (Admin Area)</span>
                 </button>
             </div>
             
-            <div class="text-center mt-8 pb-2">
+            <div class="text-center mt-6 pb-2">
                 <button onclick="logout()" class="text-[13px] text-gray-400 font-medium hover:text-red-500 transition-colors"><i class="fa-solid fa-arrow-right-from-bracket mr-1.5"></i> ออกจากระบบ</button>
             </div>
         </div>
@@ -273,8 +294,8 @@
                 </div>
                 <div>
                     <label id="lbl-empid" class="block text-[13px] font-semibold text-app-dark mb-2 pl-1">รหัสพนักงาน (Employee ID)</label>
-                    <input type="text" id="login-empid" maxlength="8" class="w-full bg-[#F8FAF9] border border-gray-200 rounded-[16px] px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-app-secondary focus:border-app-primary transition-all placeholder-gray-400" placeholder="รหัสพนักงาน 7 หลัก">
-                    <p id="lbl-hint" class="text-[11px] text-gray-400 mt-2 pl-1 font-light"><i class="fa-solid fa-circle-info mr-1"></i> สำหรับการเข้าระบบครั้งถัดไป กรอกแค่รหัสพนักงาน</p>
+                    <input type="text" id="login-empid" maxlength="8" class="w-full bg-[#F8FAF9] border border-gray-200 rounded-[16px] px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-app-secondary focus:border-app-primary transition-all placeholder-gray-400" placeholder="ตัวเลข 7 หลัก หรือ admin123">
+                    <p id="lbl-hint" class="text-[11px] text-gray-400 mt-2 pl-1 font-light"><i class="fa-solid fa-circle-info mr-1"></i> สำหรับแอดมินกรอก admin123</p>
                 </div>
             </div>
             
@@ -283,6 +304,21 @@
                     เข้าสู่ระบบ
                 </button>
             </div>
+        </div>
+    </div>
+
+    <!-- QR Scanner Modal -->
+    <div id="qr-scan-modal" class="modal-bottom pb-8">
+        <div class="w-16 h-1.5 bg-gray-200 rounded-full mx-auto mt-4 mb-2"></div>
+        <div class="px-6 flex flex-col h-full modal-content-scroll pt-2 items-center">
+            <h2 class="text-2xl font-bold text-app-dark text-center mb-1 tracking-tight">สแกน QR Code</h2>
+            <p class="text-center text-gray-500 text-[12px] mb-6 font-light">นำกล้องส่องไปที่ QR Code กิจกรรมเพื่อรับคะแนน</p>
+            
+            <div class="w-full max-w-sm rounded-[24px] overflow-hidden shadow-sm border border-gray-200 mb-6 bg-gray-50">
+                <div id="reader" width="100%"></div>
+            </div>
+            
+            <button onclick="closeAllModals()" class="w-full max-w-xs bg-[#F8FAF9] border border-gray-200 text-app-dark py-4 rounded-[16px] font-bold hover:bg-gray-50 transition-colors mt-auto text-sm shrink-0">ยกเลิกการสแกน</button>
         </div>
     </div>
 
@@ -618,7 +654,7 @@
                 <div class="bg-white p-6 rounded-[24px] border border-gray-100 shadow-sm">
                     <div class="flex justify-between items-center mb-5">
                         <h3 class="font-bold text-app-dark text-base flex items-center"><i class="fa-solid fa-qrcode text-app-primary mr-3"></i> 4.2 QR Code คะแนนพิเศษ</h3>
-                        <button onclick="createQR()" class="text-[12px] font-bold bg-app-dark text-white px-5 py-2.5 rounded-[12px] shadow-md hover:bg-opacity-90 transition-all"><i class="fa-solid fa-plus mr-1"></i> สร้าง QR โบนัส</button>
+                        <button onclick="crudQR('add')" class="text-[12px] font-bold bg-app-dark text-white px-5 py-2.5 rounded-[12px] shadow-md hover:bg-opacity-90 transition-all"><i class="fa-solid fa-plus mr-1"></i> สร้าง QR โบนัส</button>
                     </div>
                     <div class="bg-white border border-gray-200 rounded-[16px] overflow-hidden text-[13px] overflow-x-auto">
                         <table class="w-full text-left whitespace-nowrap">
@@ -690,45 +726,33 @@
                 { id: "w5", name: "เศษผักผลไม้", binId: "b4", stage: "indoor", img: "https://cdn-icons-png.flaticon.com/512/415/415682.png" },
                 { id: "w6", name: "ก้อนน้ำแข็ง", binId: "b5", stage: "indoor", img: "https://cdn-icons-png.flaticon.com/512/2316/2316999.png" }
             ],
-            users: [
-                { empId: "admin", name: "Admin", role: "admin", points: 9999, history: [], checkIn: { lastDate: null, streak: 0 }, playedWeek: 0, playCount: 0 }
-            ],
+            users: [],
             qrs: []
         };
 
         function enforceDBStructure(database) {
             if (!database) database = {};
             if (!database.settings) database.settings = defaultData.settings;
-            if (!database.users || database.users.length === 0) database.users = defaultData.users;
+            if (!database.users) database.users = [];
             if (!database.levels || database.levels.length === 0) database.levels = defaultData.levels;
             if (!database.bins || database.bins.length === 0) database.bins = defaultData.bins;
             if (!database.wastes || database.wastes.length === 0) database.wastes = defaultData.wastes;
             if (!database.qrs) database.qrs = defaultData.qrs;
             
-            // Migrate old week format to new weeks array
             if (!database.settings.weeks) {
                 database.settings.weeks = [];
                 if (database.settings.currentWeek && database.settings.weekStartDate && database.settings.weekEndDate) {
-                    database.settings.weeks.push({
-                        weekNum: database.settings.currentWeek,
-                        start: database.settings.weekStartDate,
-                        end: database.settings.weekEndDate
-                    });
+                    database.settings.weeks.push({ weekNum: database.settings.currentWeek, start: database.settings.weekStartDate, end: database.settings.weekEndDate });
                 }
             }
 
-            // Ensure fields exist for users
             database.users.forEach(u => {
                 if(typeof u.playCount === 'undefined') u.playCount = 0;
+                if(typeof u.scannedQRs === 'undefined') u.scannedQRs = [];
             });
-            // Ensure QR format
             database.qrs.forEach(q => {
                 if(!q.scanType) q.scanType = 'single';
             });
-
-            if (!database.users.find(u => u.empId === 'admin')) {
-                database.users.push({ empId: "admin", name: "Admin", role: "admin", points: 9999, history: [], checkIn: { lastDate: null, streak: 0 }, playedWeek: 0, playCount: 0 });
-            }
             return database;
         }
 
@@ -736,7 +760,8 @@
         let currentUser = null;
         let isCloudLoading = false;
         let currentRankTab = 'weekly'; 
-        let loginStep = 1; // 1 = Check ID, 2 = Check Nickname
+        let loginStep = 1;
+        let html5QrcodeScanner = null;
 
         // ================= CLOUD SYNC LOGIC =================
         async function syncToCloud() {
@@ -745,10 +770,14 @@
             if(cloudIcon) { cloudIcon.className = "fa-solid fa-cloud-arrow-up text-blue-400 animate-pulse text-[10px] absolute -top-1 -right-1"; }
             
             try {
+                // Ensure admin is not uploaded
+                let dbToUpload = JSON.parse(JSON.stringify(db));
+                dbToUpload.users = dbToUpload.users.filter(u => u.empId !== 'admin');
+
                 const response = await fetch(db.settings.gasUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ action: 'save', sheetId: db.settings.sheetId, data: db })
+                    body: JSON.stringify({ action: 'save', sheetId: db.settings.sheetId, data: dbToUpload })
                 });
                 const res = await response.json();
                 
@@ -778,7 +807,7 @@
                     db = enforceDBStructure(res.data);
                     localStorage.setItem('wcw_db', JSON.stringify(db));
                     
-                    if(currentUser) {
+                    if(currentUser && currentUser.empId !== 'admin') {
                         let updatedUser = db.users.find(u => u.empId === currentUser.empId);
                         if(updatedUser) currentUser = updatedUser;
                     }
@@ -790,7 +819,7 @@
 
         function saveDB() { localStorage.setItem('wcw_db', JSON.stringify(db)); syncToCloud(); }
         function saveUser() {
-            if(!currentUser) return;
+            if(!currentUser || currentUser.empId === 'admin') return; 
             let idx = db.users.findIndex(u => u.empId === currentUser.empId);
             if(idx > -1) {
                 db.users[idx] = currentUser;
@@ -800,18 +829,35 @@
             saveDB();
         }
 
-        function resetSystemData() {
-            Swal.fire({
-                title: 'ยืนยันการรีเซ็ต?', text: "ข้อมูลทั้งหมดจะถูกลบ (หากต้องการลบใน Sheet ด้วย ต้องไปลบในไฟล์ Sheet โดยตรง)", icon: 'warning',
-                showCancelButton: true, confirmButtonColor: '#E07A5F', confirmButtonText: 'ล้างข้อมูลบนเครื่องนี้', cancelButtonText: 'ยกเลิก',
-                customClass: { confirmButton: 'rounded-xl', cancelButton: 'rounded-xl' }
-            }).then((res) => {
-                if(res.isConfirmed) {
-                    localStorage.removeItem('wcw_db');
-                    localStorage.removeItem('wcw_user_session');
-                    location.reload();
-                }
+        async function manualRefresh() {
+            let btn = document.getElementById('btn-refresh');
+            if(btn) btn.classList.add('animate-spin');
+            
+            await loadFromCloud();
+            evaluateCurrentWeek();
+            loadUserDashboard();
+            if(document.getElementById('ranking-modal').classList.contains('active')) renderRanking(currentRankTab);
+            
+            if(btn) btn.classList.remove('animate-spin');
+        }
+
+        // ================= AUTO WEEK EVALUATION =================
+        function evaluateCurrentWeek() {
+            if(!db.settings.weeks || db.settings.weeks.length === 0) return;
+            const now = new Date();
+            const thTime = new Date(now.getTime() + (7 * 60 * 60 * 1000));
+            const todayStr = thTime.toISOString().split('T')[0];
+            
+            let foundWeek = null;
+            db.settings.weeks.forEach(w => {
+                if(todayStr >= w.start && todayStr <= w.end) foundWeek = w;
             });
+            
+            if(foundWeek) {
+                db.settings.currentWeek = foundWeek.weekNum;
+                db.settings.weekStartDate = foundWeek.start;
+                db.settings.weekEndDate = foundWeek.end;
+            }
         }
 
         // ================= INIT & UI =================
@@ -828,25 +874,44 @@
             
             localStorage.setItem('wcw_db', JSON.stringify(db));
 
-            if (db.settings.gasUrl && db.settings.sheetId) { await loadFromCloud(); }
-
+            if (db.settings.gasUrl && db.settings.sheetId) { 
+                await loadFromCloud(); 
+            }
+            evaluateCurrentWeek();
             applySettings();
             setInterval(updateLandingBackground, 60000);
 
             const sessionEmpId = localStorage.getItem('wcw_user_session');
             if (sessionEmpId) {
-                currentUser = db.users.find(u => u.empId === sessionEmpId);
+                if(sessionEmpId === 'admin') {
+                    currentUser = { empId: 'admin', name: 'Admin', role: 'admin', points: 9999, history: [], checkIn: { lastDate: null, streak: 0 }, playedWeek: 0, playCount: 0, scannedQRs: [] };
+                } else {
+                    currentUser = db.users.find(u => u.empId === sessionEmpId);
+                }
+                
                 if(currentUser) {
                     loadUserDashboard();
                     showPage('page-main');
                 }
             }
+            
+            document.querySelectorAll('.admin-tab').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    document.querySelectorAll('.admin-tab').forEach(b => { 
+                        b.classList.remove('bg-app-dark', 'text-white', 'shadow-md'); 
+                        b.classList.add('bg-[#F8FAF9]', 'text-gray-600', 'border', 'border-gray-200'); 
+                    });
+                    e.target.classList.remove('bg-[#F8FAF9]', 'text-gray-600', 'border', 'border-gray-200'); 
+                    e.target.classList.add('bg-app-dark', 'text-white', 'shadow-md');
+                    document.querySelectorAll('.admin-tab-content').forEach(c => c.classList.add('hidden'));
+                    document.getElementById(e.target.dataset.target).classList.remove('hidden');
+                });
+            });
 
             document.getElementById('lang-toggle').checked = false;
             toggleLang();
         }
 
-        // เพิ่มฟังก์ชันสลับหน้าแอดมิน ที่ทำงานได้ทันทีไม่ต้องรอโหลด
         function switchAdminTab(targetId, btnElement) {
             document.querySelectorAll('.admin-tab').forEach(b => { 
                 b.classList.remove('bg-app-dark', 'text-white', 'shadow-md'); 
@@ -871,7 +936,7 @@
                 document.getElementById('login-sub2').innerText = "We're glad to see you again.";
                 document.getElementById('lbl-nickname').innerText = "Nickname";
                 document.getElementById('lbl-empid').innerText = "Employee ID";
-                document.getElementById('lbl-hint').innerHTML = '<i class="fa-solid fa-circle-info mr-1"></i> For the next login, just enter your Employee ID.';
+                document.getElementById('lbl-hint').innerHTML = '<i class="fa-solid fa-circle-info mr-1"></i> For admin use admin123';
                 document.getElementById('btn-login').innerText = "Login";
                 document.getElementById('login-nickname').placeholder = "Enter your nickname";
                 document.getElementById('login-empid').placeholder = "Your Employee ID";
@@ -881,10 +946,10 @@
                 document.getElementById('login-sub2').innerText = "ดีใจที่ได้พบคุณอีกครั้ง";
                 document.getElementById('lbl-nickname').innerText = "ชื่อเล่น (Nickname)";
                 document.getElementById('lbl-empid').innerText = "รหัสพนักงาน (Employee ID)";
-                document.getElementById('lbl-hint').innerHTML = '<i class="fa-solid fa-circle-info mr-1"></i> สำหรับการเข้าระบบครั้งถัดไป กรอกแค่รหัสพนักงาน';
+                document.getElementById('lbl-hint').innerHTML = '<i class="fa-solid fa-circle-info mr-1"></i> สำหรับแอดมินกรอก admin123';
                 document.getElementById('btn-login').innerText = "เข้าสู่ระบบ";
                 document.getElementById('login-nickname').placeholder = "ระบุชื่อเล่นของคุณ";
-                document.getElementById('login-empid').placeholder = "ตัวเลข 7 หลัก";
+                document.getElementById('login-empid').placeholder = "ตัวเลข 7 หลัก หรือ admin123";
             }
         }
 
@@ -922,7 +987,7 @@
             if (db.settings.weekStartDate && db.settings.weekEndDate) {
                 dateStr = ` <span class="text-gray-500 font-normal ml-1 bg-white px-2 py-0.5 rounded border">(${formatDateThai(db.settings.weekStartDate)} - ${formatDateThai(db.settings.weekEndDate)})</span>`;
             }
-            document.getElementById('current-week-display').innerHTML = `<i class="fa-regular fa-calendar text-gray-400"></i> รอบปัจจุบัน: สัปดาห์ที่ ${db.settings.currentWeek}${dateStr}`;
+            document.getElementById('current-week-display').innerHTML = `<i class="fa-regular fa-calendar text-gray-400"></i> รอบปัจจุบัน: สัปดาห์ที่ ${db.settings.currentWeek || '-'}${dateStr}`;
             
             renderAdminTables();
         }
@@ -951,13 +1016,18 @@
             }
             if(modalId === 'setting-modal') renderAdminTables();
             if(modalId === 'weekly-summary-modal') renderWeeklySummary();
+            if(modalId === 'qr-scan-modal') initQRScanner();
         }
         
         function closeAllModals() {
             document.getElementById('modal-backdrop').classList.remove('active');
             document.querySelectorAll('.modal-bottom').forEach(m => m.classList.remove('active'));
-            loginStep = 1; // Reset login step just in case
+            loginStep = 1; 
             document.getElementById('nickname-group').style.display = 'none';
+            if(html5QrcodeScanner) {
+                html5QrcodeScanner.clear().catch(e => console.error("Failed to clear scanner", e));
+                html5QrcodeScanner = null;
+            }
         }
 
         // ================= AUTH =================
@@ -967,67 +1037,59 @@
         async function handleLogin() {
             const empId = document.getElementById('login-empid').value.trim();
             const nickname = document.getElementById('login-nickname').value.trim();
+            const isNewUser = document.getElementById('nickname-group').style.display !== 'none';
 
             if(!empId) return Swal.fire({title: 'Error', text:'กรุณากรอกรหัสพนักงาน', icon:'error', customClass:{confirmButton:'rounded-xl bg-app-primary'}});
 
-            // Validate ID format
-            if (empId !== 'admin123') {
-                const empIdRegex = /^\d{7}$/;
-                if (!empIdRegex.test(empId)) {
-                    return Swal.fire({title: 'Error', text:'รหัสพนักงานต้องเป็นตัวเลข 7 หลักเท่านั้น', icon:'error', customClass:{confirmButton:'rounded-xl bg-app-primary'}});
+            // 1. Admin Hardcode Login
+            if (empId === 'admin123') {
+                if (loginStep === 1) {
+                    loginStep = 2;
+                    document.getElementById('nickname-group').style.display = 'block';
+                    document.getElementById('login-nickname').focus();
+                    return;
                 }
+                if (nickname.toLowerCase() !== 'admin') {
+                    return Swal.fire({title: 'Error', text:'สิทธิ์แอดมินต้องใช้ชื่อเล่น "admin" เท่านั้น', icon:'error', customClass:{confirmButton:'rounded-xl bg-app-primary'}});
+                }
+                currentUser = { empId: 'admin', name: 'Admin', role: 'admin', points: 9999, history: [], checkIn: { lastDate: null, streak: 0 }, playedWeek: 0, playCount: 0, scannedQRs: [] };
+                localStorage.setItem('wcw_user_session', 'admin');
+                closeAllModals(); loadUserDashboard(); return showPage('page-main');
+            }
+
+            // 2. User Validation
+            const empIdRegex = /^\d{7}$/;
+            if (!empIdRegex.test(empId)) {
+                return Swal.fire({title: 'Error', text:'รหัสพนักงานต้องเป็นตัวเลข 7 หลักเท่านั้น', icon:'error', customClass:{confirmButton:'rounded-xl bg-app-primary'}});
             }
 
             if (loginStep === 1) {
-                // Step 1: Check Employee ID
                 Swal.fire({ title: 'กำลังตรวจสอบข้อมูล...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
                 await loadFromCloud();
                 if(!db.users) db.users = [];
 
                 let existing = db.users.find(u => u.empId === empId);
-
                 if (existing) {
-                    // ID exists -> Log them in!
                     currentUser = existing;
                     completeLogin();
                 } else {
-                    // ID not found -> Show nickname input
                     Swal.close();
                     loginStep = 2;
                     document.getElementById('nickname-group').style.display = 'block';
                     document.getElementById('login-nickname').focus();
                 }
             } else if (loginStep === 2) {
-                // Step 2: Validate Nickname & Create User
-                if (!nickname) {
-                    return Swal.fire({title: 'Error', text:'กรุณากรอกชื่อเล่นสำหรับการเข้าระบบครั้งแรก', icon:'error', customClass:{confirmButton:'rounded-xl bg-app-primary'}});
-                }
-
-                if (empId === 'admin123' && nickname.toLowerCase() !== 'admin') {
-                    return Swal.fire({title: 'Error', text:'สิทธิ์แอดมินต้องใช้ชื่อเล่น "admin" เท่านั้น', icon:'error', customClass:{confirmButton:'rounded-xl bg-app-primary'}});
-                }
+                if (!nickname) return Swal.fire({title: 'Error', text:'กรุณากรอกชื่อเล่นสำหรับการเข้าระบบครั้งแรก', icon:'error', customClass:{confirmButton:'rounded-xl bg-app-primary'}});
 
                 Swal.fire({ title: 'กำลังลงทะเบียน...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-                await loadFromCloud(); // Double check
+                await loadFromCloud(); 
                 if(!db.users) db.users = [];
 
                 let existing = db.users.find(u => u.empId === empId);
                 if(existing) {
-                    // Someone else registered this ID in the meantime? Just login.
                     currentUser = existing;
                 } else {
-                    // Create new user
-                    let role = (empId === 'admin123' && nickname.toLowerCase() === 'admin') ? 'admin' : 'user';
-                    currentUser = { 
-                        empId, 
-                        name: nickname, 
-                        role: role, 
-                        points: role==='admin'?9999:0, 
-                        history: [], 
-                        checkIn: { lastDate: null, streak: 0 }, 
-                        playedWeek: 0, 
-                        playCount: 0 
-                    };
+                    currentUser = { empId, name: nickname, role: 'user', points: 0, history: [], checkIn: { lastDate: null, streak: 0 }, playedWeek: 0, playCount: 0, scannedQRs: [] };
                     db.users.push(currentUser);
                     saveDB();
                 }
@@ -1103,6 +1165,52 @@
             currentUser.history.unshift({ date: new Date().toISOString().replace('T',' ').substring(0,16), pts, detail });
             saveUser();
             updatePointsUI();
+        }
+
+        // ================= QR SCANNER =================
+        function initQRScanner() {
+            if(html5QrcodeScanner) return;
+            html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: {width: 250, height: 250} }, false);
+            html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+        }
+
+        async function onScanSuccess(decodedText, decodedResult) {
+            if(html5QrcodeScanner) {
+                html5QrcodeScanner.pause(true);
+            }
+            
+            if(decodedText.startsWith("WCW_SCAN_")) {
+                let parts = decodedText.split('_');
+                let qrId = parts[2];
+                let qrPts = parseInt(parts[3]);
+
+                await loadFromCloud();
+                let qrConfig = db.qrs.find(q => q.id === qrId);
+                
+                if(qrConfig) {
+                    if(!currentUser.scannedQRs) currentUser.scannedQRs = [];
+                    
+                    if(qrConfig.scanType === 'single' && currentUser.scannedQRs.includes(qrId)) {
+                        Swal.fire({title: 'สแกนไปแล้ว!', text: 'QR Code นี้คุณเคยรับคะแนนไปแล้ว', icon: 'info', customClass:{confirmButton:'rounded-xl bg-app-primary'}}).then(()=> { if(html5QrcodeScanner) html5QrcodeScanner.resume(); });
+                        return;
+                    }
+
+                    currentUser.scannedQRs.push(qrId);
+                    addPoints(qrConfig.pts, `สแกนแคมเปญ: ${qrConfig.name}`);
+                    
+                    Swal.fire({ title: 'สำเร็จ!', text: `คุณได้รับ ${qrConfig.pts} คะแนนจาก ${qrConfig.name}`, icon: 'success', customClass:{confirmButton:'rounded-[16px] px-8 bg-app-primary'} }).then(() => {
+                        closeAllModals();
+                    });
+                } else {
+                    Swal.fire({title: 'ไม่พบกิจกรรม!', text: 'QR Code นี้ถูกลบไปแล้วหรือหมดอายุ', icon: 'error', customClass:{confirmButton:'rounded-xl bg-app-primary'}}).then(()=> { if(html5QrcodeScanner) html5QrcodeScanner.resume(); });
+                }
+            } else {
+                Swal.fire({title: 'QR ไม่ถูกต้อง!', text: 'ไม่ใช่ QR Code ของระบบ Waste Care World', icon: 'error', customClass:{confirmButton:'rounded-xl bg-app-primary'}}).then(()=> { if(html5QrcodeScanner) html5QrcodeScanner.resume(); });
+            }
+        }
+
+        function onScanFailure(error) {
+            // handle scan failure, usually better to ignore and keep scanning
         }
 
         // ================= FEATURES =================
@@ -1225,7 +1333,10 @@
                 }
             }
 
-            let usersWithScores = db.users.map(u => {
+            // Exclude Admin from leaderboard
+            let validUsers = db.users.filter(u => u.empId !== 'admin');
+
+            let usersWithScores = validUsers.map(u => {
                 let pts = 0;
                 if (type === 'alltime') {
                     pts = u.points;
@@ -1249,9 +1360,14 @@
             let myUserData = sorted.find(u => u.empId === currentUser.empId);
             let myRank = sorted.findIndex(u => u.empId === currentUser.empId) + 1;
 
-            document.getElementById('my-rank-num').innerText = myRank;
+            if(currentUser.role === 'admin') {
+                document.getElementById('my-rank-num').innerText = '-';
+                document.getElementById('my-rank-pts').innerText = '-';
+            } else {
+                document.getElementById('my-rank-num').innerText = myRank > 0 ? myRank : '-';
+                document.getElementById('my-rank-pts').innerText = myUserData ? myUserData.displayPts : 0;
+            }
             document.getElementById('my-rank-name').innerText = currentUser.name;
-            document.getElementById('my-rank-pts').innerText = myUserData ? myUserData.displayPts : 0;
 
             let html = '';
             sorted.slice(0, 10).forEach((u, idx) => {
@@ -1261,7 +1377,7 @@
                 let isMe = u.empId === currentUser.empId ? "border-app-secondary border" : "border border-gray-50";
                 html += `<div class="p-3.5 rounded-[20px] flex items-center justify-between shadow-sm mb-2 ${bgStyle} ${isMe} transition-all"><div class="flex items-center gap-4"><div class="w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm ${numStyle}">${rank}</div><div><p class="font-bold text-[13px] text-app-dark leading-tight mb-0.5">${u.name}</p><p class="text-[10px] text-gray-400">ID: ${u.empId.substring(0,3)}xxxx</p></div></div><div class="font-bold text-app-primary text-[15px]">${u.displayPts} <span class="text-[9px] text-gray-400 font-normal ml-0.5">pts</span></div></div>`;
             });
-            document.getElementById('ranking-list').innerHTML = html;
+            document.getElementById('ranking-list').innerHTML = html || '<div class="text-center text-sm text-gray-400 py-4">ยังไม่มีข้อมูลคะแนน</div>';
         }
 
         function getNextDayStr(dateStr) {
@@ -1310,7 +1426,10 @@
                 return openModal('weekly-summary-modal');
             }
 
-            const today = new Date().toISOString().split('T')[0];
+            const now = new Date();
+            const thTime = new Date(now.getTime() + (7 * 60 * 60 * 1000));
+            const today = thTime.toISOString().split('T')[0];
+            
             if (db.settings.weekStartDate && db.settings.weekEndDate && currentUser.role !== 'admin') {
                 if (today < db.settings.weekStartDate || today > db.settings.weekEndDate) {
                     return Swal.fire({ title: 'อยู่นอกเวลากิจกรรม!', text: `รอบนี้เปิดให้เล่นระหว่างวันที่ ${formatDateThai(db.settings.weekStartDate)} ถึง ${formatDateThai(db.settings.weekEndDate)}`, icon: 'warning', confirmButtonColor: '#E07A5F', customClass:{confirmButton:'rounded-xl px-6'} });
@@ -1500,10 +1619,12 @@
                     if(res2.success && res2.data.users && res2.data.users.length > 0) {
                         db = enforceDBStructure(res2.data); 
                     } else {
+                        let dbToUpload = JSON.parse(JSON.stringify(db));
+                        dbToUpload.users = dbToUpload.users.filter(u => u.empId !== 'admin');
                         await fetch(gasUrl, {
                             method: 'POST',
                             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                            body: JSON.stringify({ action: 'save', sheetId: sheetId, data: db })
+                            body: JSON.stringify({ action: 'save', sheetId: sheetId, data: dbToUpload })
                         });
                     }
                     
@@ -1536,7 +1657,10 @@
                             <div><i class="fa-regular fa-calendar ${isCurrent ? 'text-app-primary' : 'text-gray-400'} mr-1"></i> สัปดาห์ที่ ${w.weekNum} ${badge}</div>
                             <span class="text-gray-500 font-normal bg-white px-2 py-0.5 rounded border text-[11px] w-max">${formatDateThai(w.start)} - ${formatDateThai(w.end)}</span>
                         </div>
-                        <button onclick="editWeek(${w.weekNum})" class="shrink-0 flex items-center gap-2 bg-white border border-blue-200 text-blue-600 px-3 py-1.5 rounded-xl hover:bg-blue-50 transition-colors text-[11px] font-bold shadow-sm"><i class="fa-solid fa-pen"></i> แก้ไข</button>
+                        <div class="flex items-center gap-1 shrink-0">
+                            <button onclick="editWeek(${w.weekNum})" class="flex items-center gap-2 bg-white border border-blue-200 text-blue-600 px-3 py-1.5 rounded-xl hover:bg-blue-50 transition-colors text-[11px] font-bold shadow-sm"><i class="fa-solid fa-pen"></i> แก้ไข</button>
+                            <button onclick="deleteWeek(${w.weekNum})" class="flex items-center gap-2 bg-white border border-red-200 text-red-500 px-3 py-1.5 rounded-xl hover:bg-red-50 transition-colors text-[11px] font-bold shadow-sm"><i class="fa-solid fa-trash"></i> ลบ</button>
+                        </div>
                     </div>
                 `;
             }).join('') || '<div class="text-center text-sm text-gray-400 py-4">ยังไม่มีรอบเกม</div>';
@@ -1550,13 +1674,13 @@
             if(!db.wastes) db.wastes = [];
             document.getElementById('admin-table-wastes').innerHTML = db.wastes.map(w => `<tr><td class="p-4 text-center"><img src="${w.img || 'https://cdn-icons-png.flaticon.com/512/839/839088.png'}" class="w-8 h-8 object-contain mx-auto"></td><td class="p-4 font-semibold text-app-dark">${w.name}</td><td class="p-4 text-gray-600 font-medium">${db.bins.find(b=>b.id===w.binId)?.name || '-'}</td><td class="p-4 text-right"><button onclick="crudWaste('edit','${w.id}')" class="w-8 h-8 bg-blue-50 text-blue-500 rounded-lg mr-1.5 hover:bg-blue-100 transition-colors"><i class="fa-solid fa-pen text-[11px]"></i></button><button onclick="crudWaste('delete','${w.id}')" class="w-8 h-8 bg-red-50 text-red-500 rounded-lg hover:bg-red-100 transition-colors"><i class="fa-solid fa-trash text-[11px]"></i></button></td></tr>`).join('');
             
-            if(!db.users) db.users = [];
-            document.getElementById('admin-table-users').innerHTML = [...db.users].sort((a,b)=>b.points-a.points).map((u, i) => `<tr><td class="p-4 font-bold text-gray-400 text-center">${i+1}</td><td class="p-4 text-gray-500 font-medium">${u.empId}</td><td class="p-4 font-bold text-app-dark">${u.name}</td><td class="p-4 text-right font-black text-app-primary text-[14px]">${u.points}</td></tr>`).join('');
+            let validUsers = db.users.filter(u => u.empId !== 'admin');
+            document.getElementById('admin-table-users').innerHTML = [...validUsers].sort((a,b)=>b.points-a.points).map((u, i) => `<tr><td class="p-4 font-bold text-gray-400 text-center">${i+1}</td><td class="p-4 text-gray-500 font-medium">${u.empId}</td><td class="p-4 font-bold text-app-dark">${u.name}</td><td class="p-4 text-right font-black text-app-primary text-[14px]">${u.points}</td></tr>`).join('');
             
             if(!db.qrs) db.qrs = [];
             document.getElementById('admin-table-qrs').innerHTML = db.qrs.map(q => {
                 let scanText = q.scanType === 'multi' ? 'หลายครั้ง/คน' : '1 ครั้ง/คน';
-                return `<tr><td class="p-4 font-bold text-app-dark">${q.name}</td><td class="p-4 text-app-accent font-black text-[14px]">${q.pts}</td><td class="p-4"><span class="bg-[#E6F0E8] text-app-primary text-[11px] px-3 py-1.5 rounded-full font-bold">${scanText}</span></td><td class="p-4 text-right"><button onclick="viewQR('${q.url}')" class="w-8 h-8 bg-gray-100 text-gray-600 rounded-lg mr-1.5 hover:bg-gray-200 transition-colors"><i class="fa-solid fa-qrcode text-[11px]"></i></button><button onclick="deleteQR('${q.id}')" class="w-8 h-8 bg-red-50 text-red-500 rounded-lg hover:bg-red-100 transition-colors"><i class="fa-solid fa-trash text-[11px]"></i></button></td></tr>`
+                return `<tr><td class="p-4 font-bold text-app-dark">${q.name}</td><td class="p-4 text-app-accent font-black text-[14px]">${q.pts}</td><td class="p-4"><span class="bg-[#E6F0E8] text-app-primary text-[11px] px-3 py-1.5 rounded-full font-bold">${scanText}</span></td><td class="p-4 text-right"><button onclick="viewQR('${q.url}')" class="w-8 h-8 bg-gray-100 text-gray-600 rounded-lg mr-1.5 hover:bg-gray-200 transition-colors"><i class="fa-solid fa-qrcode text-[11px]"></i></button><button onclick="crudQR('edit', '${q.id}')" class="w-8 h-8 bg-blue-50 text-blue-500 rounded-lg mr-1.5 hover:bg-blue-100 transition-colors"><i class="fa-solid fa-pen text-[11px]"></i></button><button onclick="deleteQR('${q.id}')" class="w-8 h-8 bg-red-50 text-red-500 rounded-lg hover:bg-red-100 transition-colors"><i class="fa-solid fa-trash text-[11px]"></i></button></td></tr>`
             }).join('');
         }
 
@@ -1651,6 +1775,8 @@
 
         function exportCSV(type) {
             let data = db[type];
+            if(type === 'users') data = data.filter(u => u.empId !== 'admin');
+            
             if(!data || data.length === 0) return Swal.fire({title:'Error', text:'ไม่มีข้อมูลให้ส่งออก', icon:'error', customClass:{confirmButton:'bg-app-primary rounded-xl'}});
             let headers = Object.keys(data[0]);
             let csvContent = "data:text/csv;charset=utf-8,\uFEFF" + headers.join(",") + "\n" + data.map(row => headers.map(h => `"${(row[h]||'').toString().replace(/"/g, '""')}"`).join(",")).join("\n");
@@ -1689,9 +1815,24 @@
             let w = db.settings.weeks.find(x => x.weekNum === weekNum);
             if(w) promptWeekDates(weekNum, `แก้ไขสัปดาห์ที่ ${weekNum}`, w.start, w.end);
         }
+        
+        function deleteWeek(weekNum) {
+            Swal.fire({
+                title: `ลบสัปดาห์ที่ ${weekNum}?`, text: "คุณต้องการลบรอบเวลานี้ใช่หรือไม่?", icon: 'warning',
+                showCancelButton: true, confirmButtonColor: '#E07A5F', confirmButtonText: 'ลบ', cancelButtonText: 'ยกเลิก',
+                customClass: { confirmButton: 'rounded-xl', cancelButton: 'rounded-xl' }
+            }).then((res) => {
+                if(res.isConfirmed) {
+                    db.settings.weeks = db.settings.weeks.filter(w => w.weekNum !== weekNum);
+                    saveDB(); evaluateCurrentWeek(); applySettings();
+                }
+            });
+        }
 
         async function promptWeekDates(weekNum, titleStr, defaultStart, defaultEnd) {
-            const today = new Date().toISOString().split('T')[0];
+            const now = new Date();
+            const thTime = new Date(now.getTime() + (7 * 60 * 60 * 1000));
+            const today = thTime.toISOString().split('T')[0];
             const { value: formValues } = await Swal.fire({
                 title: titleStr, html: `<p class="text-sm text-gray-500 mb-6">กำหนดระยะเวลาสำหรับ <b class="text-app-dark">สัปดาห์ที่ ${weekNum}</b></p><div class="flex flex-col gap-4 text-left w-[95%] mx-auto bg-gray-50 p-5 rounded-[20px] border border-gray-100"><div><label class="text-[13px] font-bold text-gray-700 pl-1">วันที่เริ่มต้น</label><input type="date" id="swal-week-start" class="swal2-input text-sm rounded-xl border-gray-200 mt-2 w-full" value="${defaultStart || today}"></div><div><label class="text-[13px] font-bold text-gray-700 pl-1">วันที่สิ้นสุด</label><input type="date" id="swal-week-end" class="swal2-input text-sm rounded-xl border-gray-200 mt-2 w-full" value="${defaultEnd || ''}"></div></div>`,
                 focusConfirm: false, showCancelButton: true, confirmButtonText: 'บันทึก', cancelButtonText: 'ยกเลิก', customClass: {confirmButton: 'rounded-xl bg-app-primary px-8 py-3', cancelButton: 'rounded-xl px-8 py-3 text-gray-700 bg-gray-200 border-none'},
@@ -1709,15 +1850,8 @@
                 if (existing) {
                     existing.start = formValues.start;
                     existing.end = formValues.end;
-                    if (db.settings.currentWeek === weekNum) {
-                        db.settings.weekStartDate = formValues.start;
-                        db.settings.weekEndDate = formValues.end;
-                    }
                 } else {
                     db.settings.weeks.push({ weekNum: weekNum, start: formValues.start, end: formValues.end });
-                    db.settings.currentWeek = weekNum;
-                    db.settings.weekStartDate = formValues.start;
-                    db.settings.weekEndDate = formValues.end;
                 }
                 
                 if (titleStr === 'เริ่มรอบใหม่') {
@@ -1727,31 +1861,34 @@
                     });
                 }
                 
-                saveDB(); applySettings();
+                saveDB(); evaluateCurrentWeek(); applySettings();
                 Swal.fire({title:'บันทึกสำเร็จ!', text:`ข้อมูลสัปดาห์ที่ ${weekNum} ถูกตั้งเวลาใหม่เรียบร้อยแล้ว`, icon:'success', customClass:{confirmButton:'bg-app-primary rounded-xl px-6'}});
             }
         }
 
-        async function createQR() {
+        async function crudQR(action, id) {
+            let item = action === 'edit' ? db.qrs.find(q => q.id === id) : { name:'', pts:'', scanType:'single' };
             const { value: formValues } = await Swal.fire({ 
-                title: '<h2 class="text-2xl font-bold text-gray-700">สร้าง QR Code ใหม่</h2>', 
+                title: `<h2 class="text-2xl font-bold text-gray-700">${action==='add'?'สร้าง':'แก้ไข'} QR Code</h2>`, 
                 html: `
                     <div class="space-y-4 mt-2 text-left">
-                        <input id="swal-q1" class="swal2-input text-sm rounded-xl border-gray-200 w-full mx-0" placeholder="ชื่อกิจกรรม/แคมเปญ">
-                        <input id="swal-q2" type="number" class="swal2-input text-sm rounded-xl border-gray-200 w-full mx-0" placeholder="คะแนนที่แจก (Pts)">
+                        <input id="swal-q1" class="swal2-input text-sm rounded-xl border-gray-200 w-full mx-0" placeholder="ชื่อกิจกรรม/แคมเปญ" value="${item.name}">
+                        <input id="swal-q2" type="number" class="swal2-input text-sm rounded-xl border-gray-200 w-full mx-0" placeholder="คะแนนที่แจก (Pts)" value="${item.pts}">
                         <select id="swal-q3" class="swal2-select text-sm rounded-xl border-gray-200 w-full mx-0">
-                            <option value="single">1 คนสแกนได้ 1 ครั้ง</option>
-                            <option value="multi">1 คนสแกนได้หลายครั้ง</option>
+                            <option value="single" ${item.scanType==='single'?'selected':''}>1 คนสแกนได้ 1 ครั้ง</option>
+                            <option value="multi" ${item.scanType==='multi'?'selected':''}>1 คนสแกนได้หลายครั้ง</option>
                         </select>
                         <div class="h-1 w-full bg-[#A5C7A9] rounded-full mt-6 mb-2"></div>
                     </div>
                 `, 
                 focusConfirm: false, 
-                showCancelButton: false,
-                confirmButtonText: 'OK',
+                showCancelButton: true,
+                confirmButtonText: 'บันทึก',
+                cancelButtonText: 'ยกเลิก',
                 customClass: {
                     popup: 'rounded-[24px] px-6 py-8',
-                    confirmButton: 'rounded-xl bg-app-primary px-10 py-2.5 text-white font-bold text-lg hover:bg-opacity-90 transition-all'
+                    confirmButton: 'rounded-xl bg-app-primary px-8 py-2.5 text-white font-bold text-sm hover:bg-opacity-90 transition-all',
+                    cancelButton: 'rounded-xl px-8 py-2.5 text-gray-600 bg-gray-200 font-bold text-sm'
                 },
                 preConfirm: () => { 
                     return { 
@@ -1763,9 +1900,16 @@
             });
 
             if (formValues && formValues.name && formValues.pts) {
-                let id = generateId();
-                let url = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=WCW_SCAN_${id}_${formValues.pts}`;
-                db.qrs.unshift({ id, name: formValues.name, pts: formValues.pts, scanType: formValues.scanType, url });
+                if(action === 'add') {
+                    let newId = generateId();
+                    let url = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=WCW_SCAN_${newId}_${formValues.pts}`;
+                    db.qrs.unshift({ id: newId, name: formValues.name, pts: formValues.pts, scanType: formValues.scanType, url });
+                } else {
+                    item.name = formValues.name;
+                    item.pts = formValues.pts;
+                    item.scanType = formValues.scanType;
+                    item.url = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=WCW_SCAN_${item.id}_${formValues.pts}`; // update url just in case pts changed
+                }
                 saveDB(); renderAdminTables();
             }
         }
