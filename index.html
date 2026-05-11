@@ -250,6 +250,13 @@
                     <span class="font-semibold text-sm text-app-dark">My Points</span>
                 </button>
 
+                <button onclick="openModal('ranking-modal')" class="bg-[#F8FAF9] border border-gray-100 p-5 rounded-[24px] flex flex-col items-center justify-center gap-3 shadow-sm hover:shadow-md hover:bg-white transition-all active:scale-95">
+                    <div class="w-12 h-12 bg-[#E3F2FD] text-[#4A90E2] rounded-[16px] flex items-center justify-center mb-1">
+                        <i class="fa-solid fa-ranking-star text-2xl"></i>
+                    </div>
+                    <span class="font-semibold text-sm text-app-dark">Ranking</span>
+                </button>
+
                 <button id="btn-setting" onclick="openModal('setting-modal')" class="hidden col-span-2 bg-[#F2F7F4] text-app-dark p-4 rounded-[20px] flex items-center justify-center gap-3 shadow-sm hover:shadow-md transition-all active:scale-95 border border-gray-200">
                     <i class="fa-solid fa-sliders text-app-primary"></i>
                     <span class="font-bold text-sm">จัดการระบบ (Admin Area)</span>
@@ -294,8 +301,8 @@
                 </div>
                 <div>
                     <label id="lbl-empid" class="block text-[13px] font-semibold text-app-dark mb-2 pl-1">รหัสพนักงาน (Employee ID)</label>
-                    <input type="text" id="login-empid" maxlength="8" class="w-full bg-[#F8FAF9] border border-gray-200 rounded-[16px] px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-app-secondary focus:border-app-primary transition-all placeholder-gray-400" placeholder="ตัวเลข 7 หลัก หรือ admin123">
-                    <p id="lbl-hint" class="text-[11px] text-gray-400 mt-2 pl-1 font-light"><i class="fa-solid fa-circle-info mr-1"></i> สำหรับแอดมินกรอก admin123</p>
+                    <input type="text" id="login-empid" maxlength="8" class="w-full bg-[#F8FAF9] border border-gray-200 rounded-[16px] px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-app-secondary focus:border-app-primary transition-all placeholder-gray-400" placeholder="รหัสพนักงาน 7 หลัก">
+                    <p id="lbl-hint" class="text-[11px] text-gray-400 mt-2 pl-1 font-light"><i class="fa-solid fa-circle-info mr-1"></i> สำหรับการเข้าระบบครั้งถัดไป กรอกแค่รหัสพนักงาน</p>
                 </div>
             </div>
             
@@ -395,7 +402,7 @@
                 </select>
             </div>
             
-            <div class="bg-app-dark text-white rounded-[20px] p-4 flex items-center justify-between shadow-float mb-6 sticky top-0 z-10 border border-white/10">
+            <div id="my-rank-banner" class="bg-app-dark text-white rounded-[20px] p-4 flex items-center justify-between shadow-float mb-6 sticky top-0 z-10 border border-white/10">
                 <div class="flex items-center gap-4">
                     <div class="w-12 h-12 bg-white/10 rounded-[14px] flex items-center justify-center font-bold text-xl border border-white/20" id="my-rank-num">-</div>
                     <div>
@@ -747,6 +754,7 @@
             }
 
             database.users.forEach(u => {
+                if(u.empId !== undefined) u.empId = String(u.empId); // บังคับให้เป็น String ป้องกันปัญหา Google Sheets ส่งมาเป็นตัวเลข
                 if(typeof u.playCount === 'undefined') u.playCount = 0;
                 if(typeof u.scannedQRs === 'undefined') u.scannedQRs = [];
             });
@@ -936,7 +944,7 @@
                 document.getElementById('login-sub2').innerText = "We're glad to see you again.";
                 document.getElementById('lbl-nickname').innerText = "Nickname";
                 document.getElementById('lbl-empid').innerText = "Employee ID";
-                document.getElementById('lbl-hint').innerHTML = '<i class="fa-solid fa-circle-info mr-1"></i> For admin use admin123';
+                document.getElementById('lbl-hint').innerHTML = '<i class="fa-solid fa-circle-info mr-1"></i> For the next login, just enter your Employee ID.';
                 document.getElementById('btn-login').innerText = "Login";
                 document.getElementById('login-nickname').placeholder = "Enter your nickname";
                 document.getElementById('login-empid').placeholder = "Your Employee ID";
@@ -946,10 +954,10 @@
                 document.getElementById('login-sub2').innerText = "ดีใจที่ได้พบคุณอีกครั้ง";
                 document.getElementById('lbl-nickname').innerText = "ชื่อเล่น (Nickname)";
                 document.getElementById('lbl-empid').innerText = "รหัสพนักงาน (Employee ID)";
-                document.getElementById('lbl-hint').innerHTML = '<i class="fa-solid fa-circle-info mr-1"></i> สำหรับแอดมินกรอก admin123';
+                document.getElementById('lbl-hint').innerHTML = '<i class="fa-solid fa-circle-info mr-1"></i> สำหรับการเข้าระบบครั้งถัดไป กรอกแค่รหัสพนักงาน';
                 document.getElementById('btn-login').innerText = "เข้าสู่ระบบ";
                 document.getElementById('login-nickname').placeholder = "ระบุชื่อเล่นของคุณ";
-                document.getElementById('login-empid').placeholder = "ตัวเลข 7 หลัก หรือ admin123";
+                document.getElementById('login-empid').placeholder = "ตัวเลข 7 หลัก";
             }
         }
 
@@ -1031,6 +1039,17 @@
         }
 
         // ================= AUTH =================
+        document.getElementById('login-empid').addEventListener('input', function(e) {
+            const val = this.value.trim();
+            if(!db.users) db.users = []; 
+            if(val !== 'admin123' && val.length > 0) {
+                let exists = db.users.find(u => String(u.empId) === val);
+                document.getElementById('nickname-group').style.display = exists ? 'none' : 'block';
+            } else {
+                 document.getElementById('nickname-group').style.display = 'block';
+            }
+        });
+
         document.getElementById('login-nickname').addEventListener('keypress', function(e) { if(e.key === 'Enter') handleLogin(); });
         document.getElementById('login-empid').addEventListener('keypress', function(e) { if(e.key === 'Enter') handleLogin(); });
 
@@ -1043,18 +1062,9 @@
 
             // 1. Admin Hardcode Login
             if (empId === 'admin123') {
-                if (loginStep === 1) {
-                    loginStep = 2;
-                    document.getElementById('nickname-group').style.display = 'block';
-                    document.getElementById('login-nickname').focus();
-                    return;
-                }
-                if (nickname.toLowerCase() !== 'admin') {
-                    return Swal.fire({title: 'Error', text:'สิทธิ์แอดมินต้องใช้ชื่อเล่น "admin" เท่านั้น', icon:'error', customClass:{confirmButton:'rounded-xl bg-app-primary'}});
-                }
                 currentUser = { empId: 'admin', name: 'Admin', role: 'admin', points: 9999, history: [], checkIn: { lastDate: null, streak: 0 }, playedWeek: 0, playCount: 0, scannedQRs: [] };
-                localStorage.setItem('wcw_user_session', 'admin');
-                closeAllModals(); loadUserDashboard(); return showPage('page-main');
+                completeLogin();
+                return;
             }
 
             // 2. User Validation
@@ -1068,7 +1078,7 @@
                 await loadFromCloud();
                 if(!db.users) db.users = [];
 
-                let existing = db.users.find(u => u.empId === empId);
+                let existing = db.users.find(u => String(u.empId) === empId);
                 if (existing) {
                     currentUser = existing;
                     completeLogin();
@@ -1085,11 +1095,11 @@
                 await loadFromCloud(); 
                 if(!db.users) db.users = [];
 
-                let existing = db.users.find(u => u.empId === empId);
+                let existing = db.users.find(u => String(u.empId) === empId);
                 if(existing) {
                     currentUser = existing;
                 } else {
-                    currentUser = { empId, name: nickname, role: 'user', points: 0, history: [], checkIn: { lastDate: null, streak: 0 }, playedWeek: 0, playCount: 0, scannedQRs: [] };
+                    currentUser = { empId: String(empId), name: nickname, role: 'user', points: 0, history: [], checkIn: { lastDate: null, streak: 0 }, playedWeek: 0, playCount: 0, scannedQRs: [] };
                     db.users.push(currentUser);
                     saveDB();
                 }
@@ -1334,7 +1344,7 @@
             }
 
             // Exclude Admin from leaderboard
-            let validUsers = db.users.filter(u => u.empId !== 'admin');
+            let validUsers = db.users.filter(u => u.empId !== 'admin' && u.empId !== 'admin123');
 
             let usersWithScores = validUsers.map(u => {
                 let pts = 0;
@@ -1357,25 +1367,28 @@
             });
 
             let sorted = usersWithScores.sort((a,b) => b.displayPts - a.displayPts);
-            let myUserData = sorted.find(u => u.empId === currentUser.empId);
-            let myRank = sorted.findIndex(u => u.empId === currentUser.empId) + 1;
-
-            if(currentUser.role === 'admin') {
-                document.getElementById('my-rank-num').innerText = '-';
-                document.getElementById('my-rank-pts').innerText = '-';
+            
+            const myRankBanner = document.getElementById('my-rank-banner');
+            
+            if(currentUser && currentUser.role === 'admin') {
+                myRankBanner.style.display = 'none';
             } else {
+                myRankBanner.style.display = 'flex';
+                let myUserData = sorted.find(u => String(u.empId) === String(currentUser.empId));
+                let myRank = sorted.findIndex(u => String(u.empId) === String(currentUser.empId)) + 1;
+
                 document.getElementById('my-rank-num').innerText = myRank > 0 ? myRank : '-';
                 document.getElementById('my-rank-pts').innerText = myUserData ? myUserData.displayPts : 0;
+                document.getElementById('my-rank-name').innerText = currentUser.name;
             }
-            document.getElementById('my-rank-name').innerText = currentUser.name;
 
             let html = '';
             sorted.slice(0, 10).forEach((u, idx) => {
                 let rank = idx + 1;
                 let bgStyle = rank === 1 ? "bg-[#FFF3E0] border-[#F4B95F]" : rank === 2 ? "bg-gray-50 border-gray-200" : rank === 3 ? "bg-[#FFF0F0] border-[#E07A5F]" : "bg-white border-transparent";
                 let numStyle = rank === 1 ? "bg-app-accent text-white shadow-md transform scale-110" : rank === 2 ? "bg-gray-300 text-gray-700" : rank === 3 ? "bg-[#E07A5F] text-white" : "bg-gray-100 text-gray-500 font-bold";
-                let isMe = u.empId === currentUser.empId ? "border-app-secondary border" : "border border-gray-50";
-                html += `<div class="p-3.5 rounded-[20px] flex items-center justify-between shadow-sm mb-2 ${bgStyle} ${isMe} transition-all"><div class="flex items-center gap-4"><div class="w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm ${numStyle}">${rank}</div><div><p class="font-bold text-[13px] text-app-dark leading-tight mb-0.5">${u.name}</p><p class="text-[10px] text-gray-400">ID: ${u.empId.substring(0,3)}xxxx</p></div></div><div class="font-bold text-app-primary text-[15px]">${u.displayPts} <span class="text-[9px] text-gray-400 font-normal ml-0.5">pts</span></div></div>`;
+                let isMe = (currentUser && currentUser.empId !== 'admin' && String(u.empId) === String(currentUser.empId)) ? "border-app-secondary border" : "border border-gray-50";
+                html += `<div class="p-3.5 rounded-[20px] flex items-center justify-between shadow-sm mb-2 ${bgStyle} ${isMe} transition-all"><div class="flex items-center gap-4"><div class="w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm ${numStyle}">${rank}</div><div><p class="font-bold text-[13px] text-app-dark leading-tight mb-0.5">${u.name}</p><p class="text-[10px] text-gray-400">ID: ${String(u.empId).substring(0,3)}xxxx</p></div></div><div class="font-bold text-app-primary text-[15px]">${u.displayPts} <span class="text-[9px] text-gray-400 font-normal ml-0.5">pts</span></div></div>`;
             });
             document.getElementById('ranking-list').innerHTML = html || '<div class="text-center text-sm text-gray-400 py-4">ยังไม่มีข้อมูลคะแนน</div>';
         }
@@ -1674,7 +1687,7 @@
             if(!db.wastes) db.wastes = [];
             document.getElementById('admin-table-wastes').innerHTML = db.wastes.map(w => `<tr><td class="p-4 text-center"><img src="${w.img || 'https://cdn-icons-png.flaticon.com/512/839/839088.png'}" class="w-8 h-8 object-contain mx-auto"></td><td class="p-4 font-semibold text-app-dark">${w.name}</td><td class="p-4 text-gray-600 font-medium">${db.bins.find(b=>b.id===w.binId)?.name || '-'}</td><td class="p-4 text-right"><button onclick="crudWaste('edit','${w.id}')" class="w-8 h-8 bg-blue-50 text-blue-500 rounded-lg mr-1.5 hover:bg-blue-100 transition-colors"><i class="fa-solid fa-pen text-[11px]"></i></button><button onclick="crudWaste('delete','${w.id}')" class="w-8 h-8 bg-red-50 text-red-500 rounded-lg hover:bg-red-100 transition-colors"><i class="fa-solid fa-trash text-[11px]"></i></button></td></tr>`).join('');
             
-            let validUsers = db.users.filter(u => u.empId !== 'admin');
+            let validUsers = db.users.filter(u => u.empId !== 'admin' && u.empId !== 'admin123');
             document.getElementById('admin-table-users').innerHTML = [...validUsers].sort((a,b)=>b.points-a.points).map((u, i) => `<tr><td class="p-4 font-bold text-gray-400 text-center">${i+1}</td><td class="p-4 text-gray-500 font-medium">${u.empId}</td><td class="p-4 font-bold text-app-dark">${u.name}</td><td class="p-4 text-right font-black text-app-primary text-[14px]">${u.points}</td></tr>`).join('');
             
             if(!db.qrs) db.qrs = [];
