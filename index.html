@@ -332,27 +332,42 @@
     <!-- Check-in Modal -->
     <div id="checkin-modal" class="modal-bottom">
         <div class="w-16 h-1.5 bg-gray-200 rounded-full mx-auto mt-4 mb-2"></div>
-        <div class="px-8 flex flex-col items-center modal-content-scroll text-center pt-4">
-            <div class="relative w-28 h-28 mb-8">
-                <div class="absolute inset-0 bg-[#E6F0E8] rounded-full animate-ping opacity-20"></div>
-                <div class="absolute inset-0 bg-[#E6F0E8] rounded-full flex items-center justify-center z-10 shadow-inner border border-white">
-                    <i class="fa-regular fa-calendar-check text-[50px] text-app-primary drop-shadow-sm"></i>
+        <div class="px-8 flex flex-col items-center modal-content-scroll text-center pt-4 w-full">
+            
+            <!-- Step 1: Popup Image -->
+            <div id="checkin-step-1" class="w-full flex-col items-center hidden">
+                <h2 class="text-2xl font-bold text-app-dark mb-4 tracking-tight">ประกาศ / กิจกรรม</h2>
+                <div class="w-full max-w-[320px] aspect-square rounded-[24px] overflow-hidden shadow-sm border border-gray-100 mb-6 bg-gray-50 flex items-center justify-center">
+                    <img id="checkin-popup-img-display" src="" class="w-full h-full object-cover" alt="Check-in Popup">
                 </div>
+                <button onclick="acknowledgeCheckinPopup()" class="w-full max-w-xs bg-app-primary text-white py-4 rounded-[16px] font-bold text-base shadow-soft hover:bg-opacity-90 transition-all active:scale-95 mb-4 mt-auto">รับทราบ</button>
+                <button onclick="closeAllModals()" class="w-full max-w-xs bg-transparent text-gray-500 py-3 rounded-[16px] font-semibold hover:bg-gray-50 transition-colors text-sm">ปิดหน้าต่าง</button>
             </div>
-            <h2 class="text-2xl font-bold text-app-dark mb-1 tracking-tight">Daily Check-in</h2>
-            <p class="text-gray-500 mb-8 text-[13px] font-light">เช็คอินต่อเนื่องเพื่อรับคะแนนโบนัสพิเศษ!</p>
-            
-            <div class="w-full max-w-sm mb-10 relative px-2">
-                <div class="absolute top-1/2 left-4 right-4 h-1 bg-gray-100 -z-10 transform -translate-y-1/2 rounded-full"></div>
-                <div class="flex justify-between relative z-0" id="checkin-days"></div>
+
+            <!-- Step 2: Actual Check-in UI -->
+            <div id="checkin-step-2" class="w-full flex-col items-center hidden">
+                <div class="relative w-28 h-28 mb-8 mx-auto">
+                    <div class="absolute inset-0 bg-[#E6F0E8] rounded-full animate-ping opacity-20"></div>
+                    <div class="absolute inset-0 bg-[#E6F0E8] rounded-full flex items-center justify-center z-10 shadow-inner border border-white">
+                        <i class="fa-regular fa-calendar-check text-[50px] text-app-primary drop-shadow-sm"></i>
+                    </div>
+                </div>
+                <h2 class="text-2xl font-bold text-app-dark mb-1 tracking-tight">Daily Check-in</h2>
+                <p class="text-gray-500 mb-8 text-[13px] font-light">เช็คอินต่อเนื่องเพื่อรับคะแนนโบนัสพิเศษ!</p>
+                
+                <div class="w-full max-w-sm mb-10 relative px-2 mx-auto">
+                    <div class="absolute top-1/2 left-4 right-4 h-1 bg-gray-100 -z-10 transform -translate-y-1/2 rounded-full"></div>
+                    <div class="flex justify-between relative z-0" id="checkin-days"></div>
+                </div>
+                
+                <div class="bg-[#F8FAF9] w-full max-w-sm mx-auto rounded-[20px] py-4 mb-8 border border-gray-100">
+                    <p id="checkin-status" class="text-[13px] text-gray-600 font-medium">คุณเช็คอินต่อเนื่องมาแล้ว <span id="streak-count" class="text-app-accent font-bold text-xl mx-1">0</span> วัน</p>
+                </div>
+                
+                <button id="btn-do-checkin" onclick="doCheckIn()" class="w-full max-w-xs bg-app-primary text-white py-4 rounded-[16px] font-bold text-base shadow-soft hover:bg-opacity-90 transition-all active:scale-95 mb-4 mx-auto block">เช็คอินวันนี้</button>
+                <button onclick="closeAllModals()" class="w-full max-w-xs bg-transparent text-gray-500 py-3 rounded-[16px] font-semibold hover:bg-gray-50 transition-colors text-sm mx-auto block">ปิดหน้าต่าง</button>
             </div>
-            
-            <div class="bg-[#F8FAF9] w-full rounded-[20px] py-4 mb-8 border border-gray-100">
-                <p id="checkin-status" class="text-[13px] text-gray-600 font-medium">คุณเช็คอินต่อเนื่องมาแล้ว <span id="streak-count" class="text-app-accent font-bold text-xl mx-1">0</span> วัน</p>
-            </div>
-            
-            <button id="btn-do-checkin" onclick="doCheckIn()" class="w-full max-w-xs bg-app-primary text-white py-4 rounded-[16px] font-bold text-base shadow-soft hover:bg-opacity-90 transition-all active:scale-95 mb-4">เช็คอินวันนี้</button>
-            <button onclick="closeAllModals()" class="w-full max-w-xs bg-transparent text-gray-500 py-3 rounded-[16px] font-semibold hover:bg-gray-50 transition-colors text-sm">ปิดหน้าต่าง</button>
+
         </div>
     </div>
 
@@ -563,7 +578,16 @@
                             <label class="text-[13px] font-bold text-app-dark ml-1">โลโก้ระบบ (Logo URL)</label>
                             <input type="text" id="cfg-logo-img" class="w-full bg-[#F8FAF9] border border-gray-200 rounded-[16px] px-5 py-3.5 text-sm mt-2 focus:border-app-primary outline-none transition-colors" placeholder="วางลิงก์รูปโลโก้ของคุณที่นี่">
                         </div>
-                        <button onclick="saveGeneralSettings()" class="bg-app-dark text-white text-[14px] font-bold px-6 py-3.5 rounded-[16px] shadow-soft w-full hover:bg-opacity-90 transition-all mt-2">บันทึกลิงก์โลโก้</button>
+
+                        <div class="border-t border-gray-100 pt-4 mt-4">
+                            <label class="text-[13px] font-bold text-app-dark ml-1 flex items-center gap-2">
+                                รูปภาพ Popup ก่อนเช็คอิน 
+                                <span class="bg-gray-100 text-gray-500 text-[10px] px-2 py-0.5 rounded">แนะนำ 1040x1040 px</span>
+                            </label>
+                            <input type="text" id="cfg-checkin-popup-img" class="w-full bg-[#F8FAF9] border border-gray-200 rounded-[16px] px-5 py-3.5 text-sm mt-2 focus:border-app-primary outline-none transition-colors" placeholder="ปล่อยว่างไว้หากไม่ต้องการแสดง Popup">
+                        </div>
+
+                        <button onclick="saveGeneralSettings()" class="bg-app-dark text-white text-[14px] font-bold px-6 py-3.5 rounded-[16px] shadow-soft w-full hover:bg-opacity-90 transition-all mt-2">บันทึกการตั้งค่ารูปภาพ</button>
                     </div>
                 </div>
 
@@ -705,6 +729,7 @@
             settings: {
                 mainImg: "https://images.unsplash.com/photo-1542273917363-3b1817f69a5d?auto=format&fit=crop&w=800&q=80",
                 logoImg: "https://cdn-icons-png.flaticon.com/512/2913/2913426.png",
+                checkinPopupImg: "", // เพิ่มฟิลด์สำหรับรูป Popup
                 sheetId: "", gasUrl: "", currentWeek: 1, weekStartDate: "", weekEndDate: "",
                 mainImages: [
                     { url: "https://images.unsplash.com/photo-1542273917363-3b1817f69a5d?auto=format&fit=crop&w=800&q=80", startTime: "06:00", endTime: "18:00" },
@@ -987,7 +1012,8 @@
             updateLandingBackground();
             document.getElementById('login-logo').src = db.settings.logoImg;
             document.getElementById('dashboard-logo').src = db.settings.logoImg;
-            document.getElementById('cfg-logo-img').value = db.settings.logoImg;
+            document.getElementById('cfg-logo-img').value = db.settings.logoImg || '';
+            document.getElementById('cfg-checkin-popup-img').value = db.settings.checkinPopupImg || '';
             document.getElementById('cfg-sheet-id').value = db.settings.sheetId || '';
             document.getElementById('cfg-gas-url').value = db.settings.gasUrl || '';
             
@@ -1016,7 +1042,23 @@
                 document.getElementById('login-empid').value = '';
                 document.getElementById('login-nickname').value = '';
             }
-            if(modalId === 'checkin-modal') renderCheckIn();
+            if(modalId === 'checkin-modal') {
+                // ตรวจสอบว่ามีลิงก์รูป Popup ไหม ถ้ามีให้เปิด Step 1 ถ้าไม่มีข้ามไป Step 2 เลย
+                let popupUrl = db.settings.checkinPopupImg;
+                if(popupUrl && popupUrl.trim() !== '') {
+                    document.getElementById('checkin-popup-img-display').src = popupUrl;
+                    document.getElementById('checkin-step-1').classList.remove('hidden');
+                    document.getElementById('checkin-step-1').classList.add('flex');
+                    document.getElementById('checkin-step-2').classList.add('hidden');
+                    document.getElementById('checkin-step-2').classList.remove('flex');
+                } else {
+                    document.getElementById('checkin-step-1').classList.add('hidden');
+                    document.getElementById('checkin-step-1').classList.remove('flex');
+                    document.getElementById('checkin-step-2').classList.remove('hidden');
+                    document.getElementById('checkin-step-2').classList.add('flex');
+                }
+                renderCheckIn();
+            }
             if(modalId === 'point-modal') renderPointHistory();
             if(modalId === 'ranking-modal') {
                 populateRankingWeeks();
@@ -1223,7 +1265,15 @@
             // handle scan failure, usually better to ignore and keep scanning
         }
 
-        // ================= FEATURES =================
+        // ================= CHECK-IN LOGIC =================
+        function acknowledgeCheckinPopup() {
+            // ปิดรูปภาพ Popup แล้วแสดงหน้าเช็คอิน
+            document.getElementById('checkin-step-1').classList.add('hidden');
+            document.getElementById('checkin-step-1').classList.remove('flex');
+            document.getElementById('checkin-step-2').classList.remove('hidden');
+            document.getElementById('checkin-step-2').classList.add('flex');
+        }
+
         const checkInPoints = [20, 20, 30, 30, 50, 50, 100];
         function renderCheckIn() {
             if(!currentUser.checkIn) currentUser.checkIn = { lastDate: null, streak: 0 };
@@ -1598,8 +1648,9 @@
         // ================= ADMIN FUNCTIONS =================
         function saveGeneralSettings() {
             db.settings.logoImg = document.getElementById('cfg-logo-img').value;
+            db.settings.checkinPopupImg = document.getElementById('cfg-checkin-popup-img').value;
             saveDB(); applySettings();
-            Swal.fire({ title: 'Saved Logo', icon: 'success', timer: 1000, showConfirmButton:false });
+            Swal.fire({ title: 'บันทึกการตั้งค่ารูปภาพสำเร็จ', icon: 'success', timer: 1500, showConfirmButton:false });
         }
 
         async function connectDB() {
