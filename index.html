@@ -754,6 +754,12 @@
                 if(res.success) {
                     db = enforceDBStructure(res.data);
                     localStorage.setItem('wcw_db', JSON.stringify(db));
+                    
+                    // สำคัญมาก: อัปเดตข้อมูล currentUser ในเครื่องให้ตรงกับบน Cloud ป้องกันการเซฟทับ
+                    if(currentUser) {
+                        let updatedUser = db.users.find(u => u.empId === currentUser.empId);
+                        if(updatedUser) currentUser = updatedUser;
+                    }
                     return true;
                 }
             } catch(e) { console.error("Cloud Load Error:", e); } finally { isCloudLoading = false; }
@@ -764,7 +770,11 @@
         function saveUser() {
             if(!currentUser) return;
             let idx = db.users.findIndex(u => u.empId === currentUser.empId);
-            if(idx > -1) db.users[idx] = currentUser;
+            if(idx > -1) {
+                db.users[idx] = currentUser;
+            } else {
+                db.users.push(currentUser); // ป้องกันข้อมูล user ใน session หลุดหายจาก Array
+            }
             saveDB();
         }
 
@@ -932,11 +942,15 @@
         document.getElementById('login-nickname').addEventListener('keypress', function(e) { if(e.key === 'Enter') handleLogin(); });
         document.getElementById('login-empid').addEventListener('keypress', function(e) { if(e.key === 'Enter') handleLogin(); });
 
-        function handleLogin() {
+        async function handleLogin() {
             const empId = document.getElementById('login-empid').value.trim();
             const nickname = document.getElementById('login-nickname').value.trim();
 
             if(!empId) return Swal.fire({title: 'Error', text:'กรุณากรอกรหัสพนักงาน', icon:'error', customClass:{confirmButton:'rounded-xl bg-app-primary'}});
+
+            // ดึงข้อมูลล่าสุดจาก Cloud ก่อนเสมอ เพื่อป้องกันการสร้าง User ทับกัน
+            Swal.fire({ title: 'กำลังเชื่อมต่อ...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            await loadFromCloud();
 
             if(!db.users) db.users = [];
 
@@ -1019,14 +1033,6 @@
             document.getElementById('level-progress').style.width = `${progress}%`;
         }
 
-        function addPoints(pts, detail) {
-            currentUser.points += pts;
-            if(!currentUser.history) currentUser.history = [];
-            currentUser.history.unshift({ date: new Date().toISOString().replace('T',' ').substring(0,16), pts, detail });
-            saveUser();
-            updatePointsUI();
-        }
-
         // ================= FEATURES =================
         const checkInPoints = [20, 20, 30, 30, 50, 50, 100];
         function renderCheckIn() {
@@ -1051,11 +1057,15 @@
             }
         }
 
-        function doCheckIn() {
+        async function doCheckIn() {
             if(!currentUser.checkIn) currentUser.checkIn = { lastDate: null, streak: 0 };
             const today = new Date().toISOString().split('T')[0];
             let yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
             let yStr = yesterday.toISOString().split('T')[0];
+
+            // ดึงข้อมูลล่าสุดก่อนบันทึกคะแนน ป้องกันการทับข้อมูลของคนอื่น
+            Swal.fire({ title: 'กำลังบันทึกข้อมูล...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            await loadFromCloud();
 
             if(currentUser.checkIn.lastDate !== yStr && currentUser.checkIn.lastDate !== null) currentUser.checkIn.streak = 0;
             
@@ -1063,7 +1073,14 @@
             currentUser.checkIn.streak++;
             currentUser.checkIn.lastDate = today;
             
-            addPoints(ptsEarned, `Check-in วันที่ ${currentUser.checkIn.streak}`);
+            // บวกคะแนน
+            currentUser.points += ptsEarned;
+            if(!currentUser.history) currentUser.history = [];
+            currentUser.history.unshift({ date: new Date().toISOString().replace('T',' ').substring(0,16), pts: ptsEarned, detail: `Check-in วันที่ ${currentUser.checkIn.streak}` });
+            
+            saveUser();
+            updatePointsUI();
+            
             Swal.fire({ icon: 'success', title: 'เยี่ยมมาก!', text: `คุณได้รับ ${ptsEarned} คะแนนโบนัส`, confirmButtonColor: '#5C8D67', customClass:{confirmButton:'rounded-[16px] px-8'} });
             renderCheckIn();
         }
@@ -1315,20 +1332,30 @@
             });
         }
 
-        function finishGame() {
+        async function finishGame() {
             let total = stageScores.s1 + stageScores.s2;
             const fmt = (sec) => `${Math.floor(sec/60).toString().padStart(2,'0')}:${(sec%60).toString().padStart(2,'0')}`;
             document.getElementById('res-s1-score').innerText = `${stageScores.s1} pts`; document.getElementById('res-s1-time').innerText = `เวลา: ${fmt(stageScores.t1)}`;
             document.getElementById('res-s2-score').innerText = `${stageScores.s2} pts`; document.getElementById('res-s2-time').innerText = `เวลา: ${fmt(stageScores.t2)}`;
             document.getElementById('res-total-score').innerText = total;
 
-            addPoints(total, `กิจกรรมสัปดาห์ที่ ${db.settings.currentWeek}`);
+            // ดึงข้อมูลล่าสุดก่อนบันทึกคะแนนเกม ป้องกันการทับข้อมูลของคนอื่น
+            Swal.fire({ title: 'กำลังบันทึกคะแนน...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            await loadFromCloud();
+
+            // บวกคะแนน
+            currentUser.points += total;
+            if(!currentUser.history) currentUser.history = [];
+            currentUser.history.unshift({ date: new Date().toISOString().replace('T',' ').substring(0,16), pts: total, detail: `กิจกรรมสัปดาห์ที่ ${db.settings.currentWeek}` });
             
             // อัปเดตสิทธิ์การเล่น
             currentUser.playedWeek = db.settings.currentWeek;
             currentUser.playCount = (currentUser.playCount || 0) + 1;
+            
             saveUser();
+            updatePointsUI();
 
+            Swal.close();
             showPage('page-main'); openModal('game-result-modal');
         }
         function closeGameAndReturn() { closeAllModals(); updatePointsUI(); }
