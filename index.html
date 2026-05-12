@@ -318,7 +318,7 @@
                 </div>
                 <div>
                     <label id="lbl-empid" class="block text-[13px] font-semibold text-app-dark mb-2 pl-1">รหัสพนักงาน (Employee ID)</label>
-                    <input type="text" id="login-empid" maxlength="8" class="w-full bg-[#F8FAF9] border border-gray-200 rounded-[16px] px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-app-secondary focus:border-app-primary transition-all placeholder-gray-400" placeholder="ตัวเลข 7 หลัก หรือ admin123">
+                    <input type="text" id="login-empid" maxlength="8" class="w-full bg-[#F8FAF9] border border-gray-200 rounded-[16px] px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-app-secondary focus:border-app-primary transition-all placeholder-gray-400" placeholder="รหัสพนักงาน 7 หลัก">
                     <p id="lbl-hint" class="text-[11px] text-gray-400 mt-2 pl-1 font-light"><i class="fa-solid fa-circle-info mr-1"></i> สำหรับการเข้าระบบครั้งถัดไป กรอกแค่รหัสพนักงาน</p>
                 </div>
             </div>
@@ -746,6 +746,15 @@
                         <button onclick="deleteAllUsers()" class="text-[12px] font-bold bg-[#FFF0F0] text-[#E07A5F] px-4 py-2.5 rounded-[12px] hover:bg-[#FFE0E0] transition-colors"><i class="fa-solid fa-trash-can mr-1"></i> ล้างข้อมูลผู้เล่นทั้งหมด</button>
                     </div>
                 </div>
+
+                <!-- แถบค้นหารหัสพนักงาน -->
+                <div class="relative w-full max-w-sm mb-2">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <i class="fa-solid fa-magnifying-glass text-gray-400"></i>
+                    </div>
+                    <input type="text" id="search-user-input" oninput="adminUsersCurrentPage = 1; renderAdminTables()" class="w-full bg-white border border-gray-200 rounded-[16px] pl-11 pr-4 py-3 text-sm focus:outline-none focus:border-app-primary focus:ring-2 focus:ring-app-secondary transition-colors shadow-sm" placeholder="ค้นหารหัสพนักงาน (EmpID)...">
+                </div>
+
                 <div class="bg-white border border-gray-100 rounded-[20px] shadow-sm overflow-hidden text-[13px] overflow-x-auto">
                     <table class="w-full text-left whitespace-nowrap">
                         <thead class="bg-[#F8FAF9] text-gray-500 text-[12px] uppercase tracking-wider border-b border-gray-100">
@@ -753,6 +762,8 @@
                         </thead>
                         <tbody id="admin-table-users" class="divide-y divide-gray-50"></tbody>
                     </table>
+                    <!-- ส่วนแสดงผลการแบ่งหน้า Pagination -->
+                    <div id="admin-users-pagination" class="p-4 flex justify-between items-center bg-gray-50 border-t border-gray-100 min-w-max"></div>
                 </div>
             </div>
         </div>
@@ -843,6 +854,10 @@
         let currentRankTab = 'weekly'; 
         let loginStep = 1;
         let html5QrcodeScanner = null;
+        
+        // ตัวแปรสำหรับ Pagination ในหน้า Admin
+        let adminUsersCurrentPage = 1;
+        const ADMIN_USERS_PER_PAGE = 20;
 
         // Popup Slider Variables
         let currentPopupSlide = 0;
@@ -1897,9 +1912,49 @@
             if(!db.wastes) db.wastes = [];
             document.getElementById('admin-table-wastes').innerHTML = db.wastes.map(w => `<tr><td class="p-4 text-center"><img src="${w.img || 'https://cdn-icons-png.flaticon.com/512/839/839088.png'}" class="w-8 h-8 object-contain mx-auto"></td><td class="p-4 font-semibold text-app-dark">${w.name}</td><td class="p-4 text-gray-600 font-medium">${db.bins.find(b=>b.id===w.binId)?.name || '-'}</td><td class="p-4 text-right"><button onclick="crudWaste('edit','${w.id}')" class="w-8 h-8 bg-blue-50 text-blue-500 rounded-lg mr-1.5 hover:bg-blue-100 transition-colors"><i class="fa-solid fa-pen text-[11px]"></i></button><button onclick="crudWaste('delete','${w.id}')" class="w-8 h-8 bg-red-50 text-red-500 rounded-lg hover:bg-red-100 transition-colors"><i class="fa-solid fa-trash text-[11px]"></i></button></td></tr>`).join('');
             
+            // การจัดอันดับ ค้นหา และการแบ่งหน้า (Pagination) ของตารางผู้ใช้
             let validUsers = db.users.filter(u => u.empId !== 'admin' && u.empId !== 'admin123');
-            document.getElementById('admin-table-users').innerHTML = [...validUsers].sort((a,b)=>b.points-a.points).map((u, i) => `<tr><td class="p-4 font-bold text-gray-400 text-center">${i+1}</td><td class="p-4 text-gray-500 font-medium">${u.empId}</td><td class="p-4 font-bold text-app-dark">${u.name}</td><td class="p-4 font-black text-app-primary text-[14px]">${u.points}</td><td class="p-4 text-right"><button onclick="editUser('${u.empId}')" class="w-8 h-8 bg-blue-50 text-blue-500 rounded-lg mr-1.5 hover:bg-blue-100 transition-colors"><i class="fa-solid fa-pen text-[11px]"></i></button><button onclick="deleteUser('${u.empId}')" class="w-8 h-8 bg-red-50 text-red-500 rounded-lg hover:bg-red-100 transition-colors"><i class="fa-solid fa-trash text-[11px]"></i></button></td></tr>`).join('') || `<tr><td colspan="5" class="p-5 text-center text-gray-400">ยังไม่มีข้อมูลผู้เล่น</td></tr>`;
             
+            const searchInput = document.getElementById('search-user-input');
+            const searchTerm = searchInput ? searchInput.value.trim() : '';
+            if (searchTerm) {
+                validUsers = validUsers.filter(u => String(u.empId).includes(searchTerm));
+            }
+
+            let sortedUsers = [...validUsers].sort((a,b)=>b.points-a.points);
+            
+            const totalItems = sortedUsers.length;
+            const totalPages = Math.ceil(totalItems / ADMIN_USERS_PER_PAGE) || 1;
+            
+            if (adminUsersCurrentPage > totalPages) adminUsersCurrentPage = totalPages;
+            if (adminUsersCurrentPage < 1) adminUsersCurrentPage = 1;
+            
+            const startIndex = (adminUsersCurrentPage - 1) * ADMIN_USERS_PER_PAGE;
+            const endIndex = startIndex + ADMIN_USERS_PER_PAGE;
+            const currentUsers = sortedUsers.slice(startIndex, endIndex);
+
+            document.getElementById('admin-table-users').innerHTML = currentUsers.map((u, i) => {
+                let absoluteRank = startIndex + i + 1;
+                return `<tr><td class="p-4 font-bold text-gray-400 text-center">${absoluteRank}</td><td class="p-4 text-gray-500 font-medium">${u.empId}</td><td class="p-4 font-bold text-app-dark">${u.name}</td><td class="p-4 font-black text-app-primary text-[14px]">${u.points}</td><td class="p-4 text-right"><button onclick="editUser('${u.empId}')" class="w-8 h-8 bg-blue-50 text-blue-500 rounded-lg mr-1.5 hover:bg-blue-100 transition-colors"><i class="fa-solid fa-pen text-[11px]"></i></button><button onclick="deleteUser('${u.empId}')" class="w-8 h-8 bg-red-50 text-red-500 rounded-lg hover:bg-red-100 transition-colors"><i class="fa-solid fa-trash text-[11px]"></i></button></td></tr>`;
+            }).join('') || `<tr><td colspan="5" class="p-5 text-center text-gray-400">${searchTerm ? 'ไม่พบรหัสพนักงานที่ค้นหา' : 'ยังไม่มีข้อมูลผู้เล่น'}</td></tr>`;
+            
+            // Render Pagination Controls
+            let paginationHtml = '';
+            if (totalItems > 0) {
+                let displayedStart = startIndex + 1;
+                let displayedEnd = Math.min(endIndex, totalItems);
+                paginationHtml = `
+                    <div class="text-[12px] text-gray-500 font-medium">แสดง ${displayedStart}-${displayedEnd} จากทั้งหมด ${totalItems} รายการ</div>
+                    <div class="flex items-center gap-1.5">
+                        <button onclick="changeAdminUsersPage(${adminUsersCurrentPage - 1})" class="w-8 h-8 flex items-center justify-center rounded-[10px] border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all" ${adminUsersCurrentPage === 1 ? 'disabled' : ''}><i class="fa-solid fa-chevron-left text-[10px]"></i></button>
+                        <div class="px-3 py-1 text-[12px] font-bold text-app-dark bg-white border border-gray-200 rounded-[10px]">${adminUsersCurrentPage} / ${totalPages}</div>
+                        <button onclick="changeAdminUsersPage(${adminUsersCurrentPage + 1})" class="w-8 h-8 flex items-center justify-center rounded-[10px] border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all" ${adminUsersCurrentPage === totalPages ? 'disabled' : ''}><i class="fa-solid fa-chevron-right text-[10px]"></i></button>
+                    </div>
+                `;
+            }
+            const paginationContainer = document.getElementById('admin-users-pagination');
+            if(paginationContainer) paginationContainer.innerHTML = paginationHtml;
+
             if(!db.qrs) db.qrs = [];
             document.getElementById('admin-table-qrs').innerHTML = db.qrs.map(q => {
                 let scanText = q.scanType === 'multi' ? 'หลายครั้ง/คน' : '1 ครั้ง/คน';
@@ -1909,6 +1964,11 @@
 
         function generateId() { return Math.random().toString(36).substr(2, 9); }
         
+        function changeAdminUsersPage(newPage) {
+            adminUsersCurrentPage = newPage;
+            renderAdminTables();
+        }
+
         async function editUser(empId) {
             let user = db.users.find(u => String(u.empId) === String(empId));
             if(!user) return;
