@@ -95,6 +95,7 @@
 
         /* QR Scanner Overrides */
         #reader { border: none !important; border-radius: 24px; overflow: hidden; background: #f8faf9; padding-bottom: 10px; }
+        #reader__dashboard_section_csr span { display: none !important; }
         #reader__dashboard_section_csr button { background: #5C8D67 !important; color: white !important; border-radius: 12px !important; padding: 10px 20px !important; border: none !important; font-family: 'Prompt', sans-serif !important; font-size: 13px !important; font-weight: bold; margin-top: 10px; cursor: pointer; }
         #reader__dashboard_section_csr select { border-radius: 8px; border: 1px solid #e2e8f0; padding: 8px; margin-bottom: 10px; width: 100%; max-width: 250px; font-family: 'Prompt', sans-serif; }
         #html5-qrcode-anchor-scan-type-change { color: #5C8D67 !important; text-decoration: none !important; font-weight: 600; margin-top: 10px; display: inline-block; }
@@ -318,7 +319,7 @@
                 </div>
                 <div>
                     <label id="lbl-empid" class="block text-[13px] font-semibold text-app-dark mb-2 pl-1">รหัสพนักงาน (Employee ID)</label>
-                    <input type="text" id="login-empid" maxlength="8" class="w-full bg-[#F8FAF9] border border-gray-200 rounded-[16px] px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-app-secondary focus:border-app-primary transition-all placeholder-gray-400" placeholder="รหัสพนักงาน 7 หลัก">
+                    <input type="text" id="login-empid" maxlength="8" class="w-full bg-[#F8FAF9] border border-gray-200 rounded-[16px] px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-app-secondary focus:border-app-primary transition-all placeholder-gray-400" placeholder="ตัวเลข 7 หลัก หรือ admin123">
                     <p id="lbl-hint" class="text-[11px] text-gray-400 mt-2 pl-1 font-light"><i class="fa-solid fa-circle-info mr-1"></i> สำหรับการเข้าระบบครั้งถัดไป กรอกแค่รหัสพนักงาน</p>
                 </div>
             </div>
@@ -500,25 +501,26 @@
             <div class="flex items-center gap-3">
                 <button onclick="quitGame()" class="w-10 h-10 bg-[#F2F7F4] rounded-full flex items-center justify-center text-app-dark hover:bg-gray-200 transition-colors"><i class="fa-solid fa-arrow-left"></i></button>
                 <div>
-                    <h2 class="font-bold text-app-dark text-base tracking-tight" id="game-stage-title">ด่าน 1: ในอาคารผลิต</h2>
-                    <p class="text-[10px] text-gray-500 font-medium">ลากขยะลงถังให้ถูกต้อง</p>
+                    <h2 class="font-bold text-app-dark text-base sm:text-lg tracking-tight" id="game-stage-title">ด่าน 1: ในอาคารผลิต</h2>
+                    <p class="text-[10px] sm:text-xs text-gray-500 font-medium">ลากขยะลงถังให้ถูกต้อง</p>
                 </div>
             </div>
             <div class="flex gap-4 items-center">
                 <div class="bg-app-dark text-white px-3 py-1.5 rounded-[12px] text-center min-w-[70px] shadow-sm">
                     <p class="text-[8px] uppercase tracking-wider opacity-70 mb-0.5">Time</p>
-                    <p class="font-bold font-mono text-base leading-none" id="game-timer">02:00</p>
+                    <p class="font-bold font-mono text-base sm:text-lg leading-none" id="game-timer">02:00</p>
                 </div>
                 <div class="bg-app-accent text-white px-3 py-1.5 rounded-[12px] text-center min-w-[70px] shadow-sm">
                     <p class="text-[8px] uppercase tracking-wider opacity-90 mb-0.5">Score</p>
-                    <p class="font-bold text-base leading-none" id="game-score">0</p>
+                    <p class="font-bold text-base sm:text-lg leading-none" id="game-score">0</p>
                 </div>
             </div>
         </div>
         
         <div id="game-area" class="flex-1 relative z-30"></div>
         
-        <div class="h-[30%] bg-white rounded-t-[32px] shadow-[0_-10px_30px_rgba(37,62,43,0.08)] flex items-end justify-center px-4 pb-6 gap-3 z-20 overflow-x-auto whitespace-nowrap border-t border-gray-50 relative">
+        <!-- ปรับความสูงแถบด้านล่างให้รองรับแนวนอน -->
+        <div class="flex-shrink-0 min-h-[140px] sm:min-h-[160px] bg-white rounded-t-[32px] shadow-[0_-10px_30px_rgba(37,62,43,0.08)] flex items-end justify-center px-4 pb-6 gap-3 z-20 overflow-x-auto whitespace-nowrap border-t border-gray-50 relative">
             <div class="absolute top-3 left-1/2 transform -translate-x-1/2 w-12 h-1 bg-gray-200 rounded-full"></div>
             <div id="bins-area" class="flex items-end justify-center gap-3 w-full h-full pt-8"></div>
         </div>
@@ -1196,7 +1198,7 @@
             }
 
             if (loginStep === 1) {
-                Swal.fire({ title: 'กำลังเข้าสู่โลก Waste Care World...', html: '<div class="tree-loader-container"><div class="tree-loader"></div></div>', allowOutsideClick: false, showConfirmButton: false });
+                Swal.fire({ title: 'กำลังตรวจสอบข้อมูล...', html: '<div class="tree-loader-container"><div class="tree-loader"></div></div>', allowOutsideClick: false, showConfirmButton: false });
                 await loadFromCloud();
                 if(!db.users) db.users = [];
 
@@ -1303,15 +1305,14 @@
         function initQRScanner() {
             if(html5QrcodeScanner) return;
             
-            // หน่วงเวลาให้ Modal เลื่อนขึ้นมาเสร็จก่อน ป้องกันระบบคำนวณขนาดกล้องผิดพลาด
             setTimeout(() => {
                 html5QrcodeScanner = new Html5QrcodeScanner("reader", { 
                     fps: 10, 
                     qrbox: {width: 250, height: 250},
-                    videoConstraints: { facingMode: "environment" } // บังคับให้ใช้กล้องหลัง
+                    videoConstraints: { facingMode: "environment" } 
                 }, false);
                 html5QrcodeScanner.render(onScanSuccess, onScanFailure);
-            }, 400); // 400ms = ความเร็วที่ Modal เลื่อนขึ้นมาพอดี
+            }, 400); 
         }
 
         async function onScanSuccess(decodedText, decodedResult) {
@@ -1696,7 +1697,9 @@
         function renderBinsForStage() {
             const container = document.getElementById('bins-area');
             let activeBins = db.bins.filter(b => b.stage === 'all' || (gameStage === 1 && b.stage === 'indoor') || (gameStage === 2 && b.stage === 'outdoor'));
-            container.innerHTML = activeBins.map(b => `<div class="bin-target flex-shrink-0 flex flex-col items-center justify-end w-20 h-28 rounded-t-[16px] rounded-b-[6px] relative shadow-md transition-transform" style="background-color: ${b.color}; border-top: 6px solid rgba(255,255,255,0.3);" data-binid="${b.id}"><div class="absolute -top-7 w-14 h-14 bg-white rounded-full p-2 shadow-sm flex items-center justify-center border-4 border-app-bg"><img src="${b.img || 'https://cdn-icons-png.flaticon.com/512/3299/3299935.png'}" class="w-full h-full object-contain"></div><span class="text-[10px] text-white font-bold mb-3 text-center leading-tight drop-shadow-md whitespace-normal px-1">${b.name}</span></div>`).join('');
+            
+            // ขยายขนาดถังขยะ ไอคอน และตัวหนังสือให้ใหญ่ขึ้น
+            container.innerHTML = activeBins.map(b => `<div class="bin-target flex-shrink-0 flex flex-col items-center justify-end w-24 h-28 sm:w-28 sm:h-32 rounded-t-[20px] rounded-b-[8px] relative shadow-md transition-transform" style="background-color: ${b.color}; border-top: 6px solid rgba(255,255,255,0.3);" data-binid="${b.id}"><div class="absolute -top-8 w-16 h-16 sm:w-20 sm:h-20 bg-white rounded-full p-2 shadow-sm flex items-center justify-center border-4 border-app-bg"><img src="${b.img || 'https://cdn-icons-png.flaticon.com/512/3299/3299935.png'}" class="w-full h-full object-contain"></div><span class="text-[12px] sm:text-[14px] text-white font-bold mb-3 text-center leading-tight drop-shadow-md whitespace-normal px-1">${b.name}</span></div>`).join('');
         }
 
         function spawnWastes() {
@@ -1705,14 +1708,32 @@
             let stageWastes = db.wastes.filter(w => w.stage === 'all' || (gameStage === 1 && w.stage === 'indoor') || (gameStage === 2 && w.stage === 'outdoor'));
             if(stageWastes.length === 0) return endStage();
 
-            for(let i=0; i<10; i++) {
-                let wType = stageWastes[Math.floor(Math.random() * stageWastes.length)];
+            // สุ่มลำดับขยะเพื่อไม่ให้ซ้ำกัน (Fisher-Yates Shuffle)
+            let shuffledWastes = [...stageWastes];
+            for (let i = shuffledWastes.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffledWastes[i], shuffledWastes[j]] = [shuffledWastes[j], shuffledWastes[i]];
+            }
+
+            // จำนวนขยะที่จะเกิด (สูงสุด 10 ชิ้น หรือเท่าที่มีในฐานข้อมูลด่านนั้นเพื่อไม่ให้ซ้ำ)
+            let spawnCount = Math.min(10, shuffledWastes.length);
+
+            // คำนวณพื้นที่ที่เหลือของหน้าจอ เพื่อให้สุ่มเกิดได้สวยงามแม้ในแนวนอน
+            let areaWidth = container.clientWidth;
+            let areaHeight = container.clientHeight;
+
+            for(let i=0; i<spawnCount; i++) {
+                let wType = shuffledWastes[i];
                 let el = document.createElement('div');
-                el.className = 'waste-item bg-white p-3 rounded-[16px] shadow-[0_8px_20px_rgba(0,0,0,0.06)] border border-gray-100 flex flex-col items-center justify-center min-w-[65px]';
-                el.innerHTML = `<img src="${wType.img || 'https://cdn-icons-png.flaticon.com/512/839/839088.png'}" class="w-10 h-10 object-contain mb-1.5 drop-shadow-sm"><span class="text-[8px] font-bold text-gray-500 whitespace-nowrap bg-gray-50 px-2 py-0.5 rounded-full border border-gray-100">${wType.name}</span>`;
+                
+                // ขยายขนาดกรอบ รูป และตัวหนังสือของขยะ
+                el.className = 'waste-item bg-white p-3 sm:p-4 rounded-[16px] shadow-[0_8px_20px_rgba(0,0,0,0.06)] border border-gray-100 flex flex-col items-center justify-center min-w-[80px] sm:min-w-[90px]';
+                el.innerHTML = `<img src="${wType.img || 'https://cdn-icons-png.flaticon.com/512/839/839088.png'}" class="w-12 h-12 sm:w-14 sm:h-14 object-contain mb-1.5 drop-shadow-sm"><span class="text-[11px] sm:text-[13px] font-bold text-gray-500 whitespace-nowrap bg-gray-50 px-2.5 py-0.5 rounded-full border border-gray-100">${wType.name}</span>`;
                 el.dataset.targetbin = wType.binId;
-                el.style.left = Math.max(20, Math.random() * (window.innerWidth - 100)) + 'px';
-                el.style.top = Math.max(20, Math.random() * (window.innerHeight * 0.45)) + 'px';
+                
+                // สุ่มเกิดให้อยู่ภายในพื้นที่ ไม่โดนขอบบัง
+                el.style.left = Math.max(10, Math.random() * (areaWidth - 100)) + 'px';
+                el.style.top = Math.max(10, Math.random() * (areaHeight - 110)) + 'px';
                 let rot = Math.floor(Math.random() * 20) - 10;
                 el.style.transform = `rotate(${rot}deg)`;
                 
@@ -1820,7 +1841,7 @@
         function saveGeneralSettings() {
             db.settings.logoImg = document.getElementById('cfg-logo-img').value;
             saveDB(); applySettings();
-            Swal.fire({ title: 'บันทึกการตั้งค่าระบบสำเร็จ', icon: 'success', timer: 1500, showConfirmButton:false });
+            Swal.fire({ title: 'บันทึกการตั้งค่ารูปภาพสำเร็จ', icon: 'success', timer: 1500, showConfirmButton:false });
         }
 
         async function connectDB() {
@@ -2284,7 +2305,7 @@
                     item.name = formValues.name;
                     item.pts = formValues.pts;
                     item.scanType = formValues.scanType;
-                    item.url = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=WCW_SCAN_${item.id}_${formValues.pts}`; // update url just in case pts changed
+                    item.url = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=WCW_SCAN_${item.id}_${formValues.pts}`; 
                 }
                 saveDB(); renderAdminTables();
             }
@@ -2293,7 +2314,6 @@
         function viewQR(url) { Swal.fire({ imageUrl: url, imageWidth: 200, imageHeight: 200, title: 'สแกนเพื่อรับคะแนน', customClass:{confirmButton:'bg-app-primary rounded-xl px-8'} }); }
         function deleteQR(id) { db.qrs = db.qrs.filter(q => q.id !== id); saveDB(); renderAdminTables(); }
 
-        // เปลี่ยนจาก window.onload เป็น DOMContentLoaded เพื่อให้เว็บทำงานทันทีโดยไม่ต้องรอโหลดสิ่งอื่น
         document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
