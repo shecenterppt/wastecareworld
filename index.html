@@ -104,6 +104,10 @@
         .slider-container { display: flex; transition: transform 0.3s ease-out; width: 100%; height: 100%; touch-action: pan-y; }
         .slider-item { flex: 0 0 100%; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; }
         .slider-img { width: 100%; height: 100%; object-fit: cover; }
+        
+        /* Lightbox */
+        .lightbox { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; visibility: hidden; transition: all 0.3s ease; }
+        .lightbox.active { opacity: 1; visibility: visible; }
     </style>
 </head>
 <body class="antialiased h-screen flex flex-col">
@@ -321,7 +325,7 @@
                 </div>
                 <div>
                     <label id="lbl-empid" class="block text-[13px] font-semibold text-app-dark mb-2 pl-1">รหัสพนักงาน (Employee ID)</label>
-                    <input type="text" id="login-empid" maxlength="8" class="w-full bg-[#F8FAF9] border border-gray-200 rounded-[16px] px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-app-secondary focus:border-app-primary transition-all placeholder-gray-400" placeholder="รหัสพนักงาน 7 หลัก">
+                    <input type="text" id="login-empid" maxlength="8" class="w-full bg-[#F8FAF9] border border-gray-200 rounded-[16px] px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-app-secondary focus:border-app-primary transition-all placeholder-gray-400" placeholder="กรอกรหัสพนักงาน 7 หลัก">
                     <p id="lbl-hint" class="text-[11px] text-gray-400 mt-2 pl-1 font-light"><i class="fa-solid fa-circle-info mr-1"></i> สำหรับการเข้าระบบครั้งถัดไป กรอกแค่รหัสพนักงาน</p>
                 </div>
             </div>
@@ -495,6 +499,12 @@
         </div>
     </div>
 
+    <!-- Image Lightbox Modal -->
+    <div id="image-lightbox" class="lightbox">
+        <button onclick="closeLightbox()" class="absolute top-6 right-6 w-10 h-10 bg-white/20 text-white rounded-full flex items-center justify-center hover:bg-white/30 backdrop-blur-md transition-colors"><i class="fa-solid fa-xmark text-xl"></i></button>
+        <img id="lightbox-img" src="" class="max-w-[95vw] max-h-[80vh] object-contain rounded-xl shadow-2xl">
+        <button onclick="closeLightbox()" class="mt-6 px-8 py-3 bg-white/20 text-white font-semibold rounded-full hover:bg-white/30 backdrop-blur-md transition-colors text-sm">ปิดหน้าต่างรูปภาพ</button>
+    </div>
 
     <!-- GAME UI -->
     <div id="game-container" class="hidden-page fixed inset-0 bg-[#EAF4EC] z-50 flex flex-col overflow-hidden">
@@ -1168,6 +1178,7 @@
             document.getElementById('modal-backdrop').classList.remove('active');
             document.querySelectorAll('.modal-bottom').forEach(m => m.classList.remove('active'));
             document.getElementById('nickname-group').style.display = 'none';
+            closeLightbox();
             if(html5QrcodeScanner) {
                 html5QrcodeScanner.clear().catch(e => console.error("Failed to clear scanner", e));
                 html5QrcodeScanner = null;
@@ -1376,7 +1387,7 @@
             // Build slides
             slider.innerHTML = db.settings.popupImages.map(img => `
                 <div class="slider-item">
-                    <img src="${img.url}" class="slider-img" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2913/2913426.png'">
+                    <img src="${img.url}" onclick="openLightbox('${img.url}')" class="slider-img cursor-pointer transition-transform active:scale-95 hover:scale-105" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2913/2913426.png'">
                 </div>
             `).join('');
 
@@ -1386,6 +1397,22 @@
             `).join('');
 
             updatePopupUI();
+        }
+
+        function openLightbox(url) {
+            document.getElementById('lightbox-img').src = url;
+            document.getElementById('image-lightbox').classList.add('active');
+        }
+
+        function closeLightbox() {
+            const lightbox = document.getElementById('image-lightbox');
+            if (lightbox) {
+                lightbox.classList.remove('active');
+                setTimeout(() => { 
+                    const img = document.getElementById('lightbox-img');
+                    if(img) img.src = ''; 
+                }, 300);
+            }
         }
 
         function updatePopupUI() {
@@ -2208,6 +2235,81 @@
                 preConfirm: () => { return { name: document.getElementById('swal-w1').value, binId: document.getElementById('swal-w2').value, stage: document.getElementById('swal-w3').value, img: document.getElementById('swal-w4').value } }, customClass: {confirmButton: 'rounded-xl bg-app-primary w-[95%] py-3 text-white font-bold text-lg'} 
             });
             if (formValues) { if(action==='add') db.wastes.push({id: generateId(), ...formValues}); else Object.assign(item, formValues); saveDB(); renderAdminTables(); }
+        }
+
+        function exportCSV(type) {
+            let data = db[type];
+            if(type === 'users') data = data.filter(u => u.empId !== 'admin' && u.empId !== 'admin123');
+            
+            if(!data || data.length === 0) return Swal.fire({title:'Error', text:'ไม่มีข้อมูลให้ส่งออก', icon:'error', customClass:{confirmButton:'bg-app-primary rounded-xl'}});
+            let headers = Object.keys(data[0]);
+            let csvContent = "data:text/csv;charset=utf-8,\uFEFF" + headers.join(",") + "\n" + data.map(row => headers.map(h => `"${(row[h]||'').toString().replace(/"/g, '""')}"`).join(",")).join("\n");
+            let encodedUri = encodeURI(csvContent);
+            let link = document.createElement("a"); link.setAttribute("href", encodedUri); link.setAttribute("download", `WCW_${type}.csv`); document.body.appendChild(link); link.click(); document.body.removeChild(link);
+        }
+
+        function importCSV(e, type) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const text = event.target.result;
+                const rows = text.split('\n').filter(r => r.trim());
+                if(rows.length <= 1) return Swal.fire({title:'Error', text:'ไฟล์ว่าง หรือรูปแบบผิด', icon:'error', customClass:{confirmButton:'bg-app-primary rounded-xl'}});
+                const headers = rows[0].split(',').map(h=>h.replace(/"/g,'').trim());
+                let newArr = [];
+                for(let i=1; i<rows.length; i++) {
+                    let vals = rows[i].split(',').map(v=>v.replace(/"/g,'').trim());
+                    let obj = {}; headers.forEach((h, j) => obj[h] = vals[j]);
+                    if(!obj.id) obj.id = generateId();
+                    newArr.push(obj);
+                }
+                db[type] = newArr; saveDB(); renderAdminTables();
+                Swal.fire({title:'สำเร็จ', text:`นำเข้า ${type} เรียบร้อย`, icon:'success', customClass:{confirmButton:'bg-app-primary rounded-xl'}});
+            };
+            reader.readAsText(file); e.target.value = '';
+        }
+
+        async function startNewWeek() {
+            let nextWeek = (db.settings.weeks && db.settings.weeks.length > 0) ? (Math.max(...db.settings.weeks.map(w=>w.weekNum)) + 1) : 1;
+            promptWeekDates(nextWeek, 'เริ่มรอบใหม่', '', '');
+        }
+
+        async function editWeek(weekNum) {
+            let w = db.settings.weeks.find(x => x.weekNum === weekNum);
+            if(w) promptWeekDates(weekNum, `แก้ไขสัปดาห์ที่ ${weekNum}`, w.start, w.end);
+        }
+        
+        function deleteWeek(weekNum) {
+            Swal.fire({
+                title: `ลบสัปดาห์ที่ ${weekNum}?`, text: "คุณต้องการลบรอบเวลานี้ใช่หรือไม่?", icon: 'warning',
+                showCancelButton: true, confirmButtonColor: '#E07A5F', confirmButtonText: 'ลบ', cancelButtonText: 'ยกเลิก',
+                customClass: { confirmButton: 'rounded-xl', cancelButton: 'rounded-xl bg-gray-200 text-gray-700 border-none' }
+            }).then((res) => {
+                if(res.isConfirmed) {
+                    db.settings.weeks = db.settings.weeks.filter(w => w.weekNum !== weekNum);
+                    saveDB(); evaluateCurrentWeek(); applySettings();
+                }
+            });
+        }
+
+        function resetSystemData() {
+            Swal.fire({
+                title: 'ยืนยันการรีเซ็ต?',
+                text: "การรีเซ็ตจะล้างข้อมูลแคชในระบบของคุณทั้งหมด เพื่อเริ่มต้นดึงข้อมูลใหม่",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#E07A5F',
+                confirmButtonText: 'ใช่, รีเซ็ตเลย',
+                cancelButtonText: 'ยกเลิก',
+                customClass: { confirmButton: 'rounded-xl', cancelButton: 'rounded-xl bg-gray-200 text-gray-700 border-none' }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    localStorage.removeItem('wcw_db');
+                    localStorage.removeItem('wcw_user_session');
+                    location.reload();
+                }
+            });
         }
 
         async function promptWeekDates(weekNum, titleStr, defaultStart, defaultEnd) {
