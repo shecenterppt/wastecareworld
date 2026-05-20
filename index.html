@@ -10,21 +10,19 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Tailwind CSS (โหลดแบบ Defer เพื่อให้หน้าเว็บแสดงผลทันที) -->
-    <script src="https://cdn.tailwindcss.com" defer></script>
+    <!-- Tailwind CSS (ห้ามใส่ defer เพื่อให้ระบบสี Custom โหลดได้ถูกต้อง) -->
+    <script src="https://cdn.tailwindcss.com"></script>
     
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- SweetAlert2 (โหลดแบบ Defer) -->
+    <!-- SweetAlert2 (โหลดแบบ Defer เพื่อเพิ่มความเร็ว) -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
     
-    <!-- HTML5 QR Code Scanner (โหลดแบบ Defer) -->
+    <!-- HTML5 QR Code Scanner (โหลดแบบ Defer เพื่อเพิ่มความเร็ว) -->
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript" defer></script>
 
     <script>
-        // กำหนดตั้งค่าเริ่มต้นให้ Tailwind ก่อนที่ Script ตัวเต็มจะรัน
-        window.tailwind = window.tailwind || {};
         tailwind.config = {
             theme: {
                 extend: {
@@ -52,7 +50,7 @@
         body { font-family: 'Prompt', sans-serif; background-color: #F2F7F4; overflow-x: hidden; -webkit-tap-highlight-color: transparent; color: #253E2B; }
         
         /* Modal Bottom Slide-up */
-        .modal-bottom { position: fixed; bottom: 0; left: 0; width: 100%; max-width: 100vw; height: 90vh; background: white; border-top-left-radius: 36px; border-top-right-radius: 36px; box-shadow: none; transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.2, 1, 0.3, 1), box-shadow 0.4s ease; z-index: 50; display: flex; flex-direction: column; pointer-events: none; }
+        .modal-bottom { position: fixed; bottom: 0; left: 0; width: 100%; max-width: 100vw; height: auto; max-height: 90vh; background: white; border-top-left-radius: 36px; border-top-right-radius: 36px; box-shadow: none; transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.2, 1, 0.3, 1), box-shadow 0.4s ease; z-index: 50; display: flex; flex-direction: column; pointer-events: none; }
         .modal-bottom.active { transform: translateY(0); box-shadow: 0 -10px 50px rgba(37, 62, 43, 0.15); pointer-events: auto; }
         .modal-backdrop { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(37, 62, 43, 0.5); backdrop-filter: blur(4px); opacity: 0; visibility: hidden; transition: all 0.4s ease; z-index: 40; }
         .modal-backdrop.active { opacity: 1; visibility: visible; }
@@ -110,35 +108,36 @@
 </head>
 <body class="antialiased h-screen flex flex-col">
 
-    <!-- PAGE 1: Landing Page -->
-    <div id="page-landing" class="flex flex-col h-screen w-full relative overflow-hidden bg-app-bg">
-        <!-- เพิ่มสีพื้นหลังเริ่มต้นกันโหลดช้า -->
-        <div class="h-[65%] w-full bg-[#EAF4EC] bg-cover bg-center transition-all duration-700 relative" id="landing-bg" style="background-image: url('https://images.unsplash.com/photo-1542273917363-3b1817f69a5d?auto=format&fit=crop&w=800&q=80');">
+    <!-- PAGE 1: Landing Page (เปลี่ยนเป็นโครงสร้าง Flex ที่ Scroll ได้กันปุ่มหาย) -->
+    <div id="page-landing" class="flex flex-col h-screen w-full relative bg-app-bg overflow-y-auto">
+        <!-- พื้นหลังสีเรียบ + รูปภาพ (ใช้ flex-1 เพื่อให้ขยายเต็มที่เหลือ) -->
+        <div class="flex-1 min-h-[45vh] w-full bg-[#EAF4EC] bg-cover bg-center transition-all duration-700 relative shrink-0" id="landing-bg" style="background-image: url('https://images.unsplash.com/photo-1542273917363-3b1817f69a5d?auto=format&fit=crop&w=800&q=80');">
             <div class="w-full h-full bg-gradient-to-b from-black/20 via-transparent to-app-bg absolute top-0 left-0"></div>
         </div>
         
-        <div class="absolute bottom-0 w-full bg-white rounded-t-[40px] px-6 py-10 flex flex-col items-center justify-center text-center z-10 shadow-[0_-20px_50px_rgba(0,0,0,0.08)]">
-            <div class="w-16 h-1.5 bg-gray-200 rounded-full absolute top-4 left-1/2 transform -translate-x-1/2 mb-6"></div>
+        <!-- กล่องเนื้อหาด้านล่าง -->
+        <div class="w-full bg-white rounded-t-[40px] px-6 pt-6 pb-12 flex flex-col items-center justify-center text-center z-10 shadow-[0_-20px_50px_rgba(0,0,0,0.08)] shrink-0 -mt-10 relative">
+            <div class="w-16 h-1.5 bg-gray-200 rounded-full mb-6"></div>
             
-            <div class="relative w-full max-w-md overflow-hidden h-36 mb-8 mt-4">
-                <div id="welcome-slider" class="flex transition-transform duration-500 w-[200%]">
+            <div class="relative w-full max-w-md overflow-hidden mb-6">
+                <div id="welcome-slider" class="flex transition-transform duration-500 w-[200%] items-center">
                     <div class="w-1/2 px-2 flex flex-col justify-center">
-                        <h1 class="text-3xl font-bold text-app-primary mb-3">Waste Care World</h1>
-                        <p class="text-sm text-gray-500 leading-relaxed px-4">Welcome to the World of Waste Management Games & Learning. Enjoy fun activities and interactive games.</p>
+                        <h1 class="text-2xl sm:text-3xl font-bold text-app-primary mb-3">Waste Care World</h1>
+                        <p class="text-xs sm:text-sm text-gray-500 leading-relaxed px-4">Welcome to the World of Waste Management Games & Learning. Enjoy fun activities and interactive games.</p>
                     </div>
                     <div class="w-1/2 px-2 flex flex-col justify-center">
-                        <h1 class="text-3xl font-bold text-app-primary mb-3">Waste Care World</h1>
-                        <p class="text-sm text-gray-500 leading-relaxed px-4">ยินดีต้อนรับสู่โลกแห่งการเรียนรู้และเกมจัดการขยะ<br>สนุกกับกิจกรรมและไอเดียสร้างสรรค์ เพื่อรักษ์โลกอย่างชาญฉลาด</p>
+                        <h1 class="text-2xl sm:text-3xl font-bold text-app-primary mb-3">Waste Care World</h1>
+                        <p class="text-xs sm:text-sm text-gray-500 leading-relaxed px-4">ยินดีต้อนรับสู่โลกแห่งการเรียนรู้และเกมจัดการขยะ<br>สนุกกับกิจกรรมและไอเดียสร้างสรรค์ เพื่อรักษ์โลกอย่างชาญฉลาด</p>
                     </div>
                 </div>
             </div>
             
-            <div class="flex space-x-2 mb-10">
+            <div class="flex space-x-2 mb-8">
                 <button onclick="slideWelcome(0)" id="dot-0" class="w-2.5 h-2.5 rounded-full bg-app-primary transition-all duration-300"></button>
                 <button onclick="slideWelcome(1)" id="dot-1" class="w-2.5 h-2.5 rounded-full bg-gray-200 transition-all duration-300"></button>
             </div>
             
-            <button onclick="openModal('login-modal')" class="w-full max-w-[280px] bg-app-primary text-white py-4 rounded-[20px] font-bold text-lg shadow-float hover:bg-opacity-90 transition-all transform hover:scale-[1.02] active:scale-95">
+            <button onclick="openModal('login-modal')" class="w-full max-w-[280px] bg-app-primary text-white py-4 rounded-[20px] font-bold text-lg shadow-soft hover:shadow-float hover:bg-opacity-90 transition-all transform hover:scale-[1.02] active:scale-95">
                 Get Started
             </button>
         </div>
@@ -322,8 +321,8 @@
                 </div>
                 <div>
                     <label id="lbl-empid" class="block text-[13px] font-semibold text-app-dark mb-2 pl-1">รหัสพนักงาน (Employee ID)</label>
-                    <input type="text" id="login-empid" maxlength="8" class="w-full bg-[#F8FAF9] border border-gray-200 rounded-[16px] px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-app-secondary focus:border-app-primary transition-all placeholder-gray-400" placeholder="กรอกรหัสพนักงาน 7 หลัก">
-                    <p id="lbl-hint" class="text-[11px] text-gray-400 mt-2 pl-1 font-light"><i class="fa-solid fa-circle-info mr-1"></i> สำหรับการเข้าระบบครั้งถัดไป กรอกแค่ฟพนักงาน</p>
+                    <input type="text" id="login-empid" maxlength="8" class="w-full bg-[#F8FAF9] border border-gray-200 rounded-[16px] px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-app-secondary focus:border-app-primary transition-all placeholder-gray-400" placeholder="รหัสพนักงาน 7 หลัก">
+                    <p id="lbl-hint" class="text-[11px] text-gray-400 mt-2 pl-1 font-light"><i class="fa-solid fa-circle-info mr-1"></i> สำหรับการเข้าระบบครั้งถัดไป กรอกแค่รหัสพนักงาน</p>
                 </div>
             </div>
             
@@ -336,7 +335,7 @@
     </div>
 
     <!-- QR Scanner Modal -->
-    <div id="qr-scan-modal" class="modal-bottom pb-8">
+    <div id="qr-scan-modal" class="modal-bottom h-[90vh]">
         <div class="w-16 h-1.5 bg-gray-200 rounded-full mx-auto mt-4 mb-2"></div>
         <div class="px-6 flex flex-col h-full modal-content-scroll pt-2 items-center">
             <h2 class="text-2xl font-bold text-app-dark text-center mb-1 tracking-tight">สแกน QR Code</h2>
@@ -346,7 +345,7 @@
                 <div id="reader" width="100%"></div>
             </div>
             
-            <button onclick="closeAllModals()" class="w-full max-w-xs bg-[#F8FAF9] border border-gray-200 text-app-dark py-4 rounded-[16px] font-bold hover:bg-gray-50 transition-colors mt-auto text-sm shrink-0">ยกเลิกการสแกน</button>
+            <button onclick="closeAllModals()" class="w-full max-w-xs bg-[#F8FAF9] border border-gray-200 text-app-dark py-4 rounded-[16px] font-bold hover:bg-gray-50 transition-colors mt-auto mb-8 text-sm shrink-0">ยกเลิกการสแกน</button>
         </div>
     </div>
 
@@ -377,7 +376,7 @@
             </div>
 
             <!-- Step 2: Actual Check-in UI -->
-            <div id="checkin-step-2" class="w-full flex-col items-center hidden">
+            <div id="checkin-step-2" class="w-full flex-col items-center hidden pb-8">
                 <div class="relative w-28 h-28 mb-8 mx-auto">
                     <div class="absolute inset-0 bg-[#E6F0E8] rounded-full animate-ping opacity-20"></div>
                     <div class="absolute inset-0 bg-[#E6F0E8] rounded-full flex items-center justify-center z-10 shadow-inner border border-white">
@@ -404,12 +403,12 @@
     </div>
 
     <!-- Point History Modal -->
-    <div id="point-modal" class="modal-bottom">
+    <div id="point-modal" class="modal-bottom h-[85vh]">
         <div class="w-16 h-1.5 bg-gray-200 rounded-full mx-auto mt-4 mb-2"></div>
         <div class="px-6 flex flex-col h-full modal-content-scroll pt-2">
             <h2 class="text-2xl font-bold text-app-dark text-center mb-6 tracking-tight">My Points</h2>
             
-            <div class="bg-gradient-to-br from-app-secondary to-app-primary text-white rounded-[24px] p-8 flex flex-col items-center justify-center shadow-soft mb-8 relative overflow-hidden">
+            <div class="bg-gradient-to-br from-app-secondary to-app-primary text-white rounded-[24px] p-8 flex flex-col items-center justify-center shadow-soft mb-8 relative overflow-hidden shrink-0">
                 <div class="absolute -right-4 -top-4 w-24 h-24 bg-white/10 rounded-full blur-xl"></div>
                 <div class="absolute -left-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-xl"></div>
                 <p class="text-[13px] opacity-90 mb-2 font-medium relative z-10">คะแนนสะสมทั้งหมด</p>
@@ -419,37 +418,37 @@
                 </div>
             </div>
             
-            <div class="flex justify-between items-end mb-4 px-2">
+            <div class="flex justify-between items-end mb-4 px-2 shrink-0">
                 <h3 class="font-bold text-app-dark text-sm">ประวัติการรับคะแนน</h3>
             </div>
             
             <div id="point-history-list" class="flex-1 overflow-y-auto space-y-3 mb-6 pr-1"></div>
             
-            <button onclick="closeAllModals()" class="w-full bg-[#F8FAF9] border border-gray-200 text-app-dark py-4 rounded-[16px] font-bold hover:bg-gray-50 transition-colors mt-auto text-sm">ปิดหน้าต่าง</button>
+            <button onclick="closeAllModals()" class="w-full bg-[#F8FAF9] border border-gray-200 text-app-dark py-4 rounded-[16px] font-bold hover:bg-gray-50 transition-colors mt-auto mb-8 text-sm shrink-0">ปิดหน้าต่าง</button>
         </div>
     </div>
 
     <!-- Ranking Modal (With Tabs) -->
-    <div id="ranking-modal" class="modal-bottom">
+    <div id="ranking-modal" class="modal-bottom h-[90vh]">
         <div class="w-16 h-1.5 bg-gray-200 rounded-full mx-auto mt-4 mb-2"></div>
         <div class="px-6 flex flex-col h-full modal-content-scroll pt-2">
-            <h2 class="text-2xl font-bold text-app-dark text-center mb-1 tracking-tight">Leaderboard</h2>
-            <p class="text-center text-gray-500 text-[12px] mb-5 font-light">อันดับผู้เล่นที่ดูแลโลกใบนี้ได้ดีที่สุด</p>
+            <h2 class="text-2xl font-bold text-app-dark text-center mb-1 tracking-tight shrink-0">Leaderboard</h2>
+            <p class="text-center text-gray-500 text-[12px] mb-5 font-light shrink-0">อันดับผู้เล่นที่ดูแลโลกใบนี้ได้ดีที่สุด</p>
             
             <!-- Rank Tabs -->
-            <div class="flex bg-gray-100 p-1.5 rounded-full mb-4 relative">
+            <div class="flex bg-gray-100 p-1.5 rounded-full mb-4 relative shrink-0">
                 <button id="tab-rank-weekly" onclick="switchRankTab('weekly')" class="flex-1 py-2.5 text-[13px] font-bold rounded-full bg-white text-app-dark shadow-sm transition-all">สรุปรายสัปดาห์</button>
                 <button id="tab-rank-alltime" onclick="switchRankTab('alltime')" class="flex-1 py-2.5 text-[13px] font-bold rounded-full text-gray-500 hover:text-gray-700 transition-all">ภาพรวมทั้งหมด</button>
             </div>
 
             <!-- Week Selector for Weekly Ranking -->
-            <div id="rank-week-selector-container" class="mb-5 text-center hidden">
+            <div id="rank-week-selector-container" class="mb-5 text-center hidden shrink-0">
                 <select id="rank-week-selector" onchange="renderRanking('weekly')" class="bg-[#F8FAF9] border border-gray-200 text-app-dark text-[12px] font-semibold rounded-[12px] px-4 py-2 outline-none focus:border-app-primary w-full max-w-[280px]">
                     <!-- Populated via JS -->
                 </select>
             </div>
             
-            <div id="my-rank-banner" class="bg-app-dark text-white rounded-[20px] p-4 flex items-center justify-between shadow-float mb-6 sticky top-0 z-10 border border-white/10">
+            <div id="my-rank-banner" class="bg-app-dark text-white rounded-[20px] p-4 flex items-center justify-between shadow-float mb-6 sticky top-0 z-10 border border-white/10 shrink-0">
                 <div class="flex items-center gap-4">
                     <div class="w-12 h-12 bg-white/10 rounded-[14px] flex items-center justify-center font-bold text-xl border border-white/20" id="my-rank-num">-</div>
                     <div>
@@ -467,32 +466,32 @@
                 <div id="ranking-list" class="space-y-3"></div>
             </div>
             
-            <button onclick="closeAllModals()" class="w-full bg-[#F8FAF9] border border-gray-200 text-app-dark py-4 rounded-[16px] font-bold hover:bg-gray-50 transition-colors mt-auto text-sm shrink-0">ปิดหน้าต่าง</button>
+            <button onclick="closeAllModals()" class="w-full bg-[#F8FAF9] border border-gray-200 text-app-dark py-4 rounded-[16px] font-bold hover:bg-gray-50 transition-colors mt-auto mb-8 text-sm shrink-0">ปิดหน้าต่าง</button>
         </div>
     </div>
 
-    <!-- Weekly Summary Modal (สกัดการเล่นรอบที่ 3) -->
+    <!-- Weekly Summary Modal -->
     <div id="weekly-summary-modal" class="modal-bottom pb-8">
         <div class="w-16 h-1.5 bg-gray-200 rounded-full mx-auto mt-4 mb-2"></div>
         <div class="px-8 flex flex-col items-center modal-content-scroll text-center pt-6">
-            <div class="w-24 h-24 bg-[#E6F0E8] rounded-full flex items-center justify-center mb-4 border-4 border-white shadow-sm">
+            <div class="w-24 h-24 bg-[#E6F0E8] rounded-full flex items-center justify-center mb-4 border-4 border-white shadow-sm shrink-0">
                 <i class="fa-solid fa-calendar-check text-5xl text-app-primary"></i>
             </div>
-            <h2 class="text-2xl font-bold text-app-dark mb-2 tracking-tight">สรุปคะแนนสัปดาห์นี้</h2>
-            <p class="text-gray-500 mb-6 text-[13px] font-medium bg-gray-50 px-4 py-2 rounded-xl">คุณเล่นครบ 2 รอบสำหรับสัปดาห์นี้แล้ว 🎉</p>
+            <h2 class="text-2xl font-bold text-app-dark mb-2 tracking-tight shrink-0">สรุปคะแนนสัปดาห์นี้</h2>
+            <p class="text-gray-500 mb-6 text-[13px] font-medium bg-gray-50 px-4 py-2 rounded-xl shrink-0">คุณเล่นครบ 2 รอบสำหรับสัปดาห์นี้แล้ว 🎉</p>
             
-            <div class="w-full bg-[#F8FAF9] rounded-[24px] p-6 mb-8 border border-gray-100 shadow-inner">
+            <div class="w-full bg-[#F8FAF9] rounded-[24px] p-6 mb-8 border border-gray-100 shadow-inner shrink-0">
                 <p class="text-[12px] text-gray-500 mb-1 font-bold">คะแนนรวมสัปดาห์ที่ <span id="ws-week-num" class="text-app-primary"></span></p>
                 <p class="text-6xl font-black text-app-primary drop-shadow-sm mt-2" id="ws-total-score">0</p>
                 <p class="text-[10px] text-gray-400 mt-3 font-medium border-t border-gray-200 pt-3 inline-block">รวมคะแนนจากการเล่นเกมเท่านั้น</p>
             </div>
 
-            <div class="w-full bg-blue-50 border border-blue-100 rounded-[16px] p-4 mb-8">
+            <div class="w-full bg-blue-50 border border-blue-100 rounded-[16px] p-4 mb-8 shrink-0">
                 <p class="text-[12px] text-blue-600 font-bold"><i class="fa-solid fa-clock mr-1.5"></i> กรุณากลับมาเล่นใหม่ในวันที่</p>
                 <p class="text-[14px] text-blue-800 font-black mt-1 bg-white inline-block px-4 py-1.5 rounded-lg shadow-sm border border-blue-100" id="ws-next-date">-</p>
             </div>
             
-            <button onclick="closeAllModals()" class="w-full max-w-xs bg-app-primary text-white py-4 rounded-[16px] font-bold shadow-soft hover:bg-opacity-90 transition-all active:scale-95 text-base mt-auto">รับทราบ</button>
+            <button onclick="closeAllModals()" class="w-full max-w-xs bg-app-primary text-white py-4 rounded-[16px] font-bold shadow-soft hover:bg-opacity-90 transition-all active:scale-95 text-base mt-auto shrink-0">รับทราบ</button>
         </div>
     </div>
 
@@ -530,16 +529,16 @@
     </div>
 
     <!-- Game Result Modal -->
-    <div id="game-result-modal" class="modal-bottom">
+    <div id="game-result-modal" class="modal-bottom pb-8">
         <div class="w-16 h-1.5 bg-gray-200 rounded-full mx-auto mt-4 mb-2"></div>
         <div class="px-8 flex flex-col items-center modal-content-scroll text-center pt-4">
-            <div class="w-20 h-20 bg-[#FFF3E0] rounded-full flex items-center justify-center mb-4 shadow-inner">
+            <div class="w-20 h-20 bg-[#FFF3E0] rounded-full flex items-center justify-center mb-4 shadow-inner shrink-0">
                 <i class="fa-solid fa-medal text-4xl text-app-accent"></i>
             </div>
-            <h2 class="text-3xl font-bold text-app-dark mb-1 tracking-tight" id="result-title">Great Job!</h2>
-            <p class="text-gray-500 mb-8 text-[13px] font-light" id="result-subtitle">เยี่ยมมากที่คุณช่วยโลกของเราในรอบนี้</p>
+            <h2 class="text-3xl font-bold text-app-dark mb-1 tracking-tight shrink-0" id="result-title">Great Job!</h2>
+            <p class="text-gray-500 mb-8 text-[13px] font-light shrink-0" id="result-subtitle">เยี่ยมมากที่คุณช่วยโลกของเราในรอบนี้</p>
             
-            <div class="w-full bg-[#F8FAF9] rounded-[24px] p-6 mb-8 border border-gray-100 shadow-sm text-left relative overflow-hidden">
+            <div class="w-full bg-[#F8FAF9] rounded-[24px] p-6 mb-8 border border-gray-100 shadow-sm text-left relative overflow-hidden shrink-0">
                 <div class="absolute -right-6 -top-6 text-gray-100 opacity-50"><i class="fa-solid fa-clipboard-check text-8xl"></i></div>
                 
                 <div class="flex justify-between items-center border-b border-gray-200 pb-4 mb-4 relative z-10">
@@ -561,7 +560,7 @@
                     <span class="font-bold text-3xl text-app-accent drop-shadow-sm" id="res-total-score">0</span>
                 </div>
             </div>
-            <button onclick="closeGameAndReturn()" class="w-full bg-app-primary text-white py-4 rounded-[16px] font-bold shadow-soft hover:bg-opacity-90 transition-all mt-auto active:scale-95 text-base">กลับหน้าหลัก</button>
+            <button onclick="closeGameAndReturn()" class="w-full bg-app-primary text-white py-4 rounded-[16px] font-bold shadow-soft hover:bg-opacity-90 transition-all mt-auto active:scale-95 text-base shrink-0">กลับหน้าหลัก</button>
         </div>
     </div>
 
@@ -570,9 +569,9 @@
     <input type="file" id="csv-import-wastes" accept=".csv" class="hidden" onchange="importCSV(event, 'wastes')">
 
     <!-- Setting Modal (Admin) -->
-    <div id="setting-modal" class="modal-bottom">
+    <div id="setting-modal" class="modal-bottom h-[90vh] md:h-[95vh]">
         <div class="w-16 h-1.5 bg-gray-200 rounded-full mx-auto mt-4 mb-2 md:hidden"></div>
-        <div class="px-8 pb-4 border-b border-gray-100 flex justify-between items-center pt-6 md:pt-8">
+        <div class="px-8 pb-4 border-b border-gray-100 flex justify-between items-center pt-6 md:pt-8 shrink-0">
             <h2 class="text-2xl font-bold text-app-dark tracking-tight flex items-center"><i class="fa-solid fa-sliders text-app-primary mr-3"></i> Admin Center</h2>
             <button onclick="closeAllModals()" class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-200 transition-colors"><i class="fa-solid fa-xmark text-lg"></i></button>
         </div>
@@ -585,7 +584,7 @@
             <button class="admin-tab px-6 py-2.5 bg-[#F8FAF9] text-gray-600 text-[13px] font-semibold rounded-full whitespace-nowrap border border-gray-200 hover:bg-gray-50 transition-all" onclick="switchAdminTab('tab-users', this)">รายชื่อผู้เล่น</button>
         </div>
 
-        <div class="flex-1 overflow-y-auto p-8 bg-white modal-content-scroll">
+        <div class="flex-1 overflow-y-auto p-8 bg-white modal-content-scroll pb-16">
             <!-- Tab 1: General & DB Connect -->
             <div id="tab-general" class="admin-tab-content space-y-8 max-w-4xl mx-auto">
                 <div class="bg-white p-6 rounded-[24px] border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
