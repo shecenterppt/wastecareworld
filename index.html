@@ -1703,7 +1703,7 @@
             }
             if(!db.bins || db.bins.length === 0 || !db.wastes || db.wastes.length === 0) return Swal.fire('Oops!', 'ยังไม่มีข้อมูลถังขยะหรือขยะในระบบ', 'error');
             
-            Swal.fire({ title: 'พร้อมลุยไหม?', html: `<p class="text-sm text-gray-500 mb-2">ด่าน 1: ขยะในอาคารผลิต (2 นาที)</p><p class="text-xs text-app-primary font-bold mt-2">สิทธิ์การเล่นรอบนี้: ${2 - currentUser.playCount} ครั้ง</p>`, icon: 'question', showCancelButton: true, confirmButtonText: 'Start Game', cancelButtonText: 'Later', confirmButtonColor: '#5C8D67', cancelButtonColor:'#cbd5e1', customClass: { confirmButton: 'rounded-[16px] px-8', cancelButton: 'rounded-[16px] px-6 text-gray-600' } }).then((res) => {
+            Swal.fire({ title: 'พร้อมลุยไหม? ลากขยะลงในถังให้ถูกต้อง', html: `<p class="text-sm text-gray-500 mb-2">ด่าน 1: ขยะในอาคารผลิต (2 นาที)</p><p class="text-xs text-app-primary font-bold mt-2">สิทธิ์การเล่นรอบนี้: ${2 - currentUser.playCount} ครั้ง</p>`, icon: 'question', showCancelButton: true, confirmButtonText: 'Start Game', cancelButtonText: 'Later', confirmButtonColor: '#5C8D67', cancelButtonColor:'#cbd5e1', customClass: { confirmButton: 'rounded-[16px] px-8', cancelButton: 'rounded-[16px] px-6 text-gray-600' } }).then((res) => {
                 if(res.isConfirmed) initGameStage(1);
             });
         }
