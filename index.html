@@ -86,13 +86,12 @@
 
         /* Custom Loading Animation: Sprout to Tree */
         @keyframes growTree {
-            0% { transform: scale(0.5); opacity: 0.5; color: #A5C7A9; content: "\f4d8"; /* fa-seedling */ }
-            50% { transform: scale(1.2); opacity: 1; color: #5C8D67; content: "\f1bb"; /* fa-tree */ }
+            0% { transform: scale(0.5); opacity: 0.5; color: #A5C7A9; content: "\f4d8"; }
+            50% { transform: scale(1.2); opacity: 1; color: #5C8D67; content: "\f1bb"; }
             100% { transform: scale(0.5); opacity: 0.5; color: #A5C7A9; content: "\f4d8"; }
         }
         .tree-loader-container { display: flex; justify-content: center; align-items: center; height: 60px; padding: 10px 0; }
         .tree-loader { display: inline-block; font-family: "Font Awesome 6 Free"; font-weight: 900; font-size: 2rem; animation: growTree 1.5s infinite ease-in-out; }
-        /* Fallback content rule for animation */
         .tree-loader::before { content: "\f4d8"; animation: growTree 1.5s infinite ease-in-out; }
 
         /* QR Scanner Overrides */
@@ -114,14 +113,12 @@
 </head>
 <body class="antialiased h-screen flex flex-col">
 
-    <!-- PAGE 1: Landing Page (เปลี่ยนเป็นโครงสร้าง Flex ที่ Scroll ได้กันปุ่มหาย) -->
+    <!-- PAGE 1: Landing Page -->
     <div id="page-landing" class="flex flex-col h-screen w-full relative bg-app-bg overflow-y-auto">
-        <!-- พื้นหลังสีเรียบ + รูปภาพ (ใช้ flex-1 เพื่อให้ขยายเต็มที่เหลือ) -->
         <div class="flex-1 min-h-[45vh] w-full bg-[#EAF4EC] bg-cover bg-center transition-all duration-700 relative shrink-0" id="landing-bg" style="background-image: url('https://images.unsplash.com/photo-1542273917363-3b1817f69a5d?auto=format&fit=crop&w=800&q=80');">
             <div class="w-full h-full bg-gradient-to-b from-black/20 via-transparent to-app-bg absolute top-0 left-0"></div>
         </div>
         
-        <!-- กล่องเนื้อหาด้านล่าง -->
         <div class="w-full bg-white rounded-t-[40px] px-6 pt-6 pb-12 flex flex-col items-center justify-center text-center z-10 shadow-[0_-20px_50px_rgba(0,0,0,0.08)] shrink-0 -mt-10 relative">
             <div class="w-16 h-1.5 bg-gray-200 rounded-full mb-6"></div>
             
@@ -862,7 +859,7 @@
         };
 
         function enforceDBStructure(database) {
-            if (!database || typeof database !== 'object') database = {};
+            if (!database) database = {};
             if (!database.settings) database.settings = defaultData.settings;
             if (!database.users) database.users = [];
             if (!database.levels || database.levels.length === 0) database.levels = defaultData.levels;
@@ -894,13 +891,11 @@
         }
 
         let rawDb = Storage.get('wcw_db');
-        let parsedDb = null;
-        try { parsedDb = rawDb ? JSON.parse(rawDb) : null; } catch(e) { console.error("Parse error:", e); }
-        let db = enforceDBStructure(parsedDb);
-
+        let db = enforceDBStructure(rawDb ? JSON.parse(rawDb) : null);
         let currentUser = null;
         let isCloudLoading = false;
         let currentRankTab = 'weekly'; 
+        let loginStep = 1;
         let html5QrcodeScanner = null;
         
         let adminUsersCurrentPage = 1;
@@ -990,6 +985,7 @@
             if(btn) btn.classList.add('animate-spin');
             
             await loadFromCloud();
+            reindexWeeks();
             evaluateCurrentWeek();
             applySettings();
             loadUserDashboard();
@@ -998,7 +994,33 @@
             if(btn) btn.classList.remove('animate-spin');
         }
 
-        // ================= AUTO WEEK EVALUATION =================
+        // ================= WEEKS LOGIC =================
+        function reindexWeeks() {
+            if (!db.settings.weeks) db.settings.weeks = [];
+            // เรียงตามวันที่เริ่มต้น (เก่า -> ใหม่)
+            db.settings.weeks.sort((a, b) => new Date(a.start) - new Date(b.start));
+            
+            // รันเลขสัปดาห์ใหม่ และตามไปอัปเดต History ของ User ให้สอดคล้องกัน
+            let oldNewWeekMap = {};
+            db.settings.weeks.forEach((w, index) => {
+                let newWeekNum = index + 1;
+                oldNewWeekMap[w.weekNum] = newWeekNum;
+                w.weekNum = newWeekNum;
+            });
+
+            // อัปเดต History ของ User ทั้งหมด
+            db.users.forEach(u => {
+                if (u.history) {
+                    u.history.forEach(item => {
+                        if (item.week && oldNewWeekMap[item.week]) {
+                            item.week = oldNewWeekMap[item.week];
+                        }
+                    });
+                }
+            });
+            Storage.set('wcw_db', JSON.stringify(db));
+        }
+
         function evaluateCurrentWeek() {
             if(!db.settings.weeks || db.settings.weeks.length === 0) {
                 db.settings.currentWeek = null;
@@ -1038,6 +1060,7 @@
             
             Storage.set('wcw_db', JSON.stringify(db));
 
+            reindexWeeks();
             evaluateCurrentWeek();
             applySettings();
             setInterval(updateLandingBackground, 60000);
@@ -1058,8 +1081,9 @@
             if (db.settings.gasUrl && db.settings.sheetId) { 
                 loadFromCloud().then((success) => {
                     if(success) {
+                        reindexWeeks();
                         evaluateCurrentWeek();
-                        applySettings(); // โหลดรูปใหม่ทันทีเมื่อได้ข้อมูลจาก Cloud
+                        applySettings(); 
                         if(currentUser) loadUserDashboard();
                     }
                 }); 
@@ -1253,31 +1277,26 @@
 
             Swal.fire({ title: 'กำลังตรวจสอบข้อมูล...', html: '<div class="tree-loader-container"><div class="tree-loader"></div></div>', allowOutsideClick: false, showConfirmButton: false });
             
-            try {
-                await loadFromCloud();
-                if(!db.users) db.users = [];
+            await loadFromCloud();
+            if(!db.users) db.users = [];
 
-                let existing = db.users.find(u => String(u.empId) === empId);
+            let existing = db.users.find(u => String(u.empId) === empId);
 
-                if (existing) {
-                    currentUser = existing;
+            if (existing) {
+                currentUser = existing;
+                completeLogin();
+            } else {
+                if (nicknameVisible && nickname) {
+                    Swal.fire({ title: 'กำลังลงทะเบียน...', html: '<div class="tree-loader-container"><div class="tree-loader"></div></div>', allowOutsideClick: false, showConfirmButton: false });
+                    currentUser = { empId: String(empId), name: nickname, role: 'user', points: 0, history: [], checkIn: { lastDate: null, streak: 0 }, playedWeek: 0, playCount: 0, scannedQRs: [] };
+                    db.users.push(currentUser);
+                    await saveDB(); 
                     completeLogin();
                 } else {
-                    if (nicknameVisible && nickname) {
-                        Swal.fire({ title: 'กำลังลงทะเบียน...', html: '<div class="tree-loader-container"><div class="tree-loader"></div></div>', allowOutsideClick: false, showConfirmButton: false });
-                        currentUser = { empId: String(empId), name: nickname, role: 'user', points: 0, history: [], checkIn: { lastDate: null, streak: 0 }, playedWeek: 0, playCount: 0, scannedQRs: [] };
-                        db.users.push(currentUser);
-                        await saveDB(); 
-                        completeLogin();
-                    } else {
-                        Swal.close();
-                        document.getElementById('nickname-group').style.display = 'block';
-                        document.getElementById('login-nickname').focus();
-                    }
+                    Swal.close();
+                    document.getElementById('nickname-group').style.display = 'block';
+                    document.getElementById('login-nickname').focus();
                 }
-            } catch(e) {
-                console.error(e);
-                Swal.fire({title: 'เกิดข้อผิดพลาด', text:'ไม่สามารถเชื่อมต่อระบบได้ กรุณาลองใหม่อีกครั้ง', icon:'error', customClass:{confirmButton:'rounded-xl bg-app-primary'}});
             }
         }
 
@@ -1404,7 +1423,6 @@
         function initPopupSlider() {
             const slider = document.getElementById('popup-slider');
             const dotsContainer = document.getElementById('popup-dots');
-            const btnAcknowledge = document.getElementById('btn-acknowledge-popup');
             
             if(!db.settings.popupImages || db.settings.popupImages.length === 0) return;
 
@@ -1572,8 +1590,7 @@
             selector.innerHTML = '';
             
             if(db.settings.weeks && db.settings.weeks.length > 0) {
-                // แก้ไขปัญหา Sort เวลา โดยยึด start date ในการจัดเรียงจากใหม่สุดไปเก่าสุด
-                [...db.settings.weeks].sort((a,b) => new Date(b.start) - new Date(a.start)).forEach(w => {
+                [...db.settings.weeks].sort((a,b) => b.weekNum - a.weekNum).forEach(w => {
                     let opt = document.createElement('option');
                     opt.value = w.weekNum;
                     opt.text = `สัปดาห์ที่ ${w.weekNum} (${formatDateThai(w.start)} - ${formatDateThai(w.end)})`;
@@ -1745,7 +1762,8 @@
         function renderBinsForStage() {
             const container = document.getElementById('bins-area');
             let activeBins = db.bins.filter(b => b.stage === 'all' || (gameStage === 1 && b.stage === 'indoor') || (gameStage === 2 && b.stage === 'outdoor'));
-            container.innerHTML = activeBins.map(b => `<div class="bin-target flex-shrink-0 flex flex-col items-center justify-end w-20 sm:w-28 h-[85%] max-h-[130px] rounded-t-[20px] rounded-b-[8px] relative shadow-md transition-transform" style="background-color: ${b.color}; border-top: 6px solid rgba(255,255,255,0.3);" data-binid="${b.id}"><div class="absolute -top-6 sm:-top-8 w-14 h-14 sm:w-16 sm:h-16 bg-white rounded-full p-2 shadow-sm flex items-center justify-center border-4 border-app-bg"><img src="${b.img || 'https://cdn-icons-png.flaticon.com/512/3299/3299935.png'}" class="w-full h-full object-contain"></div><span class="text-[11px] sm:text-[14px] text-white font-bold mb-2 sm:mb-3 text-center leading-tight drop-shadow-md whitespace-normal px-1">${b.name}</span></div>`).join('');
+            
+            container.innerHTML = activeBins.map(b => `<div class="bin-target flex-shrink-0 flex flex-col items-center justify-end w-24 h-28 sm:w-28 sm:h-32 rounded-t-[20px] rounded-b-[8px] relative shadow-md transition-transform" style="background-color: ${b.color}; border-top: 6px solid rgba(255,255,255,0.3);" data-binid="${b.id}"><div class="absolute -top-8 w-16 h-16 sm:w-20 sm:h-20 bg-white rounded-full p-2 shadow-sm flex items-center justify-center border-4 border-app-bg"><img src="${b.img || 'https://cdn-icons-png.flaticon.com/512/3299/3299935.png'}" class="w-full h-full object-contain"></div><span class="text-[12px] sm:text-[14px] text-white font-bold mb-3 text-center leading-tight drop-shadow-md whitespace-normal px-1">${b.name}</span></div>`).join('');
         }
 
         function spawnWastes() {
@@ -1770,12 +1788,12 @@
                 let wType = shuffledWastes[i];
                 let el = document.createElement('div');
                 
-                el.className = 'waste-item bg-white p-2.5 sm:p-4 rounded-[16px] shadow-[0_8px_20px_rgba(0,0,0,0.06)] border border-gray-100 flex flex-col items-center justify-center min-w-[75px] sm:min-w-[90px]';
-                el.innerHTML = `<img src="${wType.img || 'https://cdn-icons-png.flaticon.com/512/839/839088.png'}" class="w-10 h-10 sm:w-14 sm:h-14 object-contain mb-1.5 drop-shadow-sm"><span class="text-[10px] sm:text-[13px] font-bold text-gray-500 whitespace-nowrap bg-gray-50 px-2 py-0.5 rounded-full border border-gray-100">${wType.name}</span>`;
+                el.className = 'waste-item bg-white p-3 sm:p-4 rounded-[16px] shadow-[0_8px_20px_rgba(0,0,0,0.06)] border border-gray-100 flex flex-col items-center justify-center min-w-[80px] sm:min-w-[90px]';
+                el.innerHTML = `<img src="${wType.img || 'https://cdn-icons-png.flaticon.com/512/839/839088.png'}" class="w-12 h-12 sm:w-14 sm:h-14 object-contain mb-1.5 drop-shadow-sm"><span class="text-[11px] sm:text-[13px] font-bold text-gray-500 whitespace-nowrap bg-gray-50 px-2.5 py-0.5 rounded-full border border-gray-100">${wType.name}</span>`;
                 el.dataset.targetbin = wType.binId;
                 
-                el.style.left = Math.max(10, Math.random() * (areaWidth - 90)) + 'px';
-                el.style.top = Math.max(10, Math.random() * (areaHeight - 90)) + 'px';
+                el.style.left = Math.max(10, Math.random() * (areaWidth - 100)) + 'px';
+                el.style.top = Math.max(10, Math.random() * (areaHeight - 110)) + 'px';
                 let rot = Math.floor(Math.random() * 20) - 10;
                 el.style.transform = `rotate(${rot}deg)`;
                 
@@ -1867,14 +1885,15 @@
             currentUser.points += total;
             if(!currentUser.history) currentUser.history = [];
             
+            let weekToRecord = db.settings.currentWeek || 0;
             currentUser.history.unshift({ 
                 date: getThaiTimeStr(), 
                 pts: total, 
-                detail: `กิจกรรมสัปดาห์ที่ ${db.settings.currentWeek}`, 
-                week: db.settings.currentWeek 
+                detail: `กิจกรรมสัปดาห์ที่ ${weekToRecord}`, 
+                week: weekToRecord 
             });
             
-            currentUser.playedWeek = db.settings.currentWeek;
+            currentUser.playedWeek = weekToRecord;
             currentUser.playCount = (currentUser.playCount || 0) + 1;
             
             await saveUser();
@@ -1962,7 +1981,7 @@
             document.getElementById('admin-table-popup-images').innerHTML = popupHtml || '<tr><td colspan="3" class="p-5 text-center text-gray-400">ยังไม่มีรูปภาพ Popup</td></tr>';
 
             if(!db.settings.weeks) db.settings.weeks = [];
-            document.getElementById('admin-weeks-list').innerHTML = db.settings.weeks.sort((a,b) => new Date(b.start) - new Date(a.start)).map(w => {
+            document.getElementById('admin-weeks-list').innerHTML = db.settings.weeks.map(w => {
                 let isCurrent = w.weekNum === db.settings.currentWeek;
                 let badge = isCurrent ? `<span class="bg-app-primary text-white text-[9px] px-2 py-0.5 rounded-full ml-1">รอบปัจจุบัน</span>` : '';
                 return `
@@ -2322,9 +2341,45 @@
             }
         }
 
+        // ================= REINDEX WEEKS =================
+        function reindexWeeks() {
+            if (!db.settings.weeks) db.settings.weeks = [];
+            // เรียงตามวันที่เริ่มต้น (เก่า -> ใหม่)
+            db.settings.weeks.sort((a, b) => new Date(a.start) - new Date(b.start));
+            
+            // รันเลขสัปดาห์ใหม่ และตามไปอัปเดต History ของ User ให้สอดคล้องกัน
+            let oldNewWeekMap = {};
+            db.settings.weeks.forEach((w, index) => {
+                let newWeekNum = index + 1;
+                oldNewWeekMap[w.weekNum] = newWeekNum;
+                w.weekNum = newWeekNum;
+            });
+
+            // อัปเดต History ของ User ทั้งหมดให้ตรงกับเลขสัปดาห์ใหม่
+            db.users.forEach(u => {
+                if (u.history) {
+                    u.history.forEach(item => {
+                        if (item.week && oldNewWeekMap[item.week]) {
+                            item.week = oldNewWeekMap[item.week];
+                        }
+                    });
+                }
+            });
+        }
+
         async function startNewWeek() {
-            let nextWeek = (db.settings.weeks && db.settings.weeks.length > 0) ? (Math.max(...db.settings.weeks.map(w=>w.weekNum)) + 1) : 1;
-            promptWeekDates(nextWeek, 'เริ่มรอบใหม่', '', '');
+            // ดึงวันที่สิ้นสุดของรอบล่าสุดเพื่อใช้เป็นค่า default สำหรับรอบใหม่
+            let defaultStart = "";
+            if (db.settings.weeks && db.settings.weeks.length > 0) {
+                // หากลบการเรียงลำดับ ให้เอาสัปดาห์ที่มี start date ล่าสุด
+                let latestWeek = [...db.settings.weeks].sort((a, b) => new Date(b.start) - new Date(a.start))[0];
+                if (latestWeek && latestWeek.end) {
+                    let d = new Date(latestWeek.end);
+                    d.setDate(d.getDate() + 1); // บวกไปอีก 1 วัน
+                    defaultStart = d.toISOString().split('T')[0];
+                }
+            }
+            promptWeekDates('new', 'เริ่มรอบใหม่', defaultStart, '');
         }
 
         async function editWeek(weekNum) {
@@ -2334,32 +2389,36 @@
         
         function deleteWeek(weekNum) {
             Swal.fire({
-                title: `ลบสัปดาห์ที่ ${weekNum}?`, text: "คุณต้องการลบรอบเวลานี้ใช่หรือไม่?", icon: 'warning',
+                title: `ลบสัปดาห์ที่ ${weekNum}?`, text: "คุณต้องการลบรอบเวลานี้ใช่หรือไม่? (การลบจะทำให้เลขสัปดาห์ถูกจัดเรียงใหม่ทั้งหมด)", icon: 'warning',
                 showCancelButton: true, confirmButtonColor: '#E07A5F', confirmButtonText: 'ลบ', cancelButtonText: 'ยกเลิก',
                 customClass: { confirmButton: 'rounded-xl', cancelButton: 'rounded-xl bg-gray-200 text-gray-700 border-none' }
             }).then(async (res) => {
                 if(res.isConfirmed) {
-                    Swal.fire({ title: 'กำลังลบ...', html: '<div class="tree-loader-container"><div class="tree-loader"></div></div>', allowOutsideClick: false, showConfirmButton: false });
+                    Swal.fire({ title: 'กำลังลบและจัดเรียงใหม่...', html: '<div class="tree-loader-container"><div class="tree-loader"></div></div>', allowOutsideClick: false, showConfirmButton: false });
                     let backupWeeks = JSON.parse(JSON.stringify(db.settings.weeks));
+                    let backupUsers = JSON.parse(JSON.stringify(db.users));
+                    
                     db.settings.weeks = db.settings.weeks.filter(w => Number(w.weekNum) !== Number(weekNum));
+                    reindexWeeks(); // จัดเรียงลำดับใหม่ทันทีหลังลบ
                     
                     const success = await saveDB(); 
                     if(success) {
                         evaluateCurrentWeek(); 
                         applySettings();
-                        Swal.fire({title: 'ลบแล้ว!', text: 'ข้อมูลสัปดาห์ถูกลบเรียบร้อย', icon: 'success', timer: 1500, showConfirmButton: false});
+                        Swal.fire({title: 'ลบแล้ว!', text: 'ข้อมูลสัปดาห์ถูกลบและจัดเรียงเลขใหม่เรียบร้อย', icon: 'success', timer: 1500, showConfirmButton: false});
                     } else {
                         db.settings.weeks = backupWeeks; 
-                        Swal.fire({title:'ข้อผิดพลาด', text:'ไม่สามารถเชื่อมต่อฐานข้อมูลได้', icon:'error', customClass:{confirmButton:'bg-app-primary rounded-xl px-6'}});
+                        db.users = backupUsers;
+                        Swal.fire({title:'ข้อผิดพลาด', text:'ไม่สามารถเชื่อมต่อฐานข้อมูลได้ ข้อมูลถูกคืนค่ากลับไปเหมือนเดิม', icon:'error', customClass:{confirmButton:'bg-app-primary rounded-xl px-6'}});
                     }
                 }
             });
         }
 
-        async function promptWeekDates(weekNum, titleStr, defaultStart, defaultEnd) {
+        async function promptWeekDates(weekNumOrNew, titleStr, defaultStart, defaultEnd) {
             const today = getThaiDateStr();
             const { value: formValues } = await Swal.fire({
-                title: titleStr, html: `<p class="text-sm text-gray-500 mb-6">กำหนดระยะเวลาสำหรับ <b class="text-app-dark">สัปดาห์ที่ ${weekNum}</b></p><div class="flex flex-col gap-4 text-left w-[95%] mx-auto bg-gray-50 p-5 rounded-[20px] border border-gray-100"><div><label class="text-[13px] font-bold text-gray-700 pl-1">วันที่เริ่มต้น</label><input type="date" id="swal-week-start" class="swal2-input text-sm rounded-xl border-gray-200 mt-2 w-full" value="${defaultStart || today}"></div><div><label class="text-[13px] font-bold text-gray-700 pl-1">วันที่สิ้นสุด</label><input type="date" id="swal-week-end" class="swal2-input text-sm rounded-xl border-gray-200 mt-2 w-full" value="${defaultEnd || ''}"></div></div>`,
+                title: titleStr, html: `<p class="text-sm text-gray-500 mb-6">กำหนดระยะเวลา (ระบบจะจัดเรียงเลขสัปดาห์ใหม่อัตโนมัติ)</p><div class="flex flex-col gap-4 text-left w-[95%] mx-auto bg-gray-50 p-5 rounded-[20px] border border-gray-100"><div><label class="text-[13px] font-bold text-gray-700 pl-1">วันที่เริ่มต้น</label><input type="date" id="swal-week-start" class="swal2-input text-sm rounded-xl border-gray-200 mt-2 w-full" value="${defaultStart || today}"></div><div><label class="text-[13px] font-bold text-gray-700 pl-1">วันที่สิ้นสุด</label><input type="date" id="swal-week-end" class="swal2-input text-sm rounded-xl border-gray-200 mt-2 w-full" value="${defaultEnd || ''}"></div></div>`,
                 focusConfirm: false, showCancelButton: true, confirmButtonText: 'บันทึก', cancelButtonText: 'ยกเลิก', customClass: {confirmButton: 'rounded-xl bg-app-primary px-8 py-3', cancelButton: 'rounded-xl px-8 py-3 text-gray-700 bg-gray-200 border-none'},
                 preConfirm: () => {
                     let start = document.getElementById('swal-week-start').value; let end = document.getElementById('swal-week-end').value;
@@ -2369,40 +2428,49 @@
                 }
             });
             if(formValues) {
-                Swal.fire({ title: 'กำลังบันทึกข้อมูล...', html: '<div class="tree-loader-container"><div class="tree-loader"></div></div>', allowOutsideClick: false, showConfirmButton: false });
+                Swal.fire({ title: 'กำลังบันทึกและจัดเรียงข้อมูล...', html: '<div class="tree-loader-container"><div class="tree-loader"></div></div>', allowOutsideClick: false, showConfirmButton: false });
+
+                let backupWeeks = JSON.parse(JSON.stringify(db.settings.weeks));
+                let backupUsers = JSON.parse(JSON.stringify(db.users));
 
                 if (!db.settings.weeks) db.settings.weeks = [];
-                let existing = db.settings.weeks.find(x => Number(x.weekNum) === Number(weekNum));
                 
-                let oldStart = existing ? existing.start : null;
-                let oldEnd = existing ? existing.end : null;
-
-                if (existing) {
-                    existing.start = formValues.start;
-                    existing.end = formValues.end;
+                if (weekNumOrNew === 'new') {
+                    // ใช้เลขสุ่มชั่วคราวไปก่อน เดี๋ยว reindexWeeks จะเรียงและให้เลขใหม่ที่ถูกต้องเอง
+                    let tempNum = Date.now(); 
+                    db.settings.weeks.push({ weekNum: tempNum, start: formValues.start, end: formValues.end });
                 } else {
-                    db.settings.weeks.push({ weekNum: Number(weekNum), start: formValues.start, end: formValues.end });
+                    let existing = db.settings.weeks.find(x => Number(x.weekNum) === Number(weekNumOrNew));
+                    if (existing) {
+                        existing.start = formValues.start;
+                        existing.end = formValues.end;
+                    }
                 }
                 
-                if (titleStr === 'เริ่มรอบใหม่') {
-                    db.users.forEach(u => {
-                        u.playCount = 0;
-                        u.playedWeek = Number(weekNum);
-                    });
+                // จัดเรียงและกำหนดเลขสัปดาห์ใหม่ทั้งหมด
+                reindexWeeks();
+                
+                // ถ้ารีเซ็ตสัปดาห์ใหม่ ให้เคลียร์จำนวนการเล่นของผู้เล่นทุกคน
+                if (weekNumOrNew === 'new') {
+                    // หาเลขสัปดาห์ของรอบที่เพิ่งสร้างไปตะกี้
+                    let newCreatedWeek = db.settings.weeks.find(w => w.start === formValues.start && w.end === formValues.end);
+                    if (newCreatedWeek) {
+                         db.users.forEach(u => {
+                            u.playCount = 0;
+                            u.playedWeek = newCreatedWeek.weekNum;
+                        });
+                    }
                 }
                 
                 const success = await saveDB(); 
                 if (success) {
                     evaluateCurrentWeek(); 
                     applySettings(); 
-                    Swal.fire({title:'บันทึกสำเร็จ!', text:`ข้อมูลสัปดาห์ที่ ${weekNum} ถูกตั้งเวลาใหม่เรียบร้อยแล้ว`, icon:'success', customClass:{confirmButton:'bg-app-primary rounded-xl px-6'}});
+                    Swal.fire({title:'บันทึกสำเร็จ!', text:`ข้อมูลสัปดาห์ถูกตั้งเวลาและจัดเรียงใหม่เรียบร้อยแล้ว`, icon:'success', customClass:{confirmButton:'bg-app-primary rounded-xl px-6'}});
                 } else {
-                    if (existing && oldStart) {
-                        existing.start = oldStart;
-                        existing.end = oldEnd;
-                    } else {
-                        db.settings.weeks = db.settings.weeks.filter(x => Number(x.weekNum) !== Number(weekNum));
-                    }
+                    // ถ้าพังให้คืนค่าเดิม
+                    db.settings.weeks = backupWeeks;
+                    db.users = backupUsers;
                     Swal.fire({title:'ข้อผิดพลาด', text:'ไม่สามารถบันทึกข้อมูลลงฐานข้อมูลได้ โปรดลองอีกครั้ง', icon:'error', customClass:{confirmButton:'bg-app-primary rounded-xl px-6'}});
                 }
             }
