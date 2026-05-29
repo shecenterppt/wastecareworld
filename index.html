@@ -23,6 +23,7 @@
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript" defer></script>
 
     <script>
+        // กำหนดตั้งค่าเริ่มต้นให้ Tailwind ก่อนที่ Script ตัวเต็มจะรัน
         window.tailwind = window.tailwind || {};
         tailwind.config = {
             theme: {
@@ -85,12 +86,13 @@
 
         /* Custom Loading Animation: Sprout to Tree */
         @keyframes growTree {
-            0% { transform: scale(0.5); opacity: 0.5; color: #A5C7A9; content: "\f4d8"; }
-            50% { transform: scale(1.2); opacity: 1; color: #5C8D67; content: "\f1bb"; }
+            0% { transform: scale(0.5); opacity: 0.5; color: #A5C7A9; content: "\f4d8"; /* fa-seedling */ }
+            50% { transform: scale(1.2); opacity: 1; color: #5C8D67; content: "\f1bb"; /* fa-tree */ }
             100% { transform: scale(0.5); opacity: 0.5; color: #A5C7A9; content: "\f4d8"; }
         }
         .tree-loader-container { display: flex; justify-content: center; align-items: center; height: 60px; padding: 10px 0; }
         .tree-loader { display: inline-block; font-family: "Font Awesome 6 Free"; font-weight: 900; font-size: 2rem; animation: growTree 1.5s infinite ease-in-out; }
+        /* Fallback content rule for animation */
         .tree-loader::before { content: "\f4d8"; animation: growTree 1.5s infinite ease-in-out; }
 
         /* QR Scanner Overrides */
@@ -112,12 +114,14 @@
 </head>
 <body class="antialiased h-screen flex flex-col">
 
-    <!-- PAGE 1: Landing Page -->
+    <!-- PAGE 1: Landing Page (เปลี่ยนเป็นโครงสร้าง Flex ที่ Scroll ได้กันปุ่มหาย) -->
     <div id="page-landing" class="flex flex-col h-screen w-full relative bg-app-bg overflow-y-auto">
+        <!-- พื้นหลังสีเรียบ + รูปภาพ (ใช้ flex-1 เพื่อให้ขยายเต็มที่เหลือ) -->
         <div class="flex-1 min-h-[45vh] w-full bg-[#EAF4EC] bg-cover bg-center transition-all duration-700 relative shrink-0" id="landing-bg" style="background-image: url('https://images.unsplash.com/photo-1542273917363-3b1817f69a5d?auto=format&fit=crop&w=800&q=80');">
             <div class="w-full h-full bg-gradient-to-b from-black/20 via-transparent to-app-bg absolute top-0 left-0"></div>
         </div>
         
+        <!-- กล่องเนื้อหาด้านล่าง -->
         <div class="w-full bg-white rounded-t-[40px] px-6 pt-6 pb-12 flex flex-col items-center justify-center text-center z-10 shadow-[0_-20px_50px_rgba(0,0,0,0.08)] shrink-0 -mt-10 relative">
             <div class="w-16 h-1.5 bg-gray-200 rounded-full mb-6"></div>
             
@@ -157,6 +161,7 @@
                     <h2 id="user-nickname" class="font-bold text-app-dark text-sm leading-tight pr-4">User Name</h2>
                     <p id="user-empid" class="text-[10px] text-gray-500 font-medium mt-0.5">ID: 0000000</p>
                 </div>
+                <!-- ปุ่มรีเฟรชข้อมูล -->
                 <button onclick="manualRefresh()" id="btn-refresh" class="absolute -right-2 -top-2 w-7 h-7 bg-white rounded-full shadow-md text-app-primary flex items-center justify-center hover:bg-gray-50 transition-all z-20">
                     <i class="fa-solid fa-arrows-rotate text-[11px]"></i>
                 </button>
@@ -224,6 +229,7 @@
         <div class="px-6 flex flex-col h-full modal-content-scroll pt-2">
             <div class="grid grid-cols-2 gap-4" id="main-menu-grid">
                 
+                <!-- Game Button -->
                 <button onclick="startGameFlow()" class="col-span-2 bg-app-primary text-white p-5 rounded-[24px] flex items-center justify-between shadow-soft hover:shadow-float transition-all transform active:scale-95 relative overflow-hidden group">
                     <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
                     <div class="flex items-center gap-4 relative z-10">
@@ -240,6 +246,7 @@
                     </div>
                 </button>
 
+                <!-- QR Scan Button -->
                 <button onclick="openModal('qr-scan-modal')" class="col-span-2 bg-[#253E2B] text-white p-5 rounded-[24px] flex items-center justify-between shadow-sm hover:shadow-md transition-all transform active:scale-95 relative overflow-hidden">
                     <div class="flex items-center gap-4 relative z-10">
                         <div class="w-14 h-14 bg-white/10 rounded-[18px] flex items-center justify-center backdrop-blur-sm border border-white/10">
@@ -312,6 +319,7 @@
             </div>
 
             <div class="space-y-5 flex-1">
+                <!-- ซ่อนช่องชื่อเล่นไว้ก่อน -->
                 <div id="nickname-group" style="display: none;">
                     <label id="lbl-nickname" class="block text-[13px] font-semibold text-app-dark mb-2 pl-1">ชื่อเล่น (Nickname)</label>
                     <input type="text" id="login-nickname" class="w-full bg-[#F8FAF9] border border-gray-200 rounded-[16px] px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-app-secondary focus:border-app-primary transition-all placeholder-gray-400" placeholder="ระบุชื่อเล่นของคุณ">
@@ -319,7 +327,7 @@
                 </div>
                 <div>
                     <label id="lbl-empid" class="block text-[13px] font-semibold text-app-dark mb-2 pl-1">รหัสพนักงาน (Employee ID)</label>
-                    <input type="text" id="login-empid" maxlength="8" class="w-full bg-[#F8FAF9] border border-gray-200 rounded-[16px] px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-app-secondary focus:border-app-primary transition-all placeholder-gray-400" placeholder="รหัสพนักงาน 7 หลัก">
+                    <input type="text" id="login-empid" maxlength="8" class="w-full bg-[#F8FAF9] border border-gray-200 rounded-[16px] px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-app-secondary focus:border-app-primary transition-all placeholder-gray-400" placeholder="ตัวเลข 7 หลัก หรือ admin123">
                     <p id="lbl-hint" class="text-[11px] text-gray-400 mt-2 pl-1 font-light"><i class="fa-solid fa-circle-info mr-1"></i> สำหรับการเข้าระบบครั้งถัดไป กรอกแค่รหัสพนักงาน</p>
                 </div>
             </div>
@@ -854,7 +862,7 @@
         };
 
         function enforceDBStructure(database) {
-            if (!database) database = {};
+            if (!database || typeof database !== 'object') database = {};
             if (!database.settings) database.settings = defaultData.settings;
             if (!database.users) database.users = [];
             if (!database.levels || database.levels.length === 0) database.levels = defaultData.levels;
@@ -886,11 +894,13 @@
         }
 
         let rawDb = Storage.get('wcw_db');
-        let db = enforceDBStructure(rawDb ? JSON.parse(rawDb) : null);
+        let parsedDb = null;
+        try { parsedDb = rawDb ? JSON.parse(rawDb) : null; } catch(e) { console.error("Parse error:", e); }
+        let db = enforceDBStructure(parsedDb);
+
         let currentUser = null;
         let isCloudLoading = false;
         let currentRankTab = 'weekly'; 
-        let loginStep = 1;
         let html5QrcodeScanner = null;
         
         let adminUsersCurrentPage = 1;
@@ -1008,7 +1018,6 @@
                 db.settings.weekStartDate = foundWeek.start;
                 db.settings.weekEndDate = foundWeek.end;
             } else {
-                // ถ้าวันนี้ไม่ตรงกับสัปดาห์ใดๆ เลย ให้เคลียร์ค่ารอบปัจจุบันทิ้ง
                 db.settings.currentWeek = null;
                 db.settings.weekStartDate = "";
                 db.settings.weekEndDate = "";
@@ -1046,12 +1055,11 @@
                 }
             }
 
-            // ถ้ามีลิงก์อยู่แล้ว ให้โหลดข้อมูล Cloud อัปเดตทับอัตโนมัติ
             if (db.settings.gasUrl && db.settings.sheetId) { 
                 loadFromCloud().then((success) => {
                     if(success) {
                         evaluateCurrentWeek();
-                        applySettings();
+                        applySettings(); // โหลดรูปใหม่ทันทีเมื่อได้ข้อมูลจาก Cloud
                         if(currentUser) loadUserDashboard();
                     }
                 }); 
@@ -1245,26 +1253,31 @@
 
             Swal.fire({ title: 'กำลังตรวจสอบข้อมูล...', html: '<div class="tree-loader-container"><div class="tree-loader"></div></div>', allowOutsideClick: false, showConfirmButton: false });
             
-            await loadFromCloud();
-            if(!db.users) db.users = [];
+            try {
+                await loadFromCloud();
+                if(!db.users) db.users = [];
 
-            let existing = db.users.find(u => String(u.empId) === empId);
+                let existing = db.users.find(u => String(u.empId) === empId);
 
-            if (existing) {
-                currentUser = existing;
-                completeLogin();
-            } else {
-                if (nicknameVisible && nickname) {
-                    Swal.fire({ title: 'กำลังลงทะเบียน...', html: '<div class="tree-loader-container"><div class="tree-loader"></div></div>', allowOutsideClick: false, showConfirmButton: false });
-                    currentUser = { empId: String(empId), name: nickname, role: 'user', points: 0, history: [], checkIn: { lastDate: null, streak: 0 }, playedWeek: 0, playCount: 0, scannedQRs: [] };
-                    db.users.push(currentUser);
-                    await saveDB(); 
+                if (existing) {
+                    currentUser = existing;
                     completeLogin();
                 } else {
-                    Swal.close();
-                    document.getElementById('nickname-group').style.display = 'block';
-                    document.getElementById('login-nickname').focus();
+                    if (nicknameVisible && nickname) {
+                        Swal.fire({ title: 'กำลังลงทะเบียน...', html: '<div class="tree-loader-container"><div class="tree-loader"></div></div>', allowOutsideClick: false, showConfirmButton: false });
+                        currentUser = { empId: String(empId), name: nickname, role: 'user', points: 0, history: [], checkIn: { lastDate: null, streak: 0 }, playedWeek: 0, playCount: 0, scannedQRs: [] };
+                        db.users.push(currentUser);
+                        await saveDB(); 
+                        completeLogin();
+                    } else {
+                        Swal.close();
+                        document.getElementById('nickname-group').style.display = 'block';
+                        document.getElementById('login-nickname').focus();
+                    }
                 }
+            } catch(e) {
+                console.error(e);
+                Swal.fire({title: 'เกิดข้อผิดพลาด', text:'ไม่สามารถเชื่อมต่อระบบได้ กรุณาลองใหม่อีกครั้ง', icon:'error', customClass:{confirmButton:'rounded-xl bg-app-primary'}});
             }
         }
 
@@ -1391,6 +1404,7 @@
         function initPopupSlider() {
             const slider = document.getElementById('popup-slider');
             const dotsContainer = document.getElementById('popup-dots');
+            const btnAcknowledge = document.getElementById('btn-acknowledge-popup');
             
             if(!db.settings.popupImages || db.settings.popupImages.length === 0) return;
 
@@ -1558,7 +1572,8 @@
             selector.innerHTML = '';
             
             if(db.settings.weeks && db.settings.weeks.length > 0) {
-                [...db.settings.weeks].sort((a,b) => b.weekNum - a.weekNum).forEach(w => {
+                // แก้ไขปัญหา Sort เวลา โดยยึด start date ในการจัดเรียงจากใหม่สุดไปเก่าสุด
+                [...db.settings.weeks].sort((a,b) => new Date(b.start) - new Date(a.start)).forEach(w => {
                     let opt = document.createElement('option');
                     opt.value = w.weekNum;
                     opt.text = `สัปดาห์ที่ ${w.weekNum} (${formatDateThai(w.start)} - ${formatDateThai(w.end)})`;
@@ -1687,20 +1702,8 @@
         function startGameFlow() {
             closeAllModals(); 
             
-            const today = getThaiDateStr();
-            let activeWeek = null;
-            if (db.settings.weeks) {
-                activeWeek = db.settings.weeks.find(w => today >= w.start && today <= w.end);
-            }
-
-            if (!activeWeek && currentUser.role !== 'admin') {
-                return Swal.fire({ title: 'อยู่นอกเวลากิจกรรม!', text: `ขณะนี้ยังไม่มีรอบกิจกรรมที่เปิดให้เล่น กรุณารอประกาศจากผู้ดูแลระบบ`, icon: 'warning', confirmButtonColor: '#E07A5F', customClass:{confirmButton:'rounded-xl px-6'} });
-            }
-
-            let weekToPlay = activeWeek ? activeWeek.weekNum : (db.settings.currentWeek || 0);
-
-            if(currentUser.playedWeek !== weekToPlay) {
-                currentUser.playedWeek = weekToPlay;
+            if(currentUser.playedWeek !== db.settings.currentWeek) {
+                currentUser.playedWeek = db.settings.currentWeek;
                 currentUser.playCount = 0;
                 saveUser();
             }
@@ -1709,6 +1712,12 @@
                 return openModal('weekly-summary-modal');
             }
 
+            const today = getThaiDateStr();
+            if (db.settings.weekStartDate && db.settings.weekEndDate && currentUser.role !== 'admin') {
+                if (today < db.settings.weekStartDate || today > db.settings.weekEndDate) {
+                    return Swal.fire({ title: 'อยู่นอกเวลากิจกรรม!', text: `รอบนี้เปิดให้เล่นระหว่างวันที่ ${formatDateThai(db.settings.weekStartDate)} ถึง ${formatDateThai(db.settings.weekEndDate)}`, icon: 'warning', confirmButtonColor: '#E07A5F', customClass:{confirmButton:'rounded-xl px-6'} });
+                }
+            }
             if(!db.bins || db.bins.length === 0 || !db.wastes || db.wastes.length === 0) return Swal.fire('Oops!', 'ยังไม่มีข้อมูลถังขยะหรือขยะในระบบ', 'error');
             
             Swal.fire({ title: 'พร้อมลุยไหม?', html: `<p class="text-sm text-gray-500 mb-2">ด่าน 1: ขยะในอาคารผลิต (2 นาที)</p><p class="text-xs text-app-primary font-bold mt-2">สิทธิ์การเล่นรอบนี้: ${2 - currentUser.playCount} ครั้ง</p>`, icon: 'question', showCancelButton: true, confirmButtonText: 'Start Game', cancelButtonText: 'Later', confirmButtonColor: '#5C8D67', cancelButtonColor:'#cbd5e1', customClass: { confirmButton: 'rounded-[16px] px-8', cancelButton: 'rounded-[16px] px-6 text-gray-600' } }).then((res) => {
@@ -1858,15 +1867,14 @@
             currentUser.points += total;
             if(!currentUser.history) currentUser.history = [];
             
-            let weekToRecord = db.settings.currentWeek || 0;
             currentUser.history.unshift({ 
                 date: getThaiTimeStr(), 
                 pts: total, 
-                detail: `กิจกรรมสัปดาห์ที่ ${weekToRecord}`, 
-                week: weekToRecord 
+                detail: `กิจกรรมสัปดาห์ที่ ${db.settings.currentWeek}`, 
+                week: db.settings.currentWeek 
             });
             
-            currentUser.playedWeek = weekToRecord;
+            currentUser.playedWeek = db.settings.currentWeek;
             currentUser.playCount = (currentUser.playCount || 0) + 1;
             
             await saveUser();
@@ -1954,7 +1962,7 @@
             document.getElementById('admin-table-popup-images').innerHTML = popupHtml || '<tr><td colspan="3" class="p-5 text-center text-gray-400">ยังไม่มีรูปภาพ Popup</td></tr>';
 
             if(!db.settings.weeks) db.settings.weeks = [];
-            document.getElementById('admin-weeks-list').innerHTML = db.settings.weeks.sort((a,b) => b.weekNum - a.weekNum).map(w => {
+            document.getElementById('admin-weeks-list').innerHTML = db.settings.weeks.sort((a,b) => new Date(b.start) - new Date(a.start)).map(w => {
                 let isCurrent = w.weekNum === db.settings.currentWeek;
                 let badge = isCurrent ? `<span class="bg-app-primary text-white text-[9px] px-2 py-0.5 rounded-full ml-1">รอบปัจจุบัน</span>` : '';
                 return `
