@@ -10,20 +10,19 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Tailwind CSS (ห้ามใส่ defer เพื่อให้ระบบสี Custom โหลดได้ถูกต้อง) -->
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- SweetAlert2 (โหลดแบบ Defer เพื่อเพิ่มความเร็ว) -->
+    <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
     
-    <!-- HTML5 QR Code Scanner (โหลดแบบ Defer เพื่อเพิ่มความเร็ว) -->
+    <!-- HTML5 QR Code Scanner -->
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript" defer></script>
 
     <script>
-        // กำหนดตั้งค่าเริ่มต้นให้ Tailwind ก่อนที่ Script ตัวเต็มจะรัน
         window.tailwind = window.tailwind || {};
         tailwind.config = {
             theme: {
@@ -86,13 +85,12 @@
 
         /* Custom Loading Animation: Sprout to Tree */
         @keyframes growTree {
-            0% { transform: scale(0.5); opacity: 0.5; color: #A5C7A9; content: "\f4d8"; /* fa-seedling */ }
-            50% { transform: scale(1.2); opacity: 1; color: #5C8D67; content: "\f1bb"; /* fa-tree */ }
+            0% { transform: scale(0.5); opacity: 0.5; color: #A5C7A9; content: "\f4d8"; }
+            50% { transform: scale(1.2); opacity: 1; color: #5C8D67; content: "\f1bb"; }
             100% { transform: scale(0.5); opacity: 0.5; color: #A5C7A9; content: "\f4d8"; }
         }
         .tree-loader-container { display: flex; justify-content: center; align-items: center; height: 60px; padding: 10px 0; }
         .tree-loader { display: inline-block; font-family: "Font Awesome 6 Free"; font-weight: 900; font-size: 2rem; animation: growTree 1.5s infinite ease-in-out; }
-        /* Fallback content rule for animation */
         .tree-loader::before { content: "\f4d8"; animation: growTree 1.5s infinite ease-in-out; }
 
         /* QR Scanner Overrides */
@@ -114,14 +112,12 @@
 </head>
 <body class="antialiased h-screen flex flex-col">
 
-    <!-- PAGE 1: Landing Page (เปลี่ยนเป็นโครงสร้าง Flex ที่ Scroll ได้กันปุ่มหาย) -->
+    <!-- PAGE 1: Landing Page -->
     <div id="page-landing" class="flex flex-col h-screen w-full relative bg-app-bg overflow-y-auto">
-        <!-- พื้นหลังสีเรียบ + รูปภาพ (ใช้ flex-1 เพื่อให้ขยายเต็มที่เหลือ) -->
         <div class="flex-1 min-h-[45vh] w-full bg-[#EAF4EC] bg-cover bg-center transition-all duration-700 relative shrink-0" id="landing-bg" style="background-image: url('https://images.unsplash.com/photo-1542273917363-3b1817f69a5d?auto=format&fit=crop&w=800&q=80');">
             <div class="w-full h-full bg-gradient-to-b from-black/20 via-transparent to-app-bg absolute top-0 left-0"></div>
         </div>
         
-        <!-- กล่องเนื้อหาด้านล่าง -->
         <div class="w-full bg-white rounded-t-[40px] px-6 pt-6 pb-12 flex flex-col items-center justify-center text-center z-10 shadow-[0_-20px_50px_rgba(0,0,0,0.08)] shrink-0 -mt-10 relative">
             <div class="w-16 h-1.5 bg-gray-200 rounded-full mb-6"></div>
             
@@ -161,7 +157,6 @@
                     <h2 id="user-nickname" class="font-bold text-app-dark text-sm leading-tight pr-4">User Name</h2>
                     <p id="user-empid" class="text-[10px] text-gray-500 font-medium mt-0.5">ID: 0000000</p>
                 </div>
-                <!-- ปุ่มรีเฟรชข้อมูล -->
                 <button onclick="manualRefresh()" id="btn-refresh" class="absolute -right-2 -top-2 w-7 h-7 bg-white rounded-full shadow-md text-app-primary flex items-center justify-center hover:bg-gray-50 transition-all z-20">
                     <i class="fa-solid fa-arrows-rotate text-[11px]"></i>
                 </button>
@@ -229,7 +224,6 @@
         <div class="px-6 flex flex-col h-full modal-content-scroll pt-2">
             <div class="grid grid-cols-2 gap-4" id="main-menu-grid">
                 
-                <!-- Game Button -->
                 <button onclick="startGameFlow()" class="col-span-2 bg-app-primary text-white p-5 rounded-[24px] flex items-center justify-between shadow-soft hover:shadow-float transition-all transform active:scale-95 relative overflow-hidden group">
                     <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
                     <div class="flex items-center gap-4 relative z-10">
@@ -246,7 +240,6 @@
                     </div>
                 </button>
 
-                <!-- QR Scan Button -->
                 <button onclick="openModal('qr-scan-modal')" class="col-span-2 bg-[#253E2B] text-white p-5 rounded-[24px] flex items-center justify-between shadow-sm hover:shadow-md transition-all transform active:scale-95 relative overflow-hidden">
                     <div class="flex items-center gap-4 relative z-10">
                         <div class="w-14 h-14 bg-white/10 rounded-[18px] flex items-center justify-center backdrop-blur-sm border border-white/10">
@@ -319,7 +312,6 @@
             </div>
 
             <div class="space-y-5 flex-1">
-                <!-- ซ่อนช่องชื่อเล่นไว้ก่อน -->
                 <div id="nickname-group" style="display: none;">
                     <label id="lbl-nickname" class="block text-[13px] font-semibold text-app-dark mb-2 pl-1">ชื่อเล่น (Nickname)</label>
                     <input type="text" id="login-nickname" class="w-full bg-[#F8FAF9] border border-gray-200 rounded-[16px] px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-app-secondary focus:border-app-primary transition-all placeholder-gray-400" placeholder="ระบุชื่อเล่นของคุณ">
@@ -829,7 +821,7 @@
                 mainImg: "https://images.unsplash.com/photo-1542273917363-3b1817f69a5d?auto=format&fit=crop&w=800&q=80",
                 logoImg: "https://cdn-icons-png.flaticon.com/512/2913/2913426.png",
                 popupImages: [],
-                sheetId: "", gasUrl: "", currentWeek: 1, weekStartDate: "", weekEndDate: "",
+                sheetId: "", gasUrl: "", currentWeek: null, weekStartDate: "", weekEndDate: "",
                 mainImages: [
                     { url: "https://images.unsplash.com/photo-1542273917363-3b1817f69a5d?auto=format&fit=crop&w=800&q=80", startTime: "06:00", endTime: "18:00" },
                     { url: "https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=800&q=80", startTime: "18:00", endTime: "06:00" }
@@ -998,7 +990,12 @@
 
         // ================= AUTO WEEK EVALUATION =================
         function evaluateCurrentWeek() {
-            if(!db.settings.weeks || db.settings.weeks.length === 0) return;
+            if(!db.settings.weeks || db.settings.weeks.length === 0) {
+                db.settings.currentWeek = null;
+                db.settings.weekStartDate = "";
+                db.settings.weekEndDate = "";
+                return;
+            }
             const todayStr = getThaiDateStr();
             
             let foundWeek = null;
@@ -1010,6 +1007,11 @@
                 db.settings.currentWeek = foundWeek.weekNum;
                 db.settings.weekStartDate = foundWeek.start;
                 db.settings.weekEndDate = foundWeek.end;
+            } else {
+                // ถ้าวันนี้ไม่ตรงกับสัปดาห์ใดๆ เลย ให้เคลียร์ค่ารอบปัจจุบันทิ้ง
+                db.settings.currentWeek = null;
+                db.settings.weekStartDate = "";
+                db.settings.weekEndDate = "";
             }
         }
 
@@ -1020,7 +1022,7 @@
                 db.settings.gasUrl = GLOBAL_GAS_URL;
             }
 
-            if (!db.settings.mainImages) db.settings.mainImages = [{ url: db.settings.mainImg || "https://images.unsplash.com/photo-1542273917363-3b1817f69a5d?auto=format&fit=crop&w=800&q=80", startTime: "06:00", endTime: "18:00" }, { url: "https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=800&q=80", startTime: "18:00", endTime: "06:00" }];
+            if (!db.settings.mainImages || db.settings.mainImages.length === 0) db.settings.mainImages = [{ url: db.settings.mainImg || "https://images.unsplash.com/photo-1542273917363-3b1817f69a5d?auto=format&fit=crop&w=800&q=80", startTime: "06:00", endTime: "18:00" }, { url: "https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=800&q=80", startTime: "18:00", endTime: "06:00" }];
             if (typeof db.settings.weekStartDate === 'undefined') { db.settings.weekStartDate = ""; db.settings.weekEndDate = ""; }
             if (db.bins && db.bins.length > 0 && !db.bins[0].img) { db.bins.forEach(b => b.img = "https://cdn-icons-png.flaticon.com/512/3299/3299935.png"); }
             if (db.wastes && db.wastes.length > 0 && !db.wastes[0].img) { db.wastes.forEach(w => w.img = "https://cdn-icons-png.flaticon.com/512/839/839088.png"); }
@@ -1044,11 +1046,12 @@
                 }
             }
 
+            // ถ้ามีลิงก์อยู่แล้ว ให้โหลดข้อมูล Cloud อัปเดตทับอัตโนมัติ
             if (db.settings.gasUrl && db.settings.sheetId) { 
                 loadFromCloud().then((success) => {
                     if(success) {
                         evaluateCurrentWeek();
-                        applySettings(); // โหลดรูปใหม่ทันทีเมื่อได้ข้อมูลจาก Cloud
+                        applySettings();
                         if(currentUser) loadUserDashboard();
                     }
                 }); 
@@ -1144,7 +1147,7 @@
             if(cfgGas) cfgGas.value = db.settings.gasUrl || '';
             
             let dateStr = "";
-            if (db.settings.weekStartDate && db.settings.weekEndDate) {
+            if (db.settings.currentWeek && db.settings.weekStartDate && db.settings.weekEndDate) {
                 dateStr = ` <span class="text-gray-500 font-normal ml-1 bg-white px-2 py-0.5 rounded border">(${formatDateThai(db.settings.weekStartDate)} - ${formatDateThai(db.settings.weekEndDate)})</span>`;
             }
             const weekDisplay = document.getElementById('current-week-display');
@@ -1255,7 +1258,7 @@
                     Swal.fire({ title: 'กำลังลงทะเบียน...', html: '<div class="tree-loader-container"><div class="tree-loader"></div></div>', allowOutsideClick: false, showConfirmButton: false });
                     currentUser = { empId: String(empId), name: nickname, role: 'user', points: 0, history: [], checkIn: { lastDate: null, streak: 0 }, playedWeek: 0, playCount: 0, scannedQRs: [] };
                     db.users.push(currentUser);
-                    await saveDB(); // รอให้สร้าง user เสร็จและเซฟ
+                    await saveDB(); 
                     completeLogin();
                 } else {
                     Swal.close();
@@ -1330,7 +1333,7 @@
         async function addPoints(pts, detail) {
             currentUser.points += pts;
             if(!currentUser.history) currentUser.history = [];
-            currentUser.history.unshift({ date: getThaiTimeStr(), pts, detail, week: db.settings.currentWeek });
+            currentUser.history.unshift({ date: getThaiTimeStr(), pts, detail, week: db.settings.currentWeek || 0 });
             await saveUser();
             updatePointsUI();
         }
@@ -1522,7 +1525,7 @@
                 date: getThaiTimeStr(), 
                 pts: ptsEarned, 
                 detail: `Check-in วันที่ ${currentUser.checkIn.streak}`,
-                week: db.settings.currentWeek 
+                week: db.settings.currentWeek || 0 
             });
             
             await saveUser();
@@ -1684,8 +1687,20 @@
         function startGameFlow() {
             closeAllModals(); 
             
-            if(currentUser.playedWeek !== db.settings.currentWeek) {
-                currentUser.playedWeek = db.settings.currentWeek;
+            const today = getThaiDateStr();
+            let activeWeek = null;
+            if (db.settings.weeks) {
+                activeWeek = db.settings.weeks.find(w => today >= w.start && today <= w.end);
+            }
+
+            if (!activeWeek && currentUser.role !== 'admin') {
+                return Swal.fire({ title: 'อยู่นอกเวลากิจกรรม!', text: `ขณะนี้ยังไม่มีรอบกิจกรรมที่เปิดให้เล่น กรุณารอประกาศจากผู้ดูแลระบบ`, icon: 'warning', confirmButtonColor: '#E07A5F', customClass:{confirmButton:'rounded-xl px-6'} });
+            }
+
+            let weekToPlay = activeWeek ? activeWeek.weekNum : (db.settings.currentWeek || 0);
+
+            if(currentUser.playedWeek !== weekToPlay) {
+                currentUser.playedWeek = weekToPlay;
                 currentUser.playCount = 0;
                 saveUser();
             }
@@ -1694,12 +1709,6 @@
                 return openModal('weekly-summary-modal');
             }
 
-            const today = getThaiDateStr();
-            if (db.settings.weekStartDate && db.settings.weekEndDate && currentUser.role !== 'admin') {
-                if (today < db.settings.weekStartDate || today > db.settings.weekEndDate) {
-                    return Swal.fire({ title: 'อยู่นอกเวลากิจกรรม!', text: `รอบนี้เปิดให้เล่นระหว่างวันที่ ${formatDateThai(db.settings.weekStartDate)} ถึง ${formatDateThai(db.settings.weekEndDate)}`, icon: 'warning', confirmButtonColor: '#E07A5F', customClass:{confirmButton:'rounded-xl px-6'} });
-                }
-            }
             if(!db.bins || db.bins.length === 0 || !db.wastes || db.wastes.length === 0) return Swal.fire('Oops!', 'ยังไม่มีข้อมูลถังขยะหรือขยะในระบบ', 'error');
             
             Swal.fire({ title: 'พร้อมลุยไหม?', html: `<p class="text-sm text-gray-500 mb-2">ด่าน 1: ขยะในอาคารผลิต (2 นาที)</p><p class="text-xs text-app-primary font-bold mt-2">สิทธิ์การเล่นรอบนี้: ${2 - currentUser.playCount} ครั้ง</p>`, icon: 'question', showCancelButton: true, confirmButtonText: 'Start Game', cancelButtonText: 'Later', confirmButtonColor: '#5C8D67', cancelButtonColor:'#cbd5e1', customClass: { confirmButton: 'rounded-[16px] px-8', cancelButton: 'rounded-[16px] px-6 text-gray-600' } }).then((res) => {
@@ -1849,14 +1858,15 @@
             currentUser.points += total;
             if(!currentUser.history) currentUser.history = [];
             
+            let weekToRecord = db.settings.currentWeek || 0;
             currentUser.history.unshift({ 
                 date: getThaiTimeStr(), 
                 pts: total, 
-                detail: `กิจกรรมสัปดาห์ที่ ${db.settings.currentWeek}`, 
-                week: db.settings.currentWeek 
+                detail: `กิจกรรมสัปดาห์ที่ ${weekToRecord}`, 
+                week: weekToRecord 
             });
             
-            currentUser.playedWeek = db.settings.currentWeek;
+            currentUser.playedWeek = weekToRecord;
             currentUser.playCount = (currentUser.playCount || 0) + 1;
             
             await saveUser();
@@ -2322,10 +2332,18 @@
             }).then(async (res) => {
                 if(res.isConfirmed) {
                     Swal.fire({ title: 'กำลังลบ...', html: '<div class="tree-loader-container"><div class="tree-loader"></div></div>', allowOutsideClick: false, showConfirmButton: false });
+                    let backupWeeks = JSON.parse(JSON.stringify(db.settings.weeks));
                     db.settings.weeks = db.settings.weeks.filter(w => Number(w.weekNum) !== Number(weekNum));
-                    await saveDB(); 
-                    evaluateCurrentWeek(); applySettings();
-                    Swal.close();
+                    
+                    const success = await saveDB(); 
+                    if(success) {
+                        evaluateCurrentWeek(); 
+                        applySettings();
+                        Swal.fire({title: 'ลบแล้ว!', text: 'ข้อมูลสัปดาห์ถูกลบเรียบร้อย', icon: 'success', timer: 1500, showConfirmButton: false});
+                    } else {
+                        db.settings.weeks = backupWeeks; 
+                        Swal.fire({title:'ข้อผิดพลาด', text:'ไม่สามารถเชื่อมต่อฐานข้อมูลได้', icon:'error', customClass:{confirmButton:'bg-app-primary rounded-xl px-6'}});
+                    }
                 }
             });
         }
@@ -2348,6 +2366,9 @@
                 if (!db.settings.weeks) db.settings.weeks = [];
                 let existing = db.settings.weeks.find(x => Number(x.weekNum) === Number(weekNum));
                 
+                let oldStart = existing ? existing.start : null;
+                let oldEnd = existing ? existing.end : null;
+
                 if (existing) {
                     existing.start = formValues.start;
                     existing.end = formValues.end;
@@ -2362,11 +2383,20 @@
                     });
                 }
                 
-                await saveDB(); // รอให้ส่งไปที่ Google Sheet สำเร็จ
-                evaluateCurrentWeek(); 
-                applySettings(); // อัปเดต UI หน้าเว็บ
-
-                Swal.fire({title:'บันทึกสำเร็จ!', text:`ข้อมูลสัปดาห์ที่ ${weekNum} ถูกตั้งเวลาใหม่เรียบร้อยแล้ว`, icon:'success', customClass:{confirmButton:'bg-app-primary rounded-xl px-6'}});
+                const success = await saveDB(); 
+                if (success) {
+                    evaluateCurrentWeek(); 
+                    applySettings(); 
+                    Swal.fire({title:'บันทึกสำเร็จ!', text:`ข้อมูลสัปดาห์ที่ ${weekNum} ถูกตั้งเวลาใหม่เรียบร้อยแล้ว`, icon:'success', customClass:{confirmButton:'bg-app-primary rounded-xl px-6'}});
+                } else {
+                    if (existing && oldStart) {
+                        existing.start = oldStart;
+                        existing.end = oldEnd;
+                    } else {
+                        db.settings.weeks = db.settings.weeks.filter(x => Number(x.weekNum) !== Number(weekNum));
+                    }
+                    Swal.fire({title:'ข้อผิดพลาด', text:'ไม่สามารถบันทึกข้อมูลลงฐานข้อมูลได้ โปรดลองอีกครั้ง', icon:'error', customClass:{confirmButton:'bg-app-primary rounded-xl px-6'}});
+                }
             }
         }
 
@@ -2413,22 +2443,4 @@
                     item.name = formValues.name;
                     item.pts = formValues.pts;
                     item.scanType = formValues.scanType;
-                    item.url = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=WCW_SCAN_${item.id}_${formValues.pts}`; 
-                }
-                await saveDB(); renderAdminTables();
-                Swal.close();
-            }
-        }
-
-        function viewQR(url) { Swal.fire({ imageUrl: url, imageWidth: 200, imageHeight: 200, title: 'สแกนเพื่อรับคะแนน', customClass:{confirmButton:'bg-app-primary rounded-xl px-8'} }); }
-        async function deleteQR(id) { 
-            Swal.fire({ title: 'กำลังลบ...', html: '<div class="tree-loader-container"><div class="tree-loader"></div></div>', allowOutsideClick: false, showConfirmButton: false });
-            db.qrs = db.qrs.filter(q => q.id !== id); 
-            await saveDB(); renderAdminTables(); 
-            Swal.close();
-        }
-
-        document.addEventListener('DOMContentLoaded', init);
-    </script>
-</body>
-</html>
+                    item.url = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=WCW_SCAN_${item.id}_${formValues.pts
