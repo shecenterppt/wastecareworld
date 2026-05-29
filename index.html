@@ -967,7 +967,6 @@
             return false;
         }
 
-        // ทำให้การเซฟเป็น Async และรอ Sync สำเร็จ
         async function saveDB() { 
             Storage.set('wcw_db', JSON.stringify(db)); 
             return await syncToCloud(); 
@@ -1054,19 +1053,6 @@
                     }
                 }); 
             }
-            
-            document.querySelectorAll('.admin-tab').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    document.querySelectorAll('.admin-tab').forEach(b => { 
-                        b.classList.remove('bg-app-dark', 'text-white', 'shadow-md'); 
-                        b.classList.add('bg-[#F8FAF9]', 'text-gray-600', 'border', 'border-gray-200'); 
-                    });
-                    e.target.classList.remove('bg-[#F8FAF9]', 'text-gray-600', 'border', 'border-gray-200'); 
-                    e.target.classList.add('bg-app-dark', 'text-white', 'shadow-md');
-                    document.querySelectorAll('.admin-tab-content').forEach(c => c.classList.add('hidden'));
-                    document.getElementById(e.target.dataset.target).classList.remove('hidden');
-                });
-            });
 
             document.getElementById('lang-toggle').checked = false;
             toggleLang();
