@@ -64,7 +64,7 @@
         
         /* Game Area */
         #game-area { position: relative; overflow: visible; touch-action: none; background: url('https://www.transparenttextures.com/patterns/cubes.png') rgba(255,255,255,0.4); }
-        .waste-item { position: absolute; cursor: grab; user-select: none; transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); z-index: 10; }
+        .waste-item { position: absolute; cursor: grab; user-select: none; transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); z-index: 10; touch-action: none; }
         .waste-item:active { cursor: grabbing; transform: scale(1.15) rotate(5deg); z-index: 20; box-shadow: 0 15px 25px rgba(0,0,0,0.1); }
         
         /* Custom Scrollbar */
@@ -502,7 +502,7 @@
 
 
     <!-- GAME UI -->
-    <div id="game-container" class="hidden-page fixed inset-0 bg-[#EAF4EC] z-50 flex flex-col overflow-hidden">
+    <div id="game-container" class="hidden-page fixed inset-0 bg-[#EAF4EC] z-50 flex flex-col overflow-hidden touch-none">
         <div class="absolute inset-0 opacity-40 bg-[url('https://www.transparenttextures.com/patterns/natural-paper.png')] pointer-events-none"></div>
         <div class="bg-white/80 backdrop-blur-md p-5 flex justify-between items-center shadow-sm z-40 border-b border-white relative">
             <div class="flex items-center gap-3">
@@ -524,12 +524,12 @@
             </div>
         </div>
         
-        <div id="game-area" class="flex-1 relative z-30"></div>
+        <div id="game-area" class="flex-1 relative z-30 touch-none"></div>
         
-        <!-- ปรับความสูงแถบด้านล่างให้รองรับแนวนอน -->
-        <div id="game-bottom-bar" class="flex-shrink-0 h-[25vh] min-h-[120px] max-h-[160px] bg-white rounded-t-[32px] shadow-[0_-10px_30px_rgba(37,62,43,0.08)] flex items-end justify-center px-2 sm:px-4 pb-4 sm:pb-6 gap-2 sm:gap-3 z-20 overflow-x-auto whitespace-nowrap border-t border-gray-50 relative">
+        <!-- แถบด้านล่างแบบยืดหยุ่น รองรับแนวนอนและถังขยะขยาย/หดแบบ Auto -->
+        <div id="game-bottom-bar" class="flex-shrink-0 h-[22vh] min-h-[110px] max-h-[140px] w-full bg-white rounded-t-[24px] shadow-[0_-10px_30px_rgba(37,62,43,0.08)] flex items-end justify-center px-1 sm:px-4 pb-3 sm:pb-6 z-20 overflow-hidden relative border-t border-gray-50">
             <div class="absolute top-3 left-1/2 transform -translate-x-1/2 w-12 h-1 bg-gray-200 rounded-full"></div>
-            <div id="bins-area" class="flex items-end justify-center gap-3 w-full h-full pt-8"></div>
+            <div id="bins-area" class="flex items-end justify-center gap-1 sm:gap-3 w-full h-full pt-6 px-1"></div>
         </div>
     </div>
 
@@ -723,7 +723,7 @@
                 <div class="bg-white p-6 rounded-[24px] border border-gray-100 shadow-sm">
                     <div class="flex justify-between items-center mb-6">
                         <h3 class="font-bold text-app-dark text-base flex items-center"><i class="fa-solid fa-rotate-right text-app-primary mr-3"></i> 4.1 รอบเกม (รีเซ็ตสัปดาห์)</h3>
-                        <button onclick="startNewWeek()" class="text-[12px] font-bold bg-[#5C8D67] text-white px-5 py-2.5 rounded-[12px] shadow-soft hover:bg-opacity-90 transition-all"><i class="fa-solid fa-calendar-plus mr-1"></i> เพิ่มรอบใหม่</button>
+                        <button onclick="startNewWeek()" class="text-[12px] font-bold bg-[#5C8D67] text-white px-5 py-2.5 rounded-[12px] shadow-soft hover:bg-opacity-90 transition-all"><i class="fa-solid fa-calendar-plus mr-1"></i> เริ่มรอบใหม่</button>
                     </div>
                     <div id="admin-weeks-list" class="space-y-3">
                         <!-- Rendered via JS -->
@@ -980,7 +980,7 @@
             if(btn) btn.classList.add('animate-spin');
             
             await loadFromCloud();
-            reindexWeeks(); // เพิ่มให้รีรันเลขสัปดาห์ด้วย
+            reindexWeeks(); 
             evaluateCurrentWeek();
             applySettings();
             loadUserDashboard();
@@ -992,10 +992,8 @@
         // ================= WEEKS LOGIC (จัดเรียงวันที่และรันเลขสัปดาห์) =================
         function reindexWeeks() {
             if (!db.settings.weeks) db.settings.weeks = [];
-            // เรียงตามวันที่เริ่มต้น (เก่า -> ใหม่)
             db.settings.weeks.sort((a, b) => new Date(a.start) - new Date(b.start));
             
-            // รันเลขสัปดาห์ใหม่ และตามไปอัปเดต History ของ User ให้สอดคล้องกัน
             let oldNewWeekMap = {};
             db.settings.weeks.forEach((w, index) => {
                 let newWeekNum = index + 1;
@@ -1003,7 +1001,6 @@
                 w.weekNum = newWeekNum;
             });
 
-            // อัปเดต History ของ User ทั้งหมด
             db.users.forEach(u => {
                 if (u.history) {
                     u.history.forEach(item => {
@@ -1361,7 +1358,6 @@
             currentUser.points += pts;
             if(!currentUser.history) currentUser.history = [];
             
-            // ใช้ fallback เป็น week ล่าสุด หากหลุดกรอบเวลา
             let activeWeek = db.settings.currentWeek;
             if (!activeWeek && db.settings.weeks && db.settings.weeks.length > 0) {
                 activeWeek = db.settings.weeks[db.settings.weeks.length - 1].weekNum;
@@ -1555,7 +1551,6 @@
             currentUser.points += ptsEarned;
             if(!currentUser.history) currentUser.history = [];
             
-            // หาเลขสัปดาห์ปัจจุบัน (หรือล่าสุดถ้าหลุดเวลา)
             let activeWeek = db.settings.currentWeek;
             if (!activeWeek && db.settings.weeks && db.settings.weeks.length > 0) {
                 activeWeek = db.settings.weeks[db.settings.weeks.length - 1].weekNum;
@@ -1776,7 +1771,15 @@
         function renderBinsForStage() {
             const container = document.getElementById('bins-area');
             let activeBins = db.bins.filter(b => b.stage === 'all' || (gameStage === 1 && b.stage === 'indoor') || (gameStage === 2 && b.stage === 'outdoor'));
-            container.innerHTML = activeBins.map(b => `<div class="bin-target flex-shrink-0 flex flex-col items-center justify-end w-20 sm:w-28 h-[85%] max-h-[130px] rounded-t-[20px] rounded-b-[8px] relative shadow-md transition-transform" style="background-color: ${b.color}; border-top: 6px solid rgba(255,255,255,0.3);" data-binid="${b.id}"><div class="absolute -top-6 sm:-top-8 w-14 h-14 sm:w-16 sm:h-16 bg-white rounded-full p-2 shadow-sm flex items-center justify-center border-4 border-app-bg"><img src="${b.img || 'https://cdn-icons-png.flaticon.com/512/3299/3299935.png'}" class="w-full h-full object-contain"></div><span class="text-[11px] sm:text-[14px] text-white font-bold mb-2 sm:mb-3 text-center leading-tight drop-shadow-md whitespace-normal px-1">${b.name}</span></div>`).join('');
+            
+            container.innerHTML = activeBins.map(b => `
+                <div class="bin-target flex-1 min-w-[55px] max-w-[90px] sm:max-w-[120px] h-[85%] max-h-[130px] rounded-t-[16px] sm:rounded-t-[20px] rounded-b-[6px] relative shadow-md transition-transform flex flex-col items-center justify-end" style="background-color: ${b.color}; border-top: 5px solid rgba(255,255,255,0.3);" data-binid="${b.id}">
+                    <div class="absolute -top-6 sm:-top-8 w-12 h-12 sm:w-16 sm:h-16 bg-white rounded-full p-1.5 sm:p-2 shadow-sm flex items-center justify-center border-4 border-app-bg">
+                        <img src="${b.img || 'https://cdn-icons-png.flaticon.com/512/3299/3299935.png'}" class="w-full h-full object-contain">
+                    </div>
+                    <span class="text-[9px] sm:text-[13px] text-white font-bold mb-2 sm:mb-3 text-center leading-tight drop-shadow-md px-0.5 break-words line-clamp-2 w-full">${b.name}</span>
+                </div>
+            `).join('');
         }
 
         function spawnWastes() {
@@ -1792,21 +1795,25 @@
             }
 
             let spawnCount = Math.min(10, shuffledWastes.length);
-            let bottomBar = document.getElementById('game-bottom-bar');
-            let barHeight = bottomBar ? bottomBar.clientHeight : 140;
+            let itemWidth = window.innerWidth < 600 ? 65 : 90;
+            let itemHeight = window.innerWidth < 600 ? 70 : 95;
+            
             let areaWidth = container.clientWidth;
-            let areaHeight = container.clientHeight - barHeight;
+            let areaHeight = container.clientHeight;
 
             for(let i=0; i<spawnCount; i++) {
                 let wType = shuffledWastes[i];
                 let el = document.createElement('div');
                 
-                el.className = 'waste-item bg-white p-2.5 sm:p-4 rounded-[16px] shadow-[0_8px_20px_rgba(0,0,0,0.06)] border border-gray-100 flex flex-col items-center justify-center min-w-[75px] sm:min-w-[90px]';
-                el.innerHTML = `<img src="${wType.img || 'https://cdn-icons-png.flaticon.com/512/839/839088.png'}" class="w-10 h-10 sm:w-14 sm:h-14 object-contain mb-1.5 drop-shadow-sm"><span class="text-[10px] sm:text-[13px] font-bold text-gray-500 whitespace-nowrap bg-gray-50 px-2 py-0.5 rounded-full border border-gray-100">${wType.name}</span>`;
+                el.className = 'waste-item bg-white p-2 sm:p-3 rounded-[12px] sm:rounded-[16px] shadow-[0_5px_15px_rgba(0,0,0,0.08)] border border-gray-100 flex flex-col items-center justify-center min-w-[60px] max-w-[70px] sm:min-w-[90px] sm:max-w-[100px]';
+                el.innerHTML = `<img src="${wType.img || 'https://cdn-icons-png.flaticon.com/512/839/839088.png'}" class="w-8 h-8 sm:w-12 sm:h-12 object-contain mb-1 drop-shadow-sm"><span class="text-[9px] sm:text-[12px] font-bold text-gray-500 whitespace-nowrap bg-gray-50 px-2 py-0.5 rounded-full border border-gray-100 max-w-full overflow-hidden text-ellipsis inline-block text-center w-full">${wType.name}</span>`;
                 el.dataset.targetbin = wType.binId;
                 
-                el.style.left = Math.max(10, Math.random() * (areaWidth - 90)) + 'px';
-                el.style.top = Math.max(10, Math.random() * (areaHeight - 90)) + 'px';
+                let maxLeft = Math.max(0, areaWidth - itemWidth - 10);
+                let maxTop = Math.max(0, areaHeight - itemHeight - 10);
+                
+                el.style.left = (10 + Math.random() * maxLeft) + 'px';
+                el.style.top = (10 + Math.random() * maxTop) + 'px';
                 let rot = Math.floor(Math.random() * 20) - 10;
                 el.style.transform = `rotate(${rot}deg)`;
                 
@@ -1898,20 +1905,19 @@
             currentUser.points += total;
             if(!currentUser.history) currentUser.history = [];
             
-            // ใช้ fallback เป็น week ล่าสุด หากหลุดกรอบเวลา
-            let activeWeek = db.settings.currentWeek;
-            if (!activeWeek && db.settings.weeks && db.settings.weeks.length > 0) {
-                activeWeek = db.settings.weeks[db.settings.weeks.length - 1].weekNum;
+            let weekToRecord = db.settings.currentWeek;
+            if (!weekToRecord && db.settings.weeks && db.settings.weeks.length > 0) {
+                weekToRecord = db.settings.weeks[db.settings.weeks.length - 1].weekNum;
             }
             
             currentUser.history.unshift({ 
                 date: getThaiTimeStr(), 
                 pts: total, 
-                detail: `กิจกรรมสัปดาห์ที่ ${activeWeek}`, 
-                week: activeWeek 
+                detail: `กิจกรรมสัปดาห์ที่ ${weekToRecord || 0}`, 
+                week: weekToRecord || 0 
             });
             
-            currentUser.playedWeek = activeWeek;
+            currentUser.playedWeek = weekToRecord || 0;
             currentUser.playCount = (currentUser.playCount || 0) + 1;
             
             await saveUser();
@@ -1999,7 +2005,6 @@
             document.getElementById('admin-table-popup-images').innerHTML = popupHtml || '<tr><td colspan="3" class="p-5 text-center text-gray-400">ยังไม่มีรูปภาพ Popup</td></tr>';
 
             if(!db.settings.weeks) db.settings.weeks = [];
-            // แสดงผลเรียงจากใหม่สุดไปเก่าสุด
             document.getElementById('admin-weeks-list').innerHTML = [...db.settings.weeks].sort((a,b) => b.weekNum - a.weekNum).map(w => {
                 let isCurrent = w.weekNum === db.settings.currentWeek;
                 let badge = isCurrent ? `<span class="bg-app-primary text-white text-[9px] px-2 py-0.5 rounded-full ml-1">รอบปัจจุบัน</span>` : '';
@@ -2380,7 +2385,7 @@
                     let backupWeeks = JSON.parse(JSON.stringify(db.settings.weeks));
                     db.settings.weeks = db.settings.weeks.filter(w => Number(w.weekNum) !== Number(weekNum));
                     
-                    reindexWeeks(); // จัดเรียงใหม่ทุกครั้งที่มีการเปลี่ยนแปลง
+                    reindexWeeks();
                     
                     const success = await saveDB(); 
                     if(success) {
@@ -2416,7 +2421,6 @@
                 let backupUsers = JSON.parse(JSON.stringify(db.users));
                 
                 if (weekNumOrNew === 'new') {
-                    // ใช้ Date.now() เป็น id ชั่วคราวไปก่อน เพื่อไม่ให้ชนกัน เดี๋ยว reindexWeeks จะจัดการให้
                     db.settings.weeks.push({ weekNum: Date.now(), start: formValues.start, end: formValues.end });
                 } else {
                     let existing = db.settings.weeks.find(x => Number(x.weekNum) === Number(weekNumOrNew));
@@ -2426,10 +2430,8 @@
                     }
                 }
                 
-                // สั่งรันจัดเรียงตัวเลขใหม่ตาม Timeline วันที่เลย
                 reindexWeeks();
                 
-                // สำหรับสัปดาห์ใหม่ ให้เคลียร์ยอดการเล่นของผู้ใช้
                 if (weekNumOrNew === 'new') {
                     let newCreatedWeek = db.settings.weeks.find(w => w.start === formValues.start && w.end === formValues.end);
                     if (newCreatedWeek) {
@@ -2446,7 +2448,6 @@
                     applySettings(); 
                     Swal.fire({title:'บันทึกสำเร็จ!', text:`ข้อมูลถูกตั้งเวลาและจัดเรียงลำดับใหม่เรียบร้อยแล้ว`, icon:'success', customClass:{confirmButton:'bg-app-primary rounded-xl px-6'}});
                 } else {
-                    // ถ้าพัง คืนค่า
                     db.settings.weeks = backupWeeks;
                     db.users = backupUsers;
                     Swal.fire({title:'ข้อผิดพลาด', text:'ไม่สามารถบันทึกข้อมูลลงฐานข้อมูลได้ โปรดลองอีกครั้ง', icon:'error', customClass:{confirmButton:'bg-app-primary rounded-xl px-6'}});
