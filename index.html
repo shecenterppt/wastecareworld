@@ -1954,7 +1954,11 @@
             document.getElementById('admin-table-popup-images').innerHTML = popupHtml || '<tr><td colspan="3" class="p-5 text-center text-gray-400">ยังไม่มีรูปภาพ Popup</td></tr>';
 
             if(!db.settings.weeks) db.settings.weeks = [];
-            document.getElementById('admin-weeks-list').innerHTML = db.settings.weeks.sort((a,b) => b.weekNum - a.weekNum).map(w => {
+            
+            // เรียงลำดับสัปดาห์ตามวันที่เริ่ม (Start Date) จากใหม่ไปเก่า (ล่าสุดอยู่บน)
+            let sortedWeeks = [...db.settings.weeks].sort((a,b) => new Date(b.start) - new Date(a.start));
+            
+            document.getElementById('admin-weeks-list').innerHTML = sortedWeeks.map(w => {
                 let isCurrent = w.weekNum === db.settings.currentWeek;
                 let badge = isCurrent ? `<span class="bg-app-primary text-white text-[9px] px-2 py-0.5 rounded-full ml-1">รอบปัจจุบัน</span>` : '';
                 return `
@@ -2094,29 +2098,29 @@
             let user = db.users.find(u => String(u.empId) === String(empId));
             if(!user) return;
             const { value: newName } = await Swal.fire({
-                title: 'แก้ไขชื่อผู้เล่น',
-                input: 'text',
-                inputValue: user.name,
-                showCancelButton: true,
-                confirmButtonText: 'บันทึก',
-                cancelButtonText: 'ยกเลิก',
-                customClass: {
-                    confirmButton: 'rounded-xl bg-app-primary px-8 py-2.5 text-white font-bold',
-                    cancelButton: 'rounded-xl px-8 py-2.5 bg-gray-200 text-gray-700 font-bold',
-                    input: 'text-sm rounded-xl border-gray-200'
-                },
-                inputValidator: (value) => {
-                    if (!value || value.trim() === '') {
-                        return 'กรุณากรอกชื่อผู้เล่น'
-                    }
+        // ================= RANKING LOGIC =================
+        function populateRankingWeeks() {
+            const selector = document.getElementById('rank-week-selector');
+            if(!selector) return;
+            
+            let currentVal = selector.value;
+            selector.innerHTML = '';
+            
+            if(db.settings.weeks && db.settings.weeks.length > 0) {
+                // เรียงลำดับตัวเลือกสัปดาห์ตามวันที่เริ่ม (Start Date)
+                [...db.settings.weeks].sort((a,b) => new Date(b.start) - new Date(a.start)).forEach(w => {
+                    let opt = document.createElement('option');
+                    opt.value = w.weekNum;
+                    opt.text = `สัปดาห์ที่ ${w.weekNum} (${formatDateThai(w.start)} - ${formatDateThai(w.end)})`;
+                    selector.appendChild(opt);
+                });
+                if(currentVal && db.settings.weeks.find(w => w.weekNum == currentVal)) {
+                    selector.value = currentVal;
+                } else {
+                    selector.value = db.settings.currentWeek || db.settings.weeks[0].weekNum;
                 }
-            });
-            if(newName && newName.trim() !== '') {
-                user.name = newName.trim();
-                Swal.fire({ title: 'กำลังบันทึก...', html: '<div class="tree-loader-container"><div class="tree-loader"></div></div>', allowOutsideClick: false, showConfirmButton: false });
-                await saveDB();
-                renderAdminTables();
-                Swal.fire({title: 'สำเร็จ!', text: 'อัปเดตชื่อผู้เล่นเรียบร้อยแล้ว', icon: 'success', timer: 1500, showConfirmButton: false});
+            } else {
+                selector.innerHTML = '<option value="">ยังไม่มีข้อมูลสัปดาห์</option>';
             }
         }
 
