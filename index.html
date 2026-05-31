@@ -1795,25 +1795,25 @@
             }
 
             let spawnCount = Math.min(10, shuffledWastes.length);
-            let itemWidth = window.innerWidth < 600 ? 65 : 90;
-            let itemHeight = window.innerWidth < 600 ? 70 : 95;
-            
+            let bottomBar = document.getElementById('game-bottom-bar');
+            let barHeight = bottomBar ? bottomBar.clientHeight : 140;
             let areaWidth = container.clientWidth;
-            let areaHeight = container.clientHeight;
+            let areaHeight = container.clientHeight - barHeight;
 
             for(let i=0; i<spawnCount; i++) {
                 let wType = shuffledWastes[i];
                 let el = document.createElement('div');
                 
-                el.className = 'waste-item bg-white p-2 sm:p-3 rounded-[12px] sm:rounded-[16px] shadow-[0_5px_15px_rgba(0,0,0,0.08)] border border-gray-100 flex flex-col items-center justify-center min-w-[60px] max-w-[70px] sm:min-w-[90px] sm:max-w-[100px]';
-                el.innerHTML = `<img src="${wType.img || 'https://cdn-icons-png.flaticon.com/512/839/839088.png'}" class="w-8 h-8 sm:w-12 sm:h-12 object-contain mb-1 drop-shadow-sm"><span class="text-[9px] sm:text-[12px] font-bold text-gray-500 whitespace-nowrap bg-gray-50 px-2 py-0.5 rounded-full border border-gray-100 max-w-full overflow-hidden text-ellipsis inline-block text-center w-full">${wType.name}</span>`;
+                // ปรับขนาดกรอบให้มี max-width เพื่อไม่ให้บานออกด้านข้างมากเกินไป
+                el.className = 'waste-item bg-white p-2 sm:p-3 rounded-[16px] shadow-[0_8px_20px_rgba(0,0,0,0.06)] border border-gray-100 flex flex-col items-center justify-center min-w-[70px] max-w-[85px] sm:min-w-[90px] sm:max-w-[110px]';
+                
+                // เอา whitespace-nowrap ออก, ใส่ text-center, break-words, leading-tight และเปลี่ยนทรงเป็น rounded-[8px] เพื่อรองรับ 2-3 บรรทัด
+                el.innerHTML = `<img src="${wType.img || 'https://cdn-icons-png.flaticon.com/512/839/839088.png'}" class="w-10 h-10 sm:w-14 sm:h-14 object-contain mb-1.5 drop-shadow-sm"><span class="text-[9px] sm:text-[11px] font-bold text-gray-500 text-center leading-tight break-words bg-gray-50 px-1.5 py-1 rounded-[8px] border border-gray-100 w-full">${wType.name}</span>`;
+                
                 el.dataset.targetbin = wType.binId;
                 
-                let maxLeft = Math.max(0, areaWidth - itemWidth - 10);
-                let maxTop = Math.max(0, areaHeight - itemHeight - 10);
-                
-                el.style.left = (10 + Math.random() * maxLeft) + 'px';
-                el.style.top = (10 + Math.random() * maxTop) + 'px';
+                el.style.left = Math.max(10, Math.random() * (areaWidth - 90)) + 'px';
+                el.style.top = Math.max(10, Math.random() * (areaHeight - 90)) + 'px';
                 let rot = Math.floor(Math.random() * 20) - 10;
                 el.style.transform = `rotate(${rot}deg)`;
                 
