@@ -526,7 +526,7 @@
         
         <div id="game-area" class="flex-1 relative z-30 touch-none"></div>
         
-        <!-- แถบด้านล่างแบบยืดหยุ่น รองรับแนวนอนและถังขยะขยาย/หดแบบ Auto -->
+        <!-- ปรับความสูงแถบด้านล่างให้รองรับแนวนอน -->
         <div id="game-bottom-bar" class="flex-shrink-0 h-[22vh] min-h-[110px] max-h-[140px] w-full bg-white rounded-t-[24px] shadow-[0_-10px_30px_rgba(37,62,43,0.08)] flex items-end justify-center px-1 sm:px-4 pb-3 sm:pb-6 z-20 overflow-hidden relative border-t border-gray-50">
             <div class="absolute top-3 left-1/2 transform -translate-x-1/2 w-12 h-1 bg-gray-200 rounded-full"></div>
             <div id="bins-area" class="flex items-end justify-center gap-1 sm:gap-3 w-full h-full pt-6 px-1"></div>
@@ -541,7 +541,6 @@
                 <i class="fa-solid fa-medal text-4xl text-app-accent"></i>
             </div>
             <h2 class="text-3xl font-bold text-app-dark mb-1 tracking-tight shrink-0" id="result-title">Great Job!</h2>
-            <h2 class="text-3xl font-bold text-app-dark mb-1 tracking-tight shrink-0" id="result-title">อย่าลืมไปเช็คอินเพื่อรับคะแนนสะสมทุกวัน</h2>
             <p class="text-gray-500 mb-8 text-[13px] font-light shrink-0" id="result-subtitle">เยี่ยมมากที่คุณช่วยโลกของเราในรอบนี้</p>
             
             <div class="w-full bg-[#F8FAF9] rounded-[24px] p-6 mb-8 border border-gray-100 shadow-sm text-left relative overflow-hidden shrink-0">
@@ -967,12 +966,24 @@
 
         async function saveUser() {
             if(!currentUser || currentUser.empId === 'admin') return; 
-            let idx = db.users.findIndex(u => u.empId === currentUser.empId);
+            
+            // Backup the specific user modifications before overwriting
+            let userToSave = JSON.parse(JSON.stringify(currentUser));
+            
+            // ALWAYS fetch latest DB before saving to prevent overwriting others
+            await loadFromCloud();
+            
+            // Inject modifications into fresh DB
+            let idx = db.users.findIndex(u => u.empId === userToSave.empId);
             if(idx > -1) {
-                db.users[idx] = currentUser;
+                db.users[idx] = userToSave;
             } else {
-                db.users.push(currentUser);
+                db.users.push(userToSave);
             }
+            
+            // Update local ref to match DB exactly
+            currentUser = db.users.find(u => u.empId === userToSave.empId);
+            
             await saveDB();
         }
 
@@ -1541,6 +1552,7 @@
             const yStr = thTime.toISOString().split('T')[0];
 
             Swal.fire({ title: 'กำลังบันทึกข้อมูล...', html: '<div class="tree-loader-container"><div class="tree-loader"></div></div>', allowOutsideClick: false, showConfirmButton: false });
+            
             await loadFromCloud();
 
             if(currentUser.checkIn.lastDate !== yStr && currentUser.checkIn.lastDate !== null) currentUser.checkIn.streak = 0;
@@ -1747,7 +1759,7 @@
 
             if(!db.bins || db.bins.length === 0 || !db.wastes || db.wastes.length === 0) return Swal.fire('Oops!', 'ยังไม่มีข้อมูลถังขยะหรือขยะในระบบ', 'error');
             
-            Swal.fire({ title: 'พร้อมลุยไหม?', html: `<p class="text-sm text-gray-500 mb-2">ด่าน 1: ขยะในอาคารผลิต (2 นาที)</p><p class="text-xs text-app-primary font-bold mt-2">สิทธิ์การเล่นรอบนี้: ${2 - currentUser.playCount} ครั้ง</p>`, icon: 'question', showCancelButton: true, confirmButtonText: 'Start Game', cancelButtonText: 'Later', confirmButtonColor: '#5C8D67', cancelButtonColor:'#cbd5e1', customClass: { confirmButton: 'rounded-[16px] px-8', cancelButton: 'rounded-[16px] px-6 text-gray-600' } }).then((res) => {
+            Swal.fire({ title: 'พร้อมลุยไหม? ลากขยะลงถังให้ถูกต้อง', html: `<p class="text-sm text-gray-500 mb-2">ด่าน 1: ขยะในอาคารผลิต (2 นาที)</p><p class="text-xs text-app-primary font-bold mt-2">สิทธิ์การเล่นรอบนี้: ${2 - currentUser.playCount} ครั้ง</p>`, icon: 'question', showCancelButton: true, confirmButtonText: 'Start Game', cancelButtonText: 'Later', confirmButtonColor: '#5C8D67', cancelButtonColor:'#cbd5e1', customClass: { confirmButton: 'rounded-[16px] px-8', cancelButton: 'rounded-[16px] px-6 text-gray-600' } }).then((res) => {
                 if(res.isConfirmed) initGameStage(1);
             });
         }
@@ -1796,25 +1808,25 @@
             }
 
             let spawnCount = Math.min(10, shuffledWastes.length);
-            let bottomBar = document.getElementById('game-bottom-bar');
-            let barHeight = bottomBar ? bottomBar.clientHeight : 140;
+            let itemWidth = window.innerWidth < 600 ? 65 : 90;
+            let itemHeight = window.innerWidth < 600 ? 70 : 95;
+            
             let areaWidth = container.clientWidth;
-            let areaHeight = container.clientHeight - barHeight;
+            let areaHeight = container.clientHeight;
 
             for(let i=0; i<spawnCount; i++) {
                 let wType = shuffledWastes[i];
                 let el = document.createElement('div');
                 
-                // ปรับขนาดกรอบให้มี max-width เพื่อไม่ให้บานออกด้านข้างมากเกินไป
-                el.className = 'waste-item bg-white p-2 sm:p-3 rounded-[16px] shadow-[0_8px_20px_rgba(0,0,0,0.06)] border border-gray-100 flex flex-col items-center justify-center min-w-[70px] max-w-[85px] sm:min-w-[90px] sm:max-w-[110px]';
-                
-                // เอา whitespace-nowrap ออก, ใส่ text-center, break-words, leading-tight และเปลี่ยนทรงเป็น rounded-[8px] เพื่อรองรับ 2-3 บรรทัด
-                el.innerHTML = `<img src="${wType.img || 'https://cdn-icons-png.flaticon.com/512/839/839088.png'}" class="w-10 h-10 sm:w-14 sm:h-14 object-contain mb-1.5 drop-shadow-sm"><span class="text-[9px] sm:text-[11px] font-bold text-gray-500 text-center leading-tight break-words bg-gray-50 px-1.5 py-1 rounded-[8px] border border-gray-100 w-full">${wType.name}</span>`;
-                
+                el.className = 'waste-item bg-white p-2 sm:p-3 rounded-[12px] sm:rounded-[16px] shadow-[0_5px_15px_rgba(0,0,0,0.08)] border border-gray-100 flex flex-col items-center justify-center min-w-[60px] max-w-[70px] sm:min-w-[90px] sm:max-w-[100px]';
+                el.innerHTML = `<img src="${wType.img || 'https://cdn-icons-png.flaticon.com/512/839/839088.png'}" class="w-8 h-8 sm:w-12 sm:h-12 object-contain mb-1 drop-shadow-sm"><span class="text-[9px] sm:text-[12px] font-bold text-gray-500 whitespace-nowrap bg-gray-50 px-2 py-0.5 rounded-full border border-gray-100 max-w-full overflow-hidden text-ellipsis inline-block text-center w-full">${wType.name}</span>`;
                 el.dataset.targetbin = wType.binId;
                 
-                el.style.left = Math.max(10, Math.random() * (areaWidth - 90)) + 'px';
-                el.style.top = Math.max(10, Math.random() * (areaHeight - 90)) + 'px';
+                let maxLeft = Math.max(0, areaWidth - itemWidth - 10);
+                let maxTop = Math.max(0, areaHeight - itemHeight - 10);
+                
+                el.style.left = (10 + Math.random() * maxLeft) + 'px';
+                el.style.top = (10 + Math.random() * maxTop) + 'px';
                 let rot = Math.floor(Math.random() * 20) - 10;
                 el.style.transform = `rotate(${rot}deg)`;
                 
@@ -1931,9 +1943,13 @@
 
         // ================= ADMIN FUNCTIONS =================
         async function saveGeneralSettings() {
-            db.settings.logoImg = document.getElementById('cfg-logo-img').value;
+            let logoUrl = document.getElementById('cfg-logo-img').value;
             Swal.fire({ title: 'กำลังบันทึกข้อมูล...', html: '<div class="tree-loader-container"><div class="tree-loader"></div></div>', allowOutsideClick: false, showConfirmButton: false });
-            await saveDB();
+            
+            await loadFromCloud(); // GET LATEST
+            db.settings.logoImg = logoUrl; // APPLY
+            
+            await saveDB(); // SAVE
             applySettings();
             Swal.fire({ title: 'บันทึกสำเร็จ', icon: 'success', timer: 1500, showConfirmButton:false });
         }
@@ -2115,8 +2131,11 @@
                     newArr.push(obj);
                 }
                 Swal.fire({ title: 'กำลังนำเข้าข้อมูล...', html: '<div class="tree-loader-container"><div class="tree-loader"></div></div>', allowOutsideClick: false, showConfirmButton: false });
+                
+                await loadFromCloud(); // <--- PREVENT DATA LOSS
                 db[type] = newArr; 
                 await saveDB(); 
+                
                 renderAdminTables();
                 Swal.fire({title:'สำเร็จ', text:`นำเข้า ${type} เรียบร้อย`, icon:'success', customClass:{confirmButton:'bg-app-primary rounded-xl'}});
             };
@@ -2164,8 +2183,13 @@
                 }
             });
             if(newName && newName.trim() !== '') {
-                user.name = newName.trim();
                 Swal.fire({ title: 'กำลังบันทึก...', html: '<div class="tree-loader-container"><div class="tree-loader"></div></div>', allowOutsideClick: false, showConfirmButton: false });
+                
+                await loadFromCloud(); // <--- PREVENT DATA LOSS
+                
+                let freshUser = db.users.find(u => String(u.empId) === String(empId));
+                if(freshUser) freshUser.name = newName.trim();
+                
                 await saveDB();
                 renderAdminTables();
                 Swal.fire({title: 'สำเร็จ!', text: 'อัปเดตชื่อผู้เล่นเรียบร้อยแล้ว', icon: 'success', timer: 1500, showConfirmButton: false});
@@ -2185,6 +2209,9 @@
             }).then(async (result) => {
                 if (result.isConfirmed) {
                     Swal.fire({ title: 'กำลังลบ...', html: '<div class="tree-loader-container"><div class="tree-loader"></div></div>', allowOutsideClick: false, showConfirmButton: false });
+                    
+                    await loadFromCloud(); // <--- PREVENT DATA LOSS
+                    
                     db.users = db.users.filter(u => String(u.empId) !== String(empId));
                     await saveDB();
                     renderAdminTables();
@@ -2206,6 +2233,9 @@
             }).then(async (result) => {
                 if (result.isConfirmed) {
                     Swal.fire({ title: 'กำลังลบ...', html: '<div class="tree-loader-container"><div class="tree-loader"></div></div>', allowOutsideClick: false, showConfirmButton: false });
+                    
+                    await loadFromCloud(); // <--- PREVENT DATA LOSS
+                    
                     db.users = db.users.filter(u => u.empId === 'admin' || u.empId === 'admin123');
                     await saveDB();
                     renderAdminTables();
@@ -2219,6 +2249,9 @@
                 if(db.settings.mainImages.length <= 1) return Swal.fire('ไม่สามารถลบได้', 'ต้องมีรูปพื้นหลังอย่างน้อย 1 รูป', 'warning');
                 
                 Swal.fire({ title: 'กำลังลบ...', html: '<div class="tree-loader-container"><div class="tree-loader"></div></div>', allowOutsideClick: false, showConfirmButton: false });
+                
+                await loadFromCloud(); // <--- PREVENT DATA LOSS
+                
                 db.settings.mainImages.splice(idx, 1); 
                 await saveDB(); renderAdminTables(); updateLandingBackground(); 
                 Swal.close();
@@ -2240,6 +2273,9 @@
             });
             if (formValues) {
                 Swal.fire({ title: 'กำลังบันทึก...', html: '<div class="tree-loader-container"><div class="tree-loader"></div></div>', allowOutsideClick: false, showConfirmButton: false });
+                
+                await loadFromCloud(); // <--- PREVENT DATA LOSS
+                
                 if(action === 'add') db.settings.mainImages.push(formValues); else db.settings.mainImages[idx] = formValues;
                 await saveDB(); renderAdminTables(); updateLandingBackground();
                 Swal.close();
@@ -2249,6 +2285,9 @@
         async function crudPopupImage(action, idx) {
             if(action === 'delete') { 
                 Swal.fire({ title: 'กำลังลบ...', html: '<div class="tree-loader-container"><div class="tree-loader"></div></div>', allowOutsideClick: false, showConfirmButton: false });
+                
+                await loadFromCloud(); // <--- PREVENT DATA LOSS
+                
                 db.settings.popupImages.splice(idx, 1); 
                 await saveDB(); renderAdminTables(); 
                 Swal.close();
@@ -2268,6 +2307,9 @@
             });
             if (formValues) {
                 Swal.fire({ title: 'กำลังบันทึก...', html: '<div class="tree-loader-container"><div class="tree-loader"></div></div>', allowOutsideClick: false, showConfirmButton: false });
+                
+                await loadFromCloud(); // <--- PREVENT DATA LOSS
+                
                 if(!db.settings.popupImages) db.settings.popupImages = [];
                 if(action === 'add') db.settings.popupImages.push(formValues); else db.settings.popupImages[idx] = formValues;
                 await saveDB(); renderAdminTables();
@@ -2278,6 +2320,9 @@
         async function crudLevel(action, id) {
             if(action === 'delete') { 
                 Swal.fire({ title: 'กำลังลบ...', html: '<div class="tree-loader-container"><div class="tree-loader"></div></div>', allowOutsideClick: false, showConfirmButton: false });
+                
+                await loadFromCloud(); // <--- PREVENT DATA LOSS
+                
                 db.levels = db.levels.filter(x => x.id !== id); 
                 await saveDB(); renderAdminTables(); 
                 Swal.close();
@@ -2292,7 +2337,14 @@
             });
             if (formValues) { 
                 Swal.fire({ title: 'กำลังบันทึก...', html: '<div class="tree-loader-container"><div class="tree-loader"></div></div>', allowOutsideClick: false, showConfirmButton: false });
-                if(action==='add') db.levels.push({id: generateId(), ...formValues}); else Object.assign(item, formValues); 
+                
+                await loadFromCloud(); // <--- PREVENT DATA LOSS
+                
+                if(action==='add') db.levels.push({id: generateId(), ...formValues}); 
+                else {
+                    let freshItem = db.levels.find(x => x.id === id);
+                    if(freshItem) Object.assign(freshItem, formValues); 
+                }
                 await saveDB(); renderAdminTables(); if(currentUser) loadUserDashboard();
                 Swal.close();
             }
@@ -2301,6 +2353,9 @@
         async function crudBin(action, id) {
             if(action === 'delete') { 
                 Swal.fire({ title: 'กำลังลบ...', html: '<div class="tree-loader-container"><div class="tree-loader"></div></div>', allowOutsideClick: false, showConfirmButton: false });
+                
+                await loadFromCloud(); // <--- PREVENT DATA LOSS
+                
                 db.bins = db.bins.filter(x => x.id !== id); 
                 await saveDB(); renderAdminTables(); 
                 Swal.close();
@@ -2327,7 +2382,14 @@
             });
             if (formValues) { 
                 Swal.fire({ title: 'กำลังบันทึก...', html: '<div class="tree-loader-container"><div class="tree-loader"></div></div>', allowOutsideClick: false, showConfirmButton: false });
-                if(action==='add') db.bins.push({id: generateId(), ...formValues}); else Object.assign(item, formValues); 
+                
+                await loadFromCloud(); // <--- PREVENT DATA LOSS
+                
+                if(action==='add') db.bins.push({id: generateId(), ...formValues}); 
+                else {
+                    let freshItem = db.bins.find(x => x.id === id);
+                    if(freshItem) Object.assign(freshItem, formValues); 
+                }
                 await saveDB(); renderAdminTables(); 
                 Swal.close();
             }
@@ -2336,6 +2398,9 @@
         async function crudWaste(action, id) {
             if(action === 'delete') { 
                 Swal.fire({ title: 'กำลังลบ...', html: '<div class="tree-loader-container"><div class="tree-loader"></div></div>', allowOutsideClick: false, showConfirmButton: false });
+                
+                await loadFromCloud(); // <--- PREVENT DATA LOSS
+                
                 db.wastes = db.wastes.filter(x => x.id !== id); 
                 await saveDB(); renderAdminTables(); 
                 Swal.close();
@@ -2360,7 +2425,14 @@
             });
             if (formValues) { 
                 Swal.fire({ title: 'กำลังบันทึก...', html: '<div class="tree-loader-container"><div class="tree-loader"></div></div>', allowOutsideClick: false, showConfirmButton: false });
-                if(action==='add') db.wastes.push({id: generateId(), ...formValues}); else Object.assign(item, formValues); 
+                
+                await loadFromCloud(); // <--- PREVENT DATA LOSS
+                
+                if(action==='add') db.wastes.push({id: generateId(), ...formValues}); 
+                else {
+                    let freshItem = db.wastes.find(x => x.id === id);
+                    if(freshItem) Object.assign(freshItem, formValues); 
+                }
                 await saveDB(); renderAdminTables(); 
                 Swal.close();
             }
@@ -2383,6 +2455,9 @@
             }).then(async (res) => {
                 if(res.isConfirmed) {
                     Swal.fire({ title: 'กำลังลบ...', html: '<div class="tree-loader-container"><div class="tree-loader"></div></div>', allowOutsideClick: false, showConfirmButton: false });
+                    
+                    await loadFromCloud(); // <--- PREVENT DATA LOSS
+                    
                     let backupWeeks = JSON.parse(JSON.stringify(db.settings.weeks));
                     db.settings.weeks = db.settings.weeks.filter(w => Number(w.weekNum) !== Number(weekNum));
                     
@@ -2415,6 +2490,8 @@
             });
             if(formValues) {
                 Swal.fire({ title: 'กำลังบันทึกและจัดเรียงข้อมูล...', html: '<div class="tree-loader-container"><div class="tree-loader"></div></div>', allowOutsideClick: false, showConfirmButton: false });
+
+                await loadFromCloud(); // <--- PREVENT DATA LOSS
 
                 if (!db.settings.weeks) db.settings.weeks = [];
                 
@@ -2491,15 +2568,21 @@
 
             if (formValues && formValues.name && formValues.pts) {
                 Swal.fire({ title: 'กำลังบันทึก...', html: '<div class="tree-loader-container"><div class="tree-loader"></div></div>', allowOutsideClick: false, showConfirmButton: false });
+                
+                await loadFromCloud(); // <--- PREVENT DATA LOSS
+                
                 if(action === 'add') {
                     let newId = generateId();
                     let url = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=WCW_SCAN_${newId}_${formValues.pts}`;
                     db.qrs.unshift({ id: newId, name: formValues.name, pts: formValues.pts, scanType: formValues.scanType, url });
                 } else {
-                    item.name = formValues.name;
-                    item.pts = formValues.pts;
-                    item.scanType = formValues.scanType;
-                    item.url = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=WCW_SCAN_${item.id}_${formValues.pts}`; 
+                    let freshItem = db.qrs.find(q => q.id === id);
+                    if(freshItem) {
+                        freshItem.name = formValues.name;
+                        freshItem.pts = formValues.pts;
+                        freshItem.scanType = formValues.scanType;
+                        freshItem.url = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=WCW_SCAN_${freshItem.id}_${formValues.pts}`; 
+                    }
                 }
                 await saveDB(); renderAdminTables();
                 Swal.close();
@@ -2510,6 +2593,9 @@
         
         async function deleteQR(id) { 
             Swal.fire({ title: 'กำลังลบ...', html: '<div class="tree-loader-container"><div class="tree-loader"></div></div>', allowOutsideClick: false, showConfirmButton: false });
+            
+            await loadFromCloud(); // <--- PREVENT DATA LOSS
+            
             db.qrs = db.qrs.filter(q => q.id !== id); 
             await saveDB(); renderAdminTables(); 
             Swal.close();
