@@ -966,20 +966,12 @@
 
         async function saveUser() {
             if(!currentUser || currentUser.empId === 'admin') return; 
-            
-            let userToSave = JSON.parse(JSON.stringify(currentUser));
-            
-            await loadFromCloud();
-            
-            let idx = db.users.findIndex(u => u.empId === userToSave.empId);
+            let idx = db.users.findIndex(u => u.empId === currentUser.empId);
             if(idx > -1) {
-                db.users[idx] = userToSave;
+                db.users[idx] = currentUser;
             } else {
-                db.users.push(userToSave);
+                db.users.push(currentUser);
             }
-            
-            currentUser = db.users.find(u => u.empId === userToSave.empId);
-            
             await saveDB();
         }
 
@@ -1428,7 +1420,6 @@
         function initPopupSlider() {
             const slider = document.getElementById('popup-slider');
             const dotsContainer = document.getElementById('popup-dots');
-            const btnAcknowledge = document.getElementById('btn-acknowledge-popup');
             
             if(!db.settings.popupImages || db.settings.popupImages.length === 0) return;
 
@@ -1727,9 +1718,14 @@
         let stageScores = {s1: 0, t1: 0, s2: 0, t2: 0};
         let activeWaste = null;
 
-        function startGameFlow() {
+        async function startGameFlow() {
             closeAllModals(); 
             
+            // ตรวจสอบข้อมูลอัปเดตจาก Cloud ก่อนเข้าเกม เพื่อป้องกันคนแอบเล่นเกิน
+            Swal.fire({ title: 'กำลังโหลดข้อมูล...', html: '<div class="tree-loader-container"><div class="tree-loader"></div></div>', allowOutsideClick: false, showConfirmButton: false });
+            await loadFromCloud();
+            Swal.close();
+
             const today = getThaiDateStr();
             let activeWeek = null;
             if (db.settings.weeks) {
@@ -1745,7 +1741,6 @@
             if(currentUser.playedWeek !== weekToPlay) {
                 currentUser.playedWeek = weekToPlay;
                 currentUser.playCount = 0;
-                // อัปเดตเฉพาะสเตทในเครื่อง ยังไม่ส่งเซิร์ฟเวอร์จนกว่าจะเล่นจบ
             }
 
             if(currentUser.playCount >= 2 && currentUser.role !== 'admin') {
@@ -1889,6 +1884,7 @@
         }
 
         async function finishGame() {
+            // ดึงข้อมูล Cloud ก่อนเช็คโควต้า เพื่อป้องกันการโกงรีเฟรชค้างหน้าจอ
             Swal.fire({ title: 'กำลังประมวลผล...', html: '<div class="tree-loader-container"><div class="tree-loader"></div></div>', allowOutsideClick: false, showConfirmButton: false });
             await loadFromCloud();
 
@@ -1897,11 +1893,13 @@
                 weekToRecord = db.settings.weeks[db.settings.weeks.length - 1].weekNum;
             }
             
+            // อัปเดตเพื่อความชัวร์ 100% ว่าสัปดาห์ตรงกัน
             if(currentUser.playedWeek !== weekToRecord) {
                 currentUser.playedWeek = weekToRecord;
                 currentUser.playCount = 0;
             }
 
+            // บล็อกการบันทึกคะแนน หากเกินโควต้าแล้ว
             if(currentUser.playCount >= 2 && currentUser.role !== 'admin') {
                 Swal.fire({title: 'โควต้าหมดแล้ว!', text: 'คุณเล่นครบ 2 รอบแล้วในสัปดาห์นี้ คะแนนในรอบนี้จะไม่ถูกบันทึก', icon: 'error', customClass:{confirmButton:'rounded-xl bg-app-primary'}});
                 showPage('page-main');
