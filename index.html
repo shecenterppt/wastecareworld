@@ -1,172 +1,2653 @@
 <!DOCTYPE html>
-
 <html lang="th">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ปิดปรับปรุงชั่วคราว เพื่อเพิ่มประสบการณ์ที่ดีขึ้น</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Waste Care World V.2</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
+    
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript" defer></script>
 
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        window.tailwind = window.tailwind || {};
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Prompt', 'sans-serif'], },
+                    colors: { 
+                        app: {
+                            bg: '#F2F7F4',        
+                            primary: '#5C8D67',   
+                            secondary: '#A5C7A9', 
+                            accent: '#F4B95F',    
+                            dark: '#253E2B',      
+                            card: '#FFFFFF',
+                        }
+                    },
+                    boxShadow: {
+                        'soft': '0 10px 40px -10px rgba(92, 141, 103, 0.15)',
+                        'float': '0 20px 40px -5px rgba(0, 0, 0, 0.08)',
+                    }
+                }
+            }
+        }
+    </script>
 
-<style>
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-}
+    <style>
+        body { font-family: 'Prompt', sans-serif; background-color: #F2F7F4; overflow-x: hidden; -webkit-tap-highlight-color: transparent; color: #253E2B; }
+        
+        /* Modal Bottom Slide-up */
+        .modal-bottom { position: fixed; bottom: 0; left: 0; width: 100%; max-width: 100vw; height: auto; max-height: 90vh; background: white; border-top-left-radius: 36px; border-top-right-radius: 36px; box-shadow: none; transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.2, 1, 0.3, 1), box-shadow 0.4s ease; z-index: 50; display: flex; flex-direction: column; pointer-events: none; }
+        .modal-bottom.active { transform: translateY(0); box-shadow: 0 -10px 50px rgba(37, 62, 43, 0.15); pointer-events: auto; }
+        .modal-backdrop { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(37, 62, 43, 0.5); backdrop-filter: blur(4px); opacity: 0; visibility: hidden; transition: all 0.4s ease; z-index: 40; }
+        .modal-backdrop.active { opacity: 1; visibility: visible; }
+        .modal-content-scroll { overflow-y: auto; flex: 1; padding-bottom: 2rem; }
+        
+        /* Admin specific wider modal for desktop if needed */
+        @media (min-width: 768px) {
+            #setting-modal { width: 90%; left: 5%; height: 95vh; border-radius: 32px 32px 0 0; }
+        }
+        
+        /* Game Area */
+        #game-area { position: relative; overflow: visible; touch-action: none; background: url('https://www.transparenttextures.com/patterns/cubes.png') rgba(255,255,255,0.4); }
+        .waste-item { position: absolute; cursor: grab; user-select: none; transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); z-index: 10; touch-action: none; }
+        .waste-item:active { cursor: grabbing; transform: scale(1.15) rotate(5deg); z-index: 20; box-shadow: 0 15px 25px rgba(0,0,0,0.1); }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px;}
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #A5C7A9; border-radius: 10px; }
+        
+        .hidden-page { display: none !important; }
+        
+        /* Floating Animation */
+        .animate-float { animation: float 6s ease-in-out infinite; }
+        @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
 
-body{
-    font-family:'Noto Sans Thai',sans-serif;
-    min-height:100vh;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    background:linear-gradient(135deg,#0f172a,#1e293b,#334155);
-    color:white;
-    overflow:hidden;
-}
+        /* SweetAlert overrides for modern look */
+        .swal2-popup { border-radius: 24px !important; padding: 2rem !important; }
+        .swal2-input, .swal2-select { border-radius: 16px !important; border: 1px solid #e2e8f0 !important; font-size: 14px !important; padding: 12px 16px !important; }
+        .swal2-input:focus, .swal2-select:focus { border-color: #5C8D67 !important; box-shadow: 0 0 0 3px rgba(92,141,103,0.2) !important; }
 
-.container{
-    text-align:center;
-    max-width:700px;
-    padding:40px;
-}
+        /* Custom Loading Animation: Sprout to Tree */
+        @keyframes growTree {
+            0% { transform: scale(0.5); opacity: 0.5; color: #A5C7A9; content: "\f4d8"; }
+            50% { transform: scale(1.2); opacity: 1; color: #5C8D67; content: "\f1bb"; }
+            100% { transform: scale(0.5); opacity: 0.5; color: #A5C7A9; content: "\f4d8"; }
+        }
+        .tree-loader-container { display: flex; justify-content: center; align-items: center; height: 60px; padding: 10px 0; }
+        .tree-loader { display: inline-block; font-family: "Font Awesome 6 Free"; font-weight: 900; font-size: 2rem; animation: growTree 1.5s infinite ease-in-out; }
+        .tree-loader::before { content: "\f4d8"; animation: growTree 1.5s infinite ease-in-out; }
 
-.logo{
-    width:120px;
-    height:120px;
-    margin:0 auto 30px;
-    border-radius:50%;
-    background:rgba(255,255,255,0.1);
-    backdrop-filter:blur(10px);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size:60px;
-    animation:float 3s ease-in-out infinite;
-}
+        /* QR Scanner Overrides */
+        #reader { border: none !important; border-radius: 24px; overflow: hidden; background: #f8faf9; padding-bottom: 10px; }
+        #reader__dashboard_section_csr button { background: #5C8D67 !important; color: white !important; border-radius: 12px !important; padding: 10px 20px !important; border: none !important; font-family: 'Prompt', sans-serif !important; font-size: 13px !important; font-weight: bold; margin-top: 10px; cursor: pointer; }
+        #reader__dashboard_section_csr select { border-radius: 8px; border: 1px solid #e2e8f0; padding: 8px; margin-bottom: 10px; width: 100%; max-width: 250px; font-family: 'Prompt', sans-serif; }
+        #html5-qrcode-anchor-scan-type-change { color: #5C8D67 !important; text-decoration: none !important; font-weight: 600; margin-top: 10px; display: inline-block; }
 
-h1{
-    font-size:3rem;
-    margin-bottom:15px;
-    font-weight:700;
-}
-
-.subtitle{
-    font-size:1.2rem;
-    opacity:0.85;
-    margin-bottom:30px;
-}
-
-.message{
-    background:rgba(255,255,255,0.08);
-    border:1px solid rgba(255,255,255,0.15);
-    border-radius:20px;
-    padding:25px;
-    margin-bottom:30px;
-    backdrop-filter:blur(15px);
-}
-
-.message p{
-    line-height:1.8;
-}
-
-.status{
-    display:inline-flex;
-    align-items:center;
-    gap:10px;
-    background:rgba(34,197,94,0.15);
-    border:1px solid rgba(34,197,94,0.4);
-    padding:12px 20px;
-    border-radius:999px;
-    font-size:0.95rem;
-}
-
-.dot{
-    width:10px;
-    height:10px;
-    background:#22c55e;
-    border-radius:50%;
-    animation:pulse 1.5s infinite;
-}
-
-.footer{
-    margin-top:30px;
-    opacity:0.7;
-    font-size:0.9rem;
-}
-
-@keyframes float{
-    0%,100%{
-        transform:translateY(0);
-    }
-    50%{
-        transform:translateY(-10px);
-    }
-}
-
-@keyframes pulse{
-    0%{
-        transform:scale(1);
-        opacity:1;
-    }
-    100%{
-        transform:scale(2);
-        opacity:0;
-    }
-}
-
-@media(max-width:768px){
-    h1{
-        font-size:2rem;
-    }
-
-    .subtitle{
-        font-size:1rem;
-    }
-
-    .container{
-        padding:25px;
-    }
-}
-</style>
-
+        /* Slider Styles */
+        .slider-container { display: flex; transition: transform 0.3s ease-out; width: 100%; height: 100%; touch-action: pan-y; }
+        .slider-item { flex: 0 0 100%; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; }
+        .slider-img { width: 100%; height: 100%; object-fit: cover; }
+        
+        /* Lightbox */
+        .lightbox { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; visibility: hidden; transition: all 0.3s ease; }
+        .lightbox.active { opacity: 1; visibility: visible; }
+    </style>
 </head>
+<body class="antialiased h-screen flex flex-col">
 
-<body>
+    <div id="page-landing" class="flex flex-col h-screen w-full relative bg-app-bg overflow-y-auto">
+        <div class="flex-1 min-h-[45vh] w-full bg-[#EAF4EC] bg-cover bg-center transition-all duration-700 relative shrink-0" id="landing-bg" style="background-image: url('https://images.unsplash.com/photo-1542273917363-3b1817f69a5d?auto=format&fit=crop&w=800&q=80');">
+            <div class="w-full h-full bg-gradient-to-b from-black/20 via-transparent to-app-bg absolute top-0 left-0"></div>
+        </div>
+        
+        <div class="w-full bg-white rounded-t-[40px] px-6 pt-6 pb-12 flex flex-col items-center justify-center text-center z-10 shadow-[0_-20px_50px_rgba(0,0,0,0.08)] shrink-0 -mt-10 relative">
+            <div class="w-16 h-1.5 bg-gray-200 rounded-full mb-6"></div>
+            
+            <div class="relative w-full max-w-md overflow-hidden mb-6">
+                <div id="welcome-slider" class="flex transition-transform duration-500 w-[200%] items-center">
+                    <div class="w-1/2 px-2 flex flex-col justify-center">
+                        <h1 class="text-2xl sm:text-3xl font-bold text-app-primary mb-3">Waste Care World</h1>
+                        <p class="text-xs sm:text-sm text-gray-500 leading-relaxed px-4">Welcome to the World of Waste Management Games & Learning. Enjoy fun activities and interactive games.</p>
+                    </div>
+                    <div class="w-1/2 px-2 flex flex-col justify-center">
+                        <h1 class="text-2xl sm:text-3xl font-bold text-app-primary mb-3">Waste Care World</h1>
+                        <p class="text-xs sm:text-sm text-gray-500 leading-relaxed px-4">ยินดีต้อนรับสู่โลกแห่งการเรียนรู้และเกมจัดการขยะ<br>สนุกกับกิจกรรมและไอเดียสร้างสรรค์ เพื่อรักษ์โลกอย่างชาญฉลาด</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex space-x-2 mb-8">
+                <button onclick="slideWelcome(0)" id="dot-0" class="w-2.5 h-2.5 rounded-full bg-app-primary transition-all duration-300"></button>
+                <button onclick="slideWelcome(1)" id="dot-1" class="w-2.5 h-2.5 rounded-full bg-gray-200 transition-all duration-300"></button>
+            </div>
+            
+            <button onclick="openModal('login-modal')" class="w-full max-w-[280px] bg-app-primary text-white py-4 rounded-[20px] font-bold text-lg shadow-soft hover:shadow-float hover:bg-opacity-90 transition-all transform hover:scale-[1.02] active:scale-95">
+                Get Started
+            </button>
+        </div>
+    </div>
 
-<div class="container">
+    <div id="page-main" class="hidden-page flex flex-col h-screen w-full relative overflow-hidden bg-cover bg-center bg-no-repeat transition-all duration-1000 ease-in-out">
+        <div class="absolute inset-0 bg-gradient-to-b from-white/90 via-white/40 to-white/95 -z-10 pointer-events-none"></div>
 
-```
-<div class="logo">
-    🚧
-</div>
+        <header class="p-6 pt-10 flex justify-between items-center z-10">
+            <div class="flex items-center gap-4 bg-white/60 backdrop-blur-md py-2 px-4 rounded-[20px] shadow-sm border border-white/40 relative">
+                <img id="dashboard-logo" src="https://cdn-icons-png.flaticon.com/512/2913/2913426.png" class="w-10 h-10 object-contain drop-shadow-sm" alt="Logo">
+                <div class="flex flex-col justify-center">
+                    <h2 id="user-nickname" class="font-bold text-app-dark text-sm leading-tight pr-4">User Name</h2>
+                    <p id="user-empid" class="text-[10px] text-gray-500 font-medium mt-0.5">ID: 0000000</p>
+                </div>
+                <button onclick="manualRefresh()" id="btn-refresh" class="absolute -right-2 -top-2 w-7 h-7 bg-white rounded-full shadow-md text-app-primary flex items-center justify-center hover:bg-gray-50 transition-all z-20">
+                    <i class="fa-solid fa-arrows-rotate text-[11px]"></i>
+                </button>
+            </div>
+            <div class="bg-white/80 backdrop-blur-md px-4 py-2 rounded-[20px] flex flex-col items-center shadow-sm border border-white/40 relative">
+                <i id="cloud-sync-icon" class="hidden absolute -top-1 -right-1" title="Sync Status"></i>
+                <div class="flex items-center gap-1.5">
+                    <i class="fa-solid fa-leaf text-app-primary text-sm"></i>
+                    <span id="user-points" class="font-bold text-app-dark">0</span>
+                </div>
+                <span class="text-[9px] text-gray-500 uppercase tracking-wide font-semibold">Leaves</span>
+            </div>
+        </header>
 
-<h1>ปิดปรับปรุงชั่วคราว เพื่อเพิ่มประสบการณ์ที่ดีขึ้น</h1>
+        <div class="flex-1 flex flex-col items-center justify-between relative px-6 mt-4 pb-32">
+            <div class="bg-white/80 backdrop-blur-md px-6 py-2.5 rounded-full shadow-sm border border-white/50 z-10">
+                <h3 class="text-app-primary font-bold text-sm tracking-wide" id="tree-level-name">Level 1: Seed</h3>
+            </div>
+            
+            <div class="w-full max-w-[280px] z-10 bg-white/80 backdrop-blur-md p-5 rounded-[20px] shadow-sm border border-white/60">
+                <div class="flex justify-between text-[11px] text-gray-600 font-bold mb-2 px-1">
+                    <span>Progress</span>
+                    <span id="level-text">0 / 1000</span>
+                </div>
+                <div class="w-full bg-white rounded-full h-3.5 shadow-inner p-0.5 border border-gray-100">
+                    <div id="level-progress" class="bg-gradient-to-r from-app-secondary to-app-primary h-full rounded-full transition-all duration-700 relative" style="width: 0%">
+                        <div class="absolute right-0 top-0 bottom-0 w-4 bg-white/30 rounded-full blur-[2px]"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-<div class="subtitle">
-    Temporary Maintenance
-</div>
+        <nav class="absolute bottom-0 w-full bg-white/90 backdrop-blur-xl rounded-t-[30px] border-t border-white/50 shadow-[0_-10px_40px_rgba(37,62,43,0.05)] z-20 px-6 py-4 flex justify-between items-center pb-8">
+            <button onclick="closeAllModals()" class="flex flex-col items-center gap-1.5 text-app-primary w-12 transition-transform active:scale-95">
+                <i class="fa-solid fa-house text-[22px]"></i>
+                <span class="text-[9px] font-bold tracking-wide">Home</span>
+            </button>
+            <button onclick="startGameFlow()" class="flex flex-col items-center gap-1.5 text-gray-400 hover:text-app-primary transition-all active:scale-95 w-12">
+                <i class="fa-solid fa-gamepad text-[22px]"></i>
+                <span class="text-[9px] font-medium tracking-wide">Game</span>
+            </button>
+            <button onclick="openModal('checkin-modal')" class="flex flex-col items-center gap-1.5 text-gray-400 hover:text-app-primary transition-all active:scale-95 w-12">
+                <i class="fa-regular fa-calendar-check text-[22px]"></i>
+                <span class="text-[9px] font-medium tracking-wide">Check-in</span>
+            </button>
+            <button onclick="openModal('ranking-modal')" class="flex flex-col items-center gap-1.5 text-gray-400 hover:text-app-primary transition-all active:scale-95 w-12">
+                <i class="fa-solid fa-ranking-star text-[22px]"></i>
+                <span class="text-[9px] font-medium tracking-wide">Ranking</span>
+            </button>
+            <button onclick="openModal('main-menu-modal')" class="flex flex-col items-center gap-1.5 text-gray-400 hover:text-app-primary transition-all active:scale-95 w-12">
+                <i class="fa-solid fa-bars text-[22px]"></i>
+                <span class="text-[9px] font-medium tracking-wide">Menu</span>
+            </button>
+        </nav>
+    </div>
 
-<div class="message">
-    <p>
-        ขณะนี้ระบบอยู่ระหว่างการปรับปรุงและพัฒนาเพื่อเพิ่มประสิทธิภาพการให้บริการ<br>
-        ขออภัยในความไม่สะดวก และขอบคุณสำหรับความเข้าใจ
-    </p>
-</div>
+    <div id="modal-backdrop" class="modal-backdrop" onclick="closeAllModals()"></div>
 
-<div class="status">
-    <div class="dot"></div>
-    ทีมงานกำลังดำเนินการปรับปรุงระบบ
-</div>
+    <div id="main-menu-modal" class="modal-bottom pb-8">
+        <div class="w-16 h-1.5 bg-gray-200 rounded-full mx-auto mt-4 mb-4"></div>
+        <div class="px-6 flex flex-col h-full modal-content-scroll pt-2">
+            <div class="grid grid-cols-2 gap-4" id="main-menu-grid">
+                
+                <button onclick="startGameFlow()" class="col-span-2 bg-app-primary text-white p-5 rounded-[24px] flex items-center justify-between shadow-soft hover:shadow-float transition-all transform active:scale-95 relative overflow-hidden group">
+                    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+                    <div class="flex items-center gap-4 relative z-10">
+                        <div class="w-14 h-14 bg-white/20 rounded-[18px] flex items-center justify-center backdrop-blur-sm border border-white/10">
+                            <i class="fa-solid fa-gamepad text-2xl drop-shadow-sm"></i>
+                        </div>
+                        <div class="text-left">
+                            <h3 class="font-bold text-lg tracking-wide">Sorting Game</h3>
+                            <p class="text-[11px] opacity-90 font-light mt-0.5">เกมคัดแยกขยะ (เล่นได้ 2 รอบ/สัปดาห์)</p>
+                        </div>
+                    </div>
+                    <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm relative z-10">
+                        <i class="fa-solid fa-play text-sm ml-0.5"></i>
+                    </div>
+                </button>
 
-<div class="footer">
-    © 2026 Waste Care World<br>
-    แล้วพบกันอีกครั้งเร็ว ๆ นี้
-</div>
-```
+                <button onclick="openModal('qr-scan-modal')" class="col-span-2 bg-[#253E2B] text-white p-5 rounded-[24px] flex items-center justify-between shadow-sm hover:shadow-md transition-all transform active:scale-95 relative overflow-hidden">
+                    <div class="flex items-center gap-4 relative z-10">
+                        <div class="w-14 h-14 bg-white/10 rounded-[18px] flex items-center justify-center backdrop-blur-sm border border-white/10">
+                            <i class="fa-solid fa-qrcode text-2xl drop-shadow-sm"></i>
+                        </div>
+                        <div class="text-left">
+                            <h3 class="font-bold text-base tracking-wide">สแกน QR รับแต้ม</h3>
+                            <p class="text-[11px] opacity-80 font-light mt-0.5">สแกน QR Code เพื่อรับคะแนนพิเศษ</p>
+                        </div>
+                    </div>
+                    <div class="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm relative z-10">
+                        <i class="fa-solid fa-camera text-sm"></i>
+                    </div>
+                </button>
 
-</div>
+                <button onclick="openModal('checkin-modal')" class="bg-[#F8FAF9] border border-gray-100 p-5 rounded-[24px] flex flex-col items-center justify-center gap-3 shadow-sm hover:shadow-md hover:bg-white transition-all active:scale-95">
+                    <div class="w-12 h-12 bg-[#E6F0E8] text-app-primary rounded-[16px] flex items-center justify-center mb-1">
+                        <i class="fa-regular fa-calendar-check text-2xl"></i>
+                    </div>
+                    <span class="font-semibold text-sm text-app-dark">Check-in</span>
+                </button>
 
+                <button onclick="openModal('point-modal')" class="bg-[#F8FAF9] border border-gray-100 p-5 rounded-[24px] flex flex-col items-center justify-center gap-3 shadow-sm hover:shadow-md hover:bg-white transition-all active:scale-95">
+                    <div class="w-12 h-12 bg-[#FFF3E0] text-app-accent rounded-[16px] flex items-center justify-center mb-1">
+                        <i class="fa-solid fa-star text-2xl"></i>
+                    </div>
+                    <span class="font-semibold text-sm text-app-dark">My Points</span>
+                </button>
+
+                <button onclick="openModal('ranking-modal')" class="bg-[#F8FAF9] border border-gray-100 p-5 rounded-[24px] flex flex-col items-center justify-center gap-3 shadow-sm hover:shadow-md hover:bg-white transition-all active:scale-95">
+                    <div class="w-12 h-12 bg-[#E3F2FD] text-[#4A90E2] rounded-[16px] flex items-center justify-center mb-1">
+                        <i class="fa-solid fa-ranking-star text-2xl"></i>
+                    </div>
+                    <span class="font-semibold text-sm text-app-dark">Ranking</span>
+                </button>
+
+                <button id="btn-setting" onclick="openModal('setting-modal')" class="hidden col-span-2 bg-[#F2F7F4] text-app-dark p-4 rounded-[20px] flex items-center justify-center gap-3 shadow-sm hover:shadow-md transition-all active:scale-95 border border-gray-200">
+                    <i class="fa-solid fa-sliders text-app-primary"></i>
+                    <span class="font-bold text-sm">จัดการระบบ (Admin Area)</span>
+                </button>
+            </div>
+            
+            <div class="text-center mt-6 pb-2">
+                <button onclick="logout()" class="text-[13px] text-gray-400 font-medium hover:text-red-500 transition-colors"><i class="fa-solid fa-arrow-right-from-bracket mr-1.5"></i> ออกจากระบบ</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="login-modal" class="modal-bottom pb-8">
+        <div class="w-16 h-1.5 bg-gray-200 rounded-full mx-auto mt-4 mb-2"></div>
+        <div class="px-8 flex flex-col h-full modal-content-scroll">
+            <div class="flex justify-end w-full mb-2">
+                <label class="flex items-center gap-2 text-sm font-medium cursor-pointer">
+                    <span class="text-gray-400" id="lbl-en">EN</span>
+                    <div class="relative w-10 h-5">
+                        <input type="checkbox" id="lang-toggle" onchange="toggleLang()" class="peer sr-only"/>
+                        <div class="block w-10 h-5 bg-gray-200 rounded-full peer-checked:bg-app-primary transition-colors"></div>
+                        <div class="absolute left-0 top-0 w-5 h-5 bg-white border-[2px] border-gray-300 rounded-full transition-transform peer-checked:translate-x-full peer-checked:border-app-primary shadow-sm"></div>
+                    </div>
+                    <span class="text-gray-400 font-bold text-app-primary" id="lbl-th">TH</span>
+                </label>
+            </div>
+
+            <div class="flex flex-col items-center text-center mb-8 mt-2">
+                <img id="login-logo" src="https://cdn-icons-png.flaticon.com/512/2913/2913426.png" class="h-16 w-16 object-contain mb-4 drop-shadow-sm" alt="Logo">
+                <h2 id="login-title" class="text-[28px] font-bold text-app-dark mb-1 tracking-tight">Welcome Back</h2>
+                <p id="login-sub1" class="text-[13px] text-gray-500 mb-1 font-light">Please enter your login information!</p>
+                <p id="login-sub2" class="text-[13px] text-gray-500 font-light">ยินดีต้อนรับ กรุณากรอกข้อมูลเข้าสู่ระบบของคุณ</p>
+            </div>
+
+            <div class="space-y-5 flex-1">
+                <div id="nickname-group" style="display: none;">
+                    <label id="lbl-nickname" class="block text-[13px] font-semibold text-app-dark mb-2 pl-1">ชื่อเล่น (Nickname)</label>
+                    <input type="text" id="login-nickname" class="w-full bg-[#F8FAF9] border border-gray-200 rounded-[16px] px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-app-secondary focus:border-app-primary transition-all placeholder-gray-400" placeholder="ระบุชื่อเล่นของคุณ">
+                    <p class="text-[11px] text-app-primary mt-2 pl-1 font-medium"><i class="fa-solid fa-circle-check mr-1"></i> กรุณากรอกชื่อเล่นเพื่อลงทะเบียนครั้งแรก</p>
+                </div>
+                <div>
+                    <label id="lbl-empid" class="block text-[13px] font-semibold text-app-dark mb-2 pl-1">รหัสพนักงาน (Employee ID)</label>
+                    <input type="text" id="login-empid" maxlength="8" class="w-full bg-[#F8FAF9] border border-gray-200 rounded-[16px] px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-app-secondary focus:border-app-primary transition-all placeholder-gray-400" placeholder="กรอกรหัสพนักงาน 7 หลัก">
+                    <p id="lbl-hint" class="text-[11px] text-gray-400 mt-2 pl-1 font-light"><i class="fa-solid fa-circle-info mr-1"></i> สำหรับการเข้าระบบครั้งถัดไป กรอกแค่รหัสพนักงาน</p>
+                </div>
+            </div>
+            
+            <div class="mt-4 mb-2 flex justify-center">
+                <button id="btn-login" onclick="handleLogin()" class="w-[80%] max-w-[280px] bg-app-primary text-white py-4 rounded-[16px] font-bold text-lg shadow-soft hover:bg-opacity-90 transition-all active:scale-95">
+                    เข้าสู่ระบบ
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="qr-scan-modal" class="modal-bottom h-[90vh]">
+        <div class="w-16 h-1.5 bg-gray-200 rounded-full mx-auto mt-4 mb-2"></div>
+        <div class="px-6 flex flex-col h-full modal-content-scroll pt-2 items-center">
+            <h2 class="text-2xl font-bold text-app-dark text-center mb-1 tracking-tight">สแกน QR Code</h2>
+            <p class="text-center text-gray-500 text-[12px] mb-6 font-light">นำกล้องส่องไปที่ QR Code กิจกรรมเพื่อรับคะแนน</p>
+            
+            <div class="w-full max-w-sm rounded-[24px] overflow-hidden shadow-sm border border-gray-200 mb-6 bg-gray-50">
+                <div id="reader" width="100%"></div>
+            </div>
+            
+            <button onclick="closeAllModals()" class="w-full max-w-xs bg-[#F8FAF9] border border-gray-200 text-app-dark py-4 rounded-[16px] font-bold hover:bg-gray-50 transition-colors mt-auto mb-8 text-sm shrink-0">ยกเลิกการสแกน</button>
+        </div>
+    </div>
+
+    <div id="checkin-modal" class="modal-bottom">
+        <div class="w-16 h-1.5 bg-gray-200 rounded-full mx-auto mt-4 mb-2"></div>
+        <div class="px-8 flex flex-col items-center modal-content-scroll text-center pt-4 w-full">
+            
+            <div id="checkin-step-1" class="w-full flex-col items-center hidden relative pb-10">
+                <h2 class="text-2xl font-bold text-app-dark mb-4 tracking-tight">ประกาศ / กิจกรรม</h2>
+                
+                <div class="w-full max-w-[320px] aspect-[4/5] rounded-[24px] overflow-hidden shadow-sm border border-gray-100 bg-gray-50 relative mx-auto" id="popup-slider-wrapper">
+                    <div id="popup-slider" class="slider-container">
+                        </div>
+                </div>
+                
+                <div id="popup-dots" class="flex gap-2 justify-center mt-4 h-6 items-center">
+                    </div>
+
+                <div class="mt-auto w-full pt-4">
+                    <button id="btn-acknowledge-popup" onclick="acknowledgeCheckinPopup()" disabled class="w-full max-w-xs bg-gray-300 text-gray-500 py-4 rounded-[16px] font-bold text-base shadow-sm transition-all active:scale-95 mb-4 mx-auto block cursor-not-allowed">โปรดอ่านให้ครบเพื่อรับทราบ</button>
+                    <button onclick="closeAllModals()" class="w-full max-w-xs bg-transparent text-gray-500 py-3 rounded-[16px] font-semibold hover:bg-gray-50 transition-colors text-sm mx-auto block">ปิดหน้าต่าง</button>
+                </div>
+            </div>
+
+            <div id="checkin-step-2" class="w-full flex-col items-center hidden pb-8">
+                <div class="relative w-28 h-28 mb-8 mx-auto">
+                    <div class="absolute inset-0 bg-[#E6F0E8] rounded-full animate-ping opacity-20"></div>
+                    <div class="absolute inset-0 bg-[#E6F0E8] rounded-full flex items-center justify-center z-10 shadow-inner border border-white">
+                        <i class="fa-regular fa-calendar-check text-[50px] text-app-primary drop-shadow-sm"></i>
+                    </div>
+                </div>
+                <h2 class="text-2xl font-bold text-app-dark mb-1 tracking-tight">Daily Check-in</h2>
+                <p class="text-gray-500 mb-8 text-[13px] font-light">เช็คอินต่อเนื่องเพื่อรับคะแนนโบนัสพิเศษ!</p>
+                
+                <div class="w-full max-w-sm mb-10 relative px-2 mx-auto">
+                    <div class="absolute top-1/2 left-4 right-4 h-1 bg-gray-100 -z-10 transform -translate-y-1/2 rounded-full"></div>
+                    <div class="flex justify-between relative z-0" id="checkin-days"></div>
+                </div>
+                
+                <div class="bg-[#F8FAF9] w-full max-w-sm mx-auto rounded-[20px] py-4 mb-8 border border-gray-100">
+                    <p id="checkin-status" class="text-[13px] text-gray-600 font-medium">คุณเช็คอินต่อเนื่องมาแล้ว <span id="streak-count" class="text-app-accent font-bold text-xl mx-1">0</span> วัน</p>
+                </div>
+                
+                <button id="btn-do-checkin" onclick="doCheckIn()" class="w-full max-w-xs bg-app-primary text-white py-4 rounded-[16px] font-bold text-base shadow-soft hover:bg-opacity-90 transition-all active:scale-95 mb-4 mx-auto block">เช็คอินวันนี้</button>
+                <button onclick="closeAllModals()" class="w-full max-w-xs bg-transparent text-gray-500 py-3 rounded-[16px] font-semibold hover:bg-gray-50 transition-colors text-sm mx-auto block">ปิดหน้าต่าง</button>
+            </div>
+
+        </div>
+    </div>
+
+    <div id="image-lightbox" class="lightbox">
+        <button onclick="closeLightbox()" class="absolute top-6 right-6 w-10 h-10 bg-white/20 text-white rounded-full flex items-center justify-center hover:bg-white/30 backdrop-blur-md transition-colors"><i class="fa-solid fa-xmark text-xl"></i></button>
+        <img id="lightbox-img" src="" class="max-w-[95vw] max-h-[80vh] object-contain rounded-xl shadow-2xl">
+        <button onclick="closeLightbox()" class="mt-6 px-8 py-3 bg-white/20 text-white font-semibold rounded-full hover:bg-white/30 backdrop-blur-md transition-colors text-sm">ปิดหน้าต่างรูปภาพ</button>
+    </div>
+
+    <div id="point-modal" class="modal-bottom h-[85vh]">
+        <div class="w-16 h-1.5 bg-gray-200 rounded-full mx-auto mt-4 mb-2"></div>
+        <div class="px-6 flex flex-col h-full modal-content-scroll pt-2">
+            <h2 class="text-2xl font-bold text-app-dark text-center mb-6 tracking-tight">My Points</h2>
+            
+            <div class="bg-gradient-to-br from-app-secondary to-app-primary text-white rounded-[24px] p-8 flex flex-col items-center justify-center shadow-soft mb-8 relative overflow-hidden shrink-0">
+                <div class="absolute -right-4 -top-4 w-24 h-24 bg-white/10 rounded-full blur-xl"></div>
+                <div class="absolute -left-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-xl"></div>
+                <p class="text-[13px] opacity-90 mb-2 font-medium relative z-10">คะแนนสะสมทั้งหมด</p>
+                <div class="flex items-center gap-3 relative z-10">
+                    <i class="fa-solid fa-leaf text-3xl text-[#D8E8DB] drop-shadow-md"></i>
+                    <span id="history-total-points" class="text-5xl font-bold tracking-tight drop-shadow-md">0</span>
+                </div>
+            </div>
+            
+            <div class="flex justify-between items-end mb-4 px-2 shrink-0">
+                <h3 class="font-bold text-app-dark text-sm">ประวัติการรับคะแนน</h3>
+            </div>
+            
+            <div id="point-history-list" class="flex-1 overflow-y-auto space-y-3 mb-6 pr-1"></div>
+            
+            <button onclick="closeAllModals()" class="w-full bg-[#F8FAF9] border border-gray-200 text-app-dark py-4 rounded-[16px] font-bold hover:bg-gray-50 transition-colors mt-auto mb-8 text-sm shrink-0">ปิดหน้าต่าง</button>
+        </div>
+    </div>
+
+    <div id="ranking-modal" class="modal-bottom h-[90vh]">
+        <div class="w-16 h-1.5 bg-gray-200 rounded-full mx-auto mt-4 mb-2"></div>
+        <div class="px-6 flex flex-col h-full modal-content-scroll pt-2">
+            <h2 class="text-2xl font-bold text-app-dark text-center mb-1 tracking-tight shrink-0">Leaderboard</h2>
+            <p class="text-center text-gray-500 text-[12px] mb-5 font-light shrink-0">อันดับผู้เล่นที่ดูแลโลกใบนี้ได้ดีที่สุด</p>
+            
+            <div class="flex bg-gray-100 p-1.5 rounded-full mb-4 relative shrink-0">
+                <button id="tab-rank-weekly" onclick="switchRankTab('weekly')" class="flex-1 py-2.5 text-[13px] font-bold rounded-full bg-white text-app-dark shadow-sm transition-all">สรุปรายสัปดาห์</button>
+                <button id="tab-rank-alltime" onclick="switchRankTab('alltime')" class="flex-1 py-2.5 text-[13px] font-bold rounded-full text-gray-500 hover:text-gray-700 transition-all">ภาพรวมทั้งหมด</button>
+            </div>
+
+            <div id="rank-week-selector-container" class="mb-5 text-center hidden shrink-0">
+                <select id="rank-week-selector" onchange="renderRanking('weekly')" class="bg-[#F8FAF9] border border-gray-200 text-app-dark text-[12px] font-semibold rounded-[12px] px-4 py-2 outline-none focus:border-app-primary w-full max-w-[280px]">
+                    </select>
+            </div>
+            
+            <div id="my-rank-banner" class="bg-app-dark text-white rounded-[20px] p-4 flex items-center justify-between shadow-float mb-6 sticky top-0 z-10 border border-white/10 shrink-0">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-white/10 rounded-[14px] flex items-center justify-center font-bold text-xl border border-white/20" id="my-rank-num">-</div>
+                    <div>
+                        <p class="font-medium text-[11px] text-gray-300 mb-0.5">อันดับของคุณ</p>
+                        <p class="font-bold text-sm" id="my-rank-name">User</p>
+                    </div>
+                </div>
+                <div class="bg-white/10 px-3 py-1.5 rounded-full flex items-center gap-1.5 backdrop-blur-sm">
+                    <span class="font-bold text-sm" id="my-rank-pts">0</span>
+                    <i class="fa-solid fa-leaf text-[10px] text-app-secondary"></i>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-[24px] flex-1 overflow-y-auto mb-6 px-1">
+                <div id="ranking-list" class="space-y-3"></div>
+            </div>
+            
+            <button onclick="closeAllModals()" class="w-full bg-[#F8FAF9] border border-gray-200 text-app-dark py-4 rounded-[16px] font-bold hover:bg-gray-50 transition-colors mt-auto mb-8 text-sm shrink-0">ปิดหน้าต่าง</button>
+        </div>
+    </div>
+
+    <div id="weekly-summary-modal" class="modal-bottom pb-8">
+        <div class="w-16 h-1.5 bg-gray-200 rounded-full mx-auto mt-4 mb-2"></div>
+        <div class="px-8 flex flex-col items-center modal-content-scroll text-center pt-6">
+            <div class="w-24 h-24 bg-[#E6F0E8] rounded-full flex items-center justify-center mb-4 border-4 border-white shadow-sm shrink-0">
+                <i class="fa-solid fa-calendar-check text-5xl text-app-primary"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-app-dark mb-2 tracking-tight shrink-0">สรุปคะแนนสัปดาห์นี้</h2>
+            <p class="text-gray-500 mb-6 text-[13px] font-medium bg-gray-50 px-4 py-2 rounded-xl shrink-0">คุณเล่นครบ 2 รอบสำหรับสัปดาห์นี้แล้ว 🎉</p>
+            
+            <div class="w-full bg-[#F8FAF9] rounded-[24px] p-6 mb-8 border border-gray-100 shadow-inner shrink-0">
+                <p class="text-[12px] text-gray-500 mb-1 font-bold">คะแนนรวมสัปดาห์ที่ <span id="ws-week-num" class="text-app-primary"></span></p>
+                <p class="text-6xl font-black text-app-primary drop-shadow-sm mt-2" id="ws-total-score">0</p>
+                <p class="text-[10px] text-gray-400 mt-3 font-medium border-t border-gray-200 pt-3 inline-block">รวมคะแนนจากการเล่นเกมเท่านั้น</p>
+            </div>
+
+            <div class="w-full bg-blue-50 border border-blue-100 rounded-[16px] p-4 mb-8 shrink-0">
+                <p class="text-[12px] text-blue-600 font-bold"><i class="fa-solid fa-clock mr-1.5"></i> กรุณากลับมาเล่นใหม่ในวันที่</p>
+                <p class="text-[14px] text-blue-800 font-black mt-1 bg-white inline-block px-4 py-1.5 rounded-lg shadow-sm border border-blue-100" id="ws-next-date">-</p>
+            </div>
+            
+            <button onclick="closeAllModals()" class="w-full max-w-xs bg-app-primary text-white py-4 rounded-[16px] font-bold shadow-soft hover:bg-opacity-90 transition-all active:scale-95 text-base mt-auto shrink-0">รับทราบ</button>
+        </div>
+    </div>
+
+
+    <div id="game-container" class="hidden-page fixed inset-0 bg-[#EAF4EC] z-50 flex flex-col overflow-hidden touch-none">
+        <div class="absolute inset-0 opacity-40 bg-[url('https://www.transparenttextures.com/patterns/natural-paper.png')] pointer-events-none"></div>
+        <div class="bg-white/80 backdrop-blur-md p-5 flex justify-between items-center shadow-sm z-40 border-b border-white relative">
+            <div class="flex items-center gap-3">
+                <button onclick="quitGame()" class="w-10 h-10 bg-[#F2F7F4] rounded-full flex items-center justify-center text-app-dark hover:bg-gray-200 transition-colors"><i class="fa-solid fa-arrow-left"></i></button>
+                <div>
+                    <h2 class="font-bold text-app-dark text-base sm:text-lg tracking-tight" id="game-stage-title">ด่าน 1: ในอาคารผลิต</h2>
+                    <p class="text-[10px] sm:text-xs text-gray-500 font-medium">ลากขยะลงถังให้ถูกต้อง</p>
+                </div>
+            </div>
+            <div class="flex gap-4 items-center">
+                <div class="bg-app-dark text-white px-3 py-1.5 rounded-[12px] text-center min-w-[70px] shadow-sm">
+                    <p class="text-[8px] uppercase tracking-wider opacity-70 mb-0.5">Time</p>
+                    <p class="font-bold font-mono text-base sm:text-lg leading-none" id="game-timer">02:00</p>
+                </div>
+                <div class="bg-app-accent text-white px-3 py-1.5 rounded-[12px] text-center min-w-[70px] shadow-sm">
+                    <p class="text-[8px] uppercase tracking-wider opacity-90 mb-0.5">Score</p>
+                    <p class="font-bold text-base sm:text-lg leading-none" id="game-score">0</p>
+                </div>
+            </div>
+        </div>
+        
+        <div id="game-area" class="flex-1 relative z-30 touch-none"></div>
+        
+        <div id="game-bottom-bar" class="flex-shrink-0 h-[22vh] min-h-[110px] max-h-[140px] w-full bg-white rounded-t-[24px] shadow-[0_-10px_30px_rgba(37,62,43,0.08)] flex items-end justify-center px-1 sm:px-4 pb-3 sm:pb-6 z-20 overflow-visible relative border-t border-gray-50">
+            <div class="absolute top-3 left-1/2 transform -translate-x-1/2 w-12 h-1 bg-gray-200 rounded-full"></div>
+            <div id="bins-area" class="flex items-end justify-center gap-1 sm:gap-3 w-full h-full pt-8 px-1 overflow-visible"></div>
+        </div>
+    </div>
+
+    <div id="game-result-modal" class="modal-bottom pb-8">
+        <div class="w-16 h-1.5 bg-gray-200 rounded-full mx-auto mt-4 mb-2"></div>
+        <div class="px-8 flex flex-col items-center modal-content-scroll text-center pt-4">
+            <div class="w-20 h-20 bg-[#FFF3E0] rounded-full flex items-center justify-center mb-4 shadow-inner shrink-0">
+                <i class="fa-solid fa-medal text-4xl text-app-accent"></i>
+            </div>
+            <h2 class="text-3xl font-bold text-app-dark mb-1 tracking-tight shrink-0" id="result-title">Great Job!</h2>
+            <p class="text-gray-500 mb-8 text-[13px] font-light shrink-0" id="result-subtitle">เยี่ยมมากที่คุณช่วยโลกของเราในรอบนี้</p>
+            
+            <div class="w-full bg-[#F8FAF9] rounded-[24px] p-6 mb-8 border border-gray-100 shadow-sm text-left relative overflow-hidden shrink-0">
+                <div class="absolute -right-6 -top-6 text-gray-100 opacity-50"><i class="fa-solid fa-clipboard-check text-8xl"></i></div>
+                
+                <div class="flex justify-between items-center border-b border-gray-200 pb-4 mb-4 relative z-10">
+                    <span class="text-gray-600 text-[13px] font-medium"><i class="fa-solid fa-building mr-2 text-gray-400"></i>ด่าน 1 (ในอาคารผลิต)</span>
+                    <div class="text-right">
+                        <span class="font-bold text-app-primary block text-base" id="res-s1-score">0 pts</span>
+                        <span class="text-[10px] text-gray-400" id="res-s1-time">เวลา: 00:00</span>
+                    </div>
+                </div>
+                <div class="flex justify-between items-center border-b border-gray-200 pb-4 mb-4 relative z-10">
+                    <span class="text-gray-600 text-[13px] font-medium"><i class="fa-solid fa-tree mr-2 text-gray-400"></i>ด่าน 2 (นอกอาคารผลิต)</span>
+                    <div class="text-right">
+                        <span class="font-bold text-app-primary block text-base" id="res-s2-score">0 pts</span>
+                        <span class="text-[10px] text-gray-400" id="res-s2-time">เวลา: 00:00</span>
+                    </div>
+                </div>
+                <div class="flex justify-between items-center relative z-10 pt-2">
+                    <span class="font-bold text-app-dark">คะแนนรวมรอบนี้</span>
+                    <span class="font-bold text-3xl text-app-accent drop-shadow-sm" id="res-total-score">0</span>
+                </div>
+            </div>
+            <button onclick="closeGameAndReturn()" class="w-full bg-app-primary text-white py-4 rounded-[16px] font-bold shadow-soft hover:bg-opacity-90 transition-all mt-auto active:scale-95 text-base shrink-0">กลับหน้าหลัก</button>
+        </div>
+    </div>
+
+    <input type="file" id="csv-import-bins" accept=".csv" class="hidden" onchange="importCSV(event, 'bins')">
+    <input type="file" id="csv-import-wastes" accept=".csv" class="hidden" onchange="importCSV(event, 'wastes')">
+
+    <div id="setting-modal" class="modal-bottom h-[90vh] md:h-[95vh]">
+        <div class="w-16 h-1.5 bg-gray-200 rounded-full mx-auto mt-4 mb-2 md:hidden"></div>
+        <div class="px-8 pb-4 border-b border-gray-100 flex justify-between items-center pt-6 md:pt-8 shrink-0">
+            <h2 class="text-2xl font-bold text-app-dark tracking-tight flex items-center"><i class="fa-solid fa-sliders text-app-primary mr-3"></i> Admin Center</h2>
+            <button onclick="closeAllModals()" class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-200 transition-colors"><i class="fa-solid fa-xmark text-lg"></i></button>
+        </div>
+        
+        <div class="flex overflow-x-auto px-8 py-4 gap-3 border-b border-gray-50 shrink-0 hide-scrollbar" id="admin-tabs">
+            <button class="admin-tab active px-6 py-2.5 bg-app-dark text-white text-[13px] font-semibold rounded-full whitespace-nowrap shadow-md transition-all" onclick="switchAdminTab('tab-general', this)">รูปภาพ/ระบบ</button>
+            <button class="admin-tab px-6 py-2.5 bg-[#F8FAF9] text-gray-600 text-[13px] font-semibold rounded-full whitespace-nowrap border border-gray-200 hover:bg-gray-50 transition-all" onclick="switchAdminTab('tab-level', this)">ระดับผู้เล่น</button>
+            <button class="admin-tab px-6 py-2.5 bg-[#F8FAF9] text-gray-600 text-[13px] font-semibold rounded-full whitespace-nowrap border border-gray-200 hover:bg-gray-50 transition-all" onclick="switchAdminTab('tab-game', this)">ตั้งค่าเกมขยะ</button>
+            <button class="admin-tab px-6 py-2.5 bg-[#F8FAF9] text-gray-600 text-[13px] font-semibold rounded-full whitespace-nowrap border border-gray-200 hover:bg-gray-50 transition-all" onclick="switchAdminTab('tab-event', this)">แคมเปญ QR</button>
+            <button class="admin-tab px-6 py-2.5 bg-[#F8FAF9] text-gray-600 text-[13px] font-semibold rounded-full whitespace-nowrap border border-gray-200 hover:bg-gray-50 transition-all" onclick="switchAdminTab('tab-users', this)">รายชื่อผู้เล่น</button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-8 bg-white modal-content-scroll pb-16">
+            <div id="tab-general" class="admin-tab-content space-y-8 max-w-4xl mx-auto">
+                <div class="bg-white p-6 rounded-[24px] border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
+                    <h3 class="font-bold text-app-dark pb-4 mb-5 text-base flex items-center"><i class="fa-regular fa-image mr-2 text-app-primary"></i> 1. รูปภาพในระบบ</h3>
+                    <div class="space-y-6">
+                        <div class="mb-5 bg-[#F8FAF9] p-5 rounded-[16px]">
+                            <div class="flex justify-between items-center mb-2">
+                                <label class="text-[13px] font-bold text-app-dark">พื้นหลังหน้าแรก (Dynamic Background)</label>
+                                <button onclick="crudMainImage('add')" class="text-[11px] bg-[#5C8D67] text-white px-3 py-2 rounded-[10px] shadow-sm font-bold hover:bg-opacity-90 transition-all"><i class="fa-solid fa-plus mr-1"></i> เพิ่มรูปพื้นหลัง</button>
+                            </div>
+                            <p class="text-[11px] text-gray-500 mb-4">ตั้งค่ารูปภาพให้เปลี่ยนไปตามช่วงเวลา (HH:MM)</p>
+                            <div class="bg-white border border-gray-200 rounded-[16px] overflow-hidden text-[13px]">
+                                <table class="w-full text-left">
+                                    <thead class="bg-gray-50 text-gray-500 text-[11px] uppercase tracking-wider">
+                                        <tr><th class="p-3 font-semibold">รูปภาพ</th><th class="p-3 font-semibold">เวลาเริ่ม</th><th class="p-3 font-semibold">เวลาสิ้นสุด</th><th class="p-3 text-right font-semibold">จัดการ</th></tr>
+                                    </thead>
+                                    <tbody id="admin-table-main-images" class="divide-y divide-gray-100"></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="text-[13px] font-bold text-app-dark ml-1">โลโก้ระบบ (Logo URL)</label>
+                            <input type="text" id="cfg-logo-img" class="w-full bg-[#F8FAF9] border border-gray-200 rounded-[16px] px-5 py-3.5 text-sm mt-2 focus:border-app-primary outline-none transition-colors" placeholder="วางลิงก์รูปโลโก้ของคุณที่นี่">
+                        </div>
+
+                        <div class="border-t border-gray-100 pt-6 mt-6">
+                            <div class="flex justify-between items-center mb-2">
+                                <label class="text-[13px] font-bold text-app-dark ml-1 flex items-center gap-2">
+                                    รูปภาพ Popup ก่อนเช็คอิน 
+                                    <span class="bg-gray-100 text-gray-500 text-[10px] px-2 py-0.5 rounded">แนะนำ 1080x1350 px</span>
+                                </label>
+                                <button onclick="crudPopupImage('add')" class="text-[11px] bg-[#5C8D67] text-white px-3 py-2 rounded-[10px] shadow-sm font-bold hover:bg-opacity-90 transition-all"><i class="fa-solid fa-plus mr-1"></i> เพิ่มรูป Popup</button>
+                            </div>
+                            <p class="text-[11px] text-gray-500 ml-1 mb-4">เพิ่มรูปภาพที่ต้องการให้แสดงก่อนเช็คอิน (ใส่ได้หลายรูปเพื่อทำสไลด์)</p>
+                            <div class="bg-white border border-gray-200 rounded-[16px] overflow-hidden text-[13px]">
+                                <table class="w-full text-left">
+                                    <thead class="bg-gray-50 text-gray-500 text-[11px] uppercase tracking-wider">
+                                        <tr><th class="p-3 font-semibold w-24">รูปภาพ</th><th class="p-3 font-semibold">Image URL</th><th class="p-3 text-right font-semibold w-24">จัดการ</th></tr>
+                                    </thead>
+                                    <tbody id="admin-table-popup-images" class="divide-y divide-gray-100"></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <button onclick="saveGeneralSettings()" class="bg-app-dark text-white text-[14px] font-bold px-6 py-3.5 rounded-[16px] shadow-soft w-full hover:bg-opacity-90 transition-all mt-2">บันทึกการตั้งค่ารูปภาพ</button>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-[24px] border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
+                    <h3 class="font-bold text-app-dark pb-4 mb-5 text-base flex items-center"><i class="fa-solid fa-database mr-2 text-blue-500"></i> 6. ฐานข้อมูล Google Sheets</h3>
+                    <div class="space-y-5">
+                        <div>
+                            <label class="text-[12px] font-semibold text-gray-500 ml-1">Google Sheet ID</label>
+                            <input type="text" id="cfg-sheet-id" class="w-full bg-[#F8FAF9] border border-gray-200 rounded-[16px] px-5 py-3 text-sm mt-2 focus:border-blue-400 outline-none transition-colors" placeholder="วาง ID ของ Google Sheet">
+                        </div>
+                        <div>
+                            <label class="text-[12px] font-semibold text-gray-500 ml-1">GAS Web App URL (Backend)</label>
+                            <input type="text" id="cfg-gas-url" class="w-full bg-[#F8FAF9] border border-gray-200 rounded-[16px] px-5 py-3 text-sm mt-2 focus:border-blue-400 outline-none transition-colors" placeholder="https://script.google.com/...">
+                        </div>
+                        <div class="flex gap-3 mt-4">
+                            <button onclick="connectDB()" id="btn-db-connect" class="bg-blue-600 text-white text-[13px] font-bold px-5 py-3.5 rounded-[16px] flex-1 hover:bg-blue-700 transition-all shadow-md">บันทึกและเชื่อมต่อ DB</button>
+                            <button onclick="resetSystemData()" class="bg-[#FFF0F0] text-red-500 text-[13px] font-bold px-5 py-3.5 rounded-[16px] hover:bg-red-50 transition-all border border-red-100"><i class="fa-solid fa-trash-can mr-1"></i> รีเซ็ตฐานข้อมูล (สลับชีท)</button>
+                        </div>
+                        <p class="text-[11px] text-gray-400 mt-2 bg-gray-50 p-3 rounded-xl border border-gray-100"><i class="fa-solid fa-circle-info mr-1"></i> เมื่อกดเชื่อมต่อ ระบบจะสร้างโครงสร้างข้อมูลลงใน Google Sheets ให้โดยอัตโนมัติ (หากยังไม่มี)</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab-level" class="admin-tab-content hidden space-y-6 max-w-5xl mx-auto">
+                <div class="flex justify-between items-center bg-white p-5 rounded-[20px] border border-gray-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)] mb-4">
+                    <h3 class="font-bold text-app-dark text-base flex items-center"><i class="fa-solid fa-layer-group text-app-primary mr-3"></i> 2. ระดับผู้เล่น</h3>
+                    <button onclick="crudLevel('add')" class="text-[12px] font-bold bg-[#5C8D67] text-white px-5 py-2.5 rounded-[12px] shadow-soft transition-all hover:bg-opacity-90"><i class="fa-solid fa-plus mr-1"></i> เพิ่มระดับ</button>
+                </div>
+                <div class="bg-white border border-gray-100 rounded-[20px] shadow-sm overflow-hidden text-sm">
+                    <table class="w-full text-left">
+                        <thead class="bg-[#F8FAF9] text-gray-500 text-[12px] uppercase tracking-wider border-b border-gray-100">
+                            <tr><th class="p-4 font-semibold">Level</th><th class="p-4 font-semibold">คะแนนเริ่มต้น</th><th class="p-4 text-right font-semibold">จัดการ</th></tr>
+                        </thead>
+                        <tbody id="admin-table-levels" class="divide-y divide-gray-50"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="tab-game" class="admin-tab-content hidden space-y-10 max-w-5xl mx-auto">
+                <div>
+                    <div class="flex justify-between items-center mb-4 bg-white p-4 rounded-[20px] border border-gray-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)]">
+                        <h3 class="font-bold text-app-dark text-base flex items-center"><i class="fa-solid fa-trash-can text-app-primary mr-3"></i> 3.1 ประเภทถังขยะ</h3>
+                        <div class="space-x-2 flex">
+                            <button onclick="document.getElementById('csv-import-bins').click()" class="text-[11px] font-bold bg-[#E6F0E8] text-[#5C8D67] px-4 py-2 rounded-[10px] hover:bg-[#D4E4D7] transition-colors"><i class="fa-solid fa-upload mr-1"></i> Import</button>
+                            <button onclick="exportCSV('bins')" class="text-[11px] font-bold bg-[#E6F0E8] text-[#5C8D67] px-4 py-2 rounded-[10px] hover:bg-[#D4E4D7] transition-colors"><i class="fa-solid fa-download mr-1"></i> Export</button>
+                            <button onclick="crudBin('add')" class="text-[11px] font-bold bg-[#5C8D67] text-white px-4 py-2 rounded-[10px] shadow-sm hover:bg-opacity-90 transition-colors"><i class="fa-solid fa-plus mr-1"></i> เพิ่มถังขยะ</button>
+                        </div>
+                    </div>
+                    <div class="bg-white border border-gray-100 rounded-[20px] shadow-sm overflow-hidden text-sm overflow-x-auto">
+                        <table class="w-full text-left whitespace-nowrap">
+                            <thead class="bg-[#F8FAF9] text-gray-500 text-[12px] uppercase tracking-wider border-b border-gray-100">
+                                <tr><th class="p-4 font-semibold w-16 text-center">รูป</th><th class="p-4 font-semibold">ชื่อถังขยะ</th><th class="p-4 font-semibold">แสดงผลด่าน</th><th class="p-4 text-right font-semibold">จัดการ</th></tr>
+                            </thead>
+                            <tbody id="admin-table-bins" class="divide-y divide-gray-50"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="flex justify-between items-center mb-4 bg-white p-4 rounded-[20px] border border-gray-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)]">
+                        <h3 class="font-bold text-app-dark text-base flex items-center"><i class="fa-solid fa-bottle-water text-app-primary mr-3"></i> 3.2 ประเภทขยะ</h3>
+                        <div class="space-x-2 flex">
+                            <button onclick="document.getElementById('csv-import-wastes').click()" class="text-[11px] font-bold bg-[#E6F0E8] text-[#5C8D67] px-4 py-2 rounded-[10px] hover:bg-[#D4E4D7] transition-colors"><i class="fa-solid fa-upload mr-1"></i> Import</button>
+                            <button onclick="exportCSV('wastes')" class="text-[11px] font-bold bg-[#E6F0E8] text-[#5C8D67] px-4 py-2 rounded-[10px] hover:bg-[#D4E4D7] transition-colors"><i class="fa-solid fa-download mr-1"></i> Export</button>
+                            <button onclick="crudWaste('add')" class="text-[11px] font-bold bg-[#5C8D67] text-white px-4 py-2 rounded-[10px] shadow-sm hover:bg-opacity-90 transition-colors"><i class="fa-solid fa-plus mr-1"></i> เพิ่มขยะ</button>
+                        </div>
+                    </div>
+                    <div class="bg-white border border-gray-100 rounded-[20px] shadow-sm overflow-hidden text-sm overflow-x-auto">
+                        <table class="w-full text-left whitespace-nowrap">
+                            <thead class="bg-[#F8FAF9] text-gray-500 text-[12px] uppercase tracking-wider border-b border-gray-100">
+                                <tr><th class="p-4 font-semibold w-16 text-center">รูป</th><th class="p-4 font-semibold">ชื่อขยะ</th><th class="p-4 font-semibold">ถังเป้าหมาย</th><th class="p-4 text-right font-semibold">จัดการ</th></tr>
+                            </thead>
+                            <tbody id="admin-table-wastes" class="divide-y divide-gray-50"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab-event" class="admin-tab-content hidden space-y-8 max-w-5xl mx-auto">
+                <div class="bg-white p-6 rounded-[24px] border border-gray-100 shadow-sm">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="font-bold text-app-dark text-base flex items-center"><i class="fa-solid fa-rotate-right text-app-primary mr-3"></i> 4.1 รอบเกม (รีเซ็ตสัปดาห์)</h3>
+                        <button onclick="startNewWeek()" class="text-[12px] font-bold bg-[#5C8D67] text-white px-5 py-2.5 rounded-[12px] shadow-soft hover:bg-opacity-90 transition-all"><i class="fa-solid fa-calendar-plus mr-1"></i> เริ่มรอบใหม่</button>
+                    </div>
+                    <div id="admin-weeks-list" class="space-y-3">
+                        </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-[24px] border border-gray-100 shadow-sm">
+                    <div class="flex justify-between items-center mb-5">
+                        <h3 class="font-bold text-app-dark text-base flex items-center"><i class="fa-solid fa-qrcode text-app-primary mr-3"></i> 4.2 QR Code คะแนนพิเศษ</h3>
+                        <button onclick="crudQR('add')" class="text-[12px] font-bold bg-app-dark text-white px-5 py-2.5 rounded-[12px] shadow-md hover:bg-opacity-90 transition-all"><i class="fa-solid fa-plus mr-1"></i> สร้าง QR โบนัส</button>
+                    </div>
+                    <div class="bg-white border border-gray-200 rounded-[16px] overflow-hidden text-[13px] overflow-x-auto">
+                        <table class="w-full text-left whitespace-nowrap">
+                            <thead class="bg-[#F8FAF9] text-gray-500 text-[11px] uppercase tracking-wider border-b border-gray-100">
+                                <tr><th class="p-4 font-semibold">ชื่อแคมเปญ</th><th class="p-4 font-semibold">แจกคะแนน (Pts)</th><th class="p-4 font-semibold">เงื่อนไขการสแกน</th><th class="p-4 text-right font-semibold">จัดการ</th></tr>
+                            </thead>
+                            <tbody id="admin-table-qrs" class="divide-y divide-gray-50"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab-users" class="admin-tab-content hidden space-y-6 max-w-5xl mx-auto">
+                <div class="flex flex-col sm:flex-row justify-between items-center gap-4 mb-4 bg-white p-5 rounded-[20px] border border-gray-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)]">
+                    <h3 class="font-bold text-app-dark text-base flex items-center w-full sm:w-auto"><i class="fa-solid fa-users text-app-primary mr-3"></i> 5. รายชื่อผู้เล่นทั้งหมด</h3>
+                    <div class="flex gap-2 w-full sm:w-auto justify-end">
+                        <button onclick="exportCSV('users')" class="text-[12px] font-bold bg-[#E6F0E8] text-[#5C8D67] px-4 py-2.5 rounded-[12px] hover:bg-[#D4E4D7] transition-colors"><i class="fa-solid fa-file-csv mr-1"></i> Export Data</button>
+                        <button onclick="deleteAllUsers()" class="text-[12px] font-bold bg-[#FFF0F0] text-[#E07A5F] px-4 py-2.5 rounded-[12px] hover:bg-[#FFE0E0] transition-colors"><i class="fa-solid fa-trash-can mr-1"></i> ล้างข้อมูลผู้เล่นทั้งหมด</button>
+                    </div>
+                </div>
+
+                <div class="relative w-full max-w-sm mb-2">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <i class="fa-solid fa-magnifying-glass text-gray-400"></i>
+                    </div>
+                    <input type="text" id="search-user-input" oninput="adminUsersCurrentPage = 1; renderAdminTables()" class="w-full bg-white border border-gray-200 rounded-[16px] pl-11 pr-4 py-3 text-sm focus:outline-none focus:border-app-primary focus:ring-2 focus:ring-app-secondary transition-colors shadow-sm" placeholder="ค้นหารหัสพนักงาน (EmpID)...">
+                </div>
+
+                <div class="bg-white border border-gray-100 rounded-[20px] shadow-sm overflow-hidden text-[13px] overflow-x-auto">
+                    <table class="w-full text-left whitespace-nowrap">
+                        <thead class="bg-[#F8FAF9] text-gray-500 text-[12px] uppercase tracking-wider border-b border-gray-100">
+                            <tr><th class="p-4 font-semibold w-16 text-center">Rank</th><th class="p-4 font-semibold">รหัสพนักงาน (EmpID)</th><th class="p-4 font-semibold">ชื่อ (Name)</th><th class="p-4 font-semibold">คะแนน (Points)</th><th class="p-4 text-right font-semibold">จัดการ</th></tr>
+                        </thead>
+                        <tbody id="admin-table-users" class="divide-y divide-gray-50"></tbody>
+                    </table>
+                    <div id="admin-users-pagination" class="p-4 flex justify-between items-center bg-gray-50 border-t border-gray-100 min-w-max"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // =========================================================================
+        // 🚀 ส่วนตั้งค่าฐานข้อมูลหลัก (GLOBAL CONFIG)
+        // =========================================================================
+        const GLOBAL_SHEET_ID = "1Gcx90x0a9ndgOXajdDi9FUCucxi7UaV7Ld7Y2-JzV3E"; 
+        const GLOBAL_GAS_URL = "https://script.google.com/macros/s/AKfycbxt9GmVN6EpEiI-P4_aiShJ6kK2Ku-YBnZDpo7pvhk2FrlJSlr6AoCCqThbfElcQtUZ/exec"; 
+        // =========================================================================
+
+        // ================= STORAGE WRAPPER =================
+        const Storage = {
+            get: (key) => {
+                try { return localStorage.getItem(key); }
+                catch(e) { return null; }
+            },
+            set: (key, val) => {
+                try { localStorage.setItem(key, val); }
+                catch(e) { console.warn("Storage restricted:", e); }
+            },
+            remove: (key) => {
+                try { localStorage.removeItem(key); }
+                catch(e) {}
+            }
+        };
+
+        // ================= UTILS =================
+        function getThaiTimeStr() {
+            const now = new Date();
+            const thTime = new Date(now.getTime() + (7 * 60 * 60 * 1000));
+            return thTime.toISOString().replace('T',' ').substring(0,16);
+        }
+
+        function getThaiDateStr() {
+            const now = new Date();
+            const thTime = new Date(now.getTime() + (7 * 60 * 60 * 1000));
+            return thTime.toISOString().split('T')[0];
+        }
+
+        // ================= DATABASE (State Management) =================
+        const defaultData = {
+            settings: {
+                mainImg: "https://images.unsplash.com/photo-1542273917363-3b1817f69a5d?auto=format&fit=crop&w=800&q=80",
+                logoImg: "https://cdn-icons-png.flaticon.com/512/2913/2913426.png",
+                popupImages: [],
+                sheetId: "", gasUrl: "", currentWeek: null, weekStartDate: "", weekEndDate: "",
+                mainImages: [
+                    { url: "https://images.unsplash.com/photo-1542273917363-3b1817f69a5d?auto=format&fit=crop&w=800&q=80", startTime: "06:00", endTime: "18:00" },
+                    { url: "https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=800&q=80", startTime: "18:00", endTime: "06:00" }
+                ]
+            },
+            levels: [
+                { id: "l1", level: "Seed", points: 0, img: "https://cdn-icons-png.flaticon.com/512/2619/2619163.png", bgColor: "#F2F7F4" },
+                { id: "l2", level: "Sprout", points: 500, img: "https://cdn-icons-png.flaticon.com/512/2990/2990860.png", bgColor: "#FDF8E7" },
+                { id: "l3", level: "Small Tree", points: 1500, img: "https://cdn-icons-png.flaticon.com/512/414/414825.png", bgColor: "#E8F4F8" },
+                { id: "l4", level: "Big Tree", points: 3000, img: "https://cdn-icons-png.flaticon.com/512/2555/2555021.png", bgColor: "#EEF4E8" },
+                { id: "l5", level: "Forest Guardian", points: 5000, img: "https://cdn-icons-png.flaticon.com/512/12020/12020358.png", bgColor: "#F4EEE8" }
+            ],
+            bins: [
+                { id: "b1", name: "ทั่วไป", color: "#3A5A40", stage: "all", img: "https://cdn-icons-png.flaticon.com/512/3299/3299935.png" }, 
+                { id: "b2", name: "รีไซเคิล", color: "#F4B95F", stage: "all", img: "https://cdn-icons-png.flaticon.com/512/3299/3299935.png" }, 
+                { id: "b3", name: "อันตราย", color: "#E07A5F", stage: "all", img: "https://cdn-icons-png.flaticon.com/512/3299/3299935.png" }, 
+                { id: "b4", name: "เศษอาหาร", color: "#5C8D67", stage: "indoor", img: "https://cdn-icons-png.flaticon.com/512/3299/3299935.png" }, 
+                { id: "b5", name: "น้ำแข็ง", color: "#A5C7A9", stage: "indoor", img: "https://cdn-icons-png.flaticon.com/512/3299/3299935.png" } 
+            ],
+            wastes: [
+                { id: "w1", name: "กระดาษ", binId: "b2", stage: "all", img: "https://cdn-icons-png.flaticon.com/512/839/839088.png" },
+                { id: "w2", name: "ขวดพลาสติก", binId: "b2", stage: "all", img: "https://cdn-icons-png.flaticon.com/512/823/823330.png" },
+                { id: "w3", name: "ถุงพลาสติก", binId: "b1", stage: "all", img: "https://cdn-icons-png.flaticon.com/512/3037/3037061.png" },
+                { id: "w4", name: "กระป๋องสี", binId: "b3", stage: "outdoor", img: "https://cdn-icons-png.flaticon.com/512/2830/2830305.png" },
+                { id: "w5", name: "เศษผักผลไม้", binId: "b4", stage: "indoor", img: "https://cdn-icons-png.flaticon.com/512/415/415682.png" },
+                { id: "w6", name: "ก้อนน้ำแข็ง", binId: "b5", stage: "indoor", img: "https://cdn-icons-png.flaticon.com/512/2316/2316999.png" }
+            ],
+            users: [],
+            qrs: []
+        };
+
+        function enforceDBStructure(database) {
+            if (!database) database = {};
+            if (!database.settings) database.settings = defaultData.settings;
+            if (!database.users) database.users = [];
+            if (!database.levels || database.levels.length === 0) database.levels = defaultData.levels;
+            if (!database.bins || database.bins.length === 0) database.bins = defaultData.bins;
+            if (!database.wastes || database.wastes.length === 0) database.wastes = defaultData.wastes;
+            if (!database.qrs) database.qrs = defaultData.qrs;
+            
+            if (!database.settings.weeks) {
+                database.settings.weeks = [];
+                if (database.settings.currentWeek && database.settings.weekStartDate && database.settings.weekEndDate) {
+                    database.settings.weeks.push({ weekNum: database.settings.currentWeek, start: database.settings.weekStartDate, end: database.settings.weekEndDate });
+                }
+            }
+
+            if (database.settings.checkinPopupImg && (!database.settings.popupImages || database.settings.popupImages.length === 0)) {
+                database.settings.popupImages = [{url: database.settings.checkinPopupImg}];
+            }
+            if(!database.settings.popupImages) database.settings.popupImages = [];
+
+            database.users.forEach(u => {
+                if(u.empId !== undefined) u.empId = String(u.empId);
+                if(typeof u.playCount === 'undefined') u.playCount = 0;
+                if(typeof u.scannedQRs === 'undefined') u.scannedQRs = [];
+            });
+            database.qrs.forEach(q => {
+                if(!q.scanType) q.scanType = 'single';
+            });
+            return database;
+        }
+
+        let rawDb = Storage.get('wcw_db');
+        let db = enforceDBStructure(rawDb ? JSON.parse(rawDb) : null);
+        let currentUser = null;
+        let isCloudLoading = false;
+        let currentRankTab = 'weekly'; 
+        let loginStep = 1;
+        let html5QrcodeScanner = null;
+        
+        let adminUsersCurrentPage = 1;
+        const ADMIN_USERS_PER_PAGE = 20;
+
+        let currentPopupSlide = 0;
+        let hasReachedLastPopupSlide = false;
+        let popupStartX = 0;
+        
+        let isStageEnding = false; // ป้องกันการเรียกจบด่านซ้ำซ้อน
+
+        // ================= CLOUD SYNC LOGIC =================
+        async function syncToCloud() {
+            if (!db.settings.gasUrl || !db.settings.sheetId) return false;
+            const cloudIcon = document.getElementById('cloud-sync-icon');
+            if(cloudIcon) { cloudIcon.className = "fa-solid fa-cloud-arrow-up text-blue-400 animate-pulse text-[10px] absolute -top-1 -right-1"; }
+            
+            try {
+                let dbToUpload = JSON.parse(JSON.stringify(db));
+                dbToUpload.users = dbToUpload.users.filter(u => u.empId !== 'admin');
+
+                const response = await fetch(db.settings.gasUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: 'save', sheetId: db.settings.sheetId, data: dbToUpload }),
+                    mode: 'cors',
+                    credentials: 'omit'
+                });
+                const res = await response.json();
+                
+                if(cloudIcon) {
+                    if(res.success) {
+                        cloudIcon.className = "fa-solid fa-cloud-check text-green-400 text-[10px] absolute -top-1 -right-1";
+                        setTimeout(() => { if(cloudIcon.classList.contains('fa-cloud-check')) cloudIcon.className = "hidden absolute -top-1 -right-1"; }, 2000);
+                    } else { cloudIcon.className = "fa-solid fa-triangle-exclamation text-red-400 text-[10px] absolute -top-1 -right-1"; }
+                }
+                return res.success;
+            } catch(e) {
+                console.error("Cloud Sync Error:", e);
+                if(cloudIcon) cloudIcon.className = "fa-solid fa-cloud-xmark text-red-400 text-[10px] absolute -top-1 -right-1";
+                return false;
+            }
+        }
+
+        async function loadFromCloud() {
+            if (!db.settings.gasUrl || !db.settings.sheetId) return false;
+            isCloudLoading = true;
+            try {
+                const response = await fetch(db.settings.gasUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: 'load', sheetId: db.settings.sheetId }),
+                    mode: 'cors',
+                    credentials: 'omit'
+                });
+                const res = await response.json();
+                if(res.success) {
+                    db = enforceDBStructure(res.data);
+                    Storage.set('wcw_db', JSON.stringify(db));
+                    
+                    if(currentUser && currentUser.empId !== 'admin') {
+                        let updatedUser = db.users.find(u => u.empId === currentUser.empId);
+                        if(updatedUser) currentUser = updatedUser;
+                    }
+                    return true;
+                }
+            } catch(e) { console.error("Cloud Load Error:", e); } finally { isCloudLoading = false; }
+            return false;
+        }
+
+        async function saveDB() { 
+            Storage.set('wcw_db', JSON.stringify(db)); 
+            return await syncToCloud(); 
+        }
+
+        async function saveUser() {
+            if(!currentUser || currentUser.empId === 'admin') return; 
+            
+            let userToSave = JSON.parse(JSON.stringify(currentUser));
+            
+            await loadFromCloud();
+            
+            let idx = db.users.findIndex(u => u.empId === userToSave.empId);
+            if(idx > -1) {
+                db.users[idx] = userToSave;
+            } else {
+                db.users.push(userToSave);
+            }
+            
+            currentUser = db.users.find(u => u.empId === userToSave.empId);
+            
+            await saveDB();
+        }
+
+        async function manualRefresh() {
+            let btn = document.getElementById('btn-refresh');
+            if(btn) btn.classList.add('animate-spin');
+            
+            await loadFromCloud();
+            reindexWeeks(); 
+            evaluateCurrentWeek();
+            applySettings();
+            loadUserDashboard();
+            if(document.getElementById('ranking-modal').classList.contains('active')) renderRanking(currentRankTab);
+            
+            if(btn) btn.classList.remove('animate-spin');
+        }
+
+        // ================= WEEKS LOGIC (จัดเรียงวันที่และรันเลขสัปดาห์) =================
+        function reindexWeeks() {
+            if (!db.settings.weeks) db.settings.weeks = [];
+            db.settings.weeks.sort((a, b) => new Date(a.start) - new Date(b.start));
+            
+            let oldNewWeekMap = {};
+            db.settings.weeks.forEach((w, index) => {
+                let newWeekNum = index + 1;
+                oldNewWeekMap[w.weekNum] = newWeekNum;
+                w.weekNum = newWeekNum;
+            });
+
+            db.users.forEach(u => {
+                if (u.history) {
+                    u.history.forEach(item => {
+                        if (item.week && oldNewWeekMap[item.week]) {
+                            item.week = oldNewWeekMap[item.week];
+                        }
+                    });
+                }
+            });
+            Storage.set('wcw_db', JSON.stringify(db));
+        }
+
+        function evaluateCurrentWeek() {
+            if(!db.settings.weeks || db.settings.weeks.length === 0) {
+                db.settings.currentWeek = null;
+                db.settings.weekStartDate = "";
+                db.settings.weekEndDate = "";
+                return;
+            }
+            const todayStr = getThaiDateStr();
+            
+            let foundWeek = null;
+            db.settings.weeks.forEach(w => {
+                if(todayStr >= w.start && todayStr <= w.end) foundWeek = w;
+            });
+            
+            if(foundWeek) {
+                db.settings.currentWeek = foundWeek.weekNum;
+                db.settings.weekStartDate = foundWeek.start;
+                db.settings.weekEndDate = foundWeek.end;
+            } else {
+                db.settings.currentWeek = null;
+                db.settings.weekStartDate = "";
+                db.settings.weekEndDate = "";
+            }
+        }
+
+        // ================= INIT & UI =================
+        function init() {
+            if (GLOBAL_SHEET_ID && GLOBAL_GAS_URL) {
+                db.settings.sheetId = GLOBAL_SHEET_ID;
+                db.settings.gasUrl = GLOBAL_GAS_URL;
+            }
+
+            if (!db.settings.mainImages || db.settings.mainImages.length === 0) db.settings.mainImages = [{ url: db.settings.mainImg || "https://images.unsplash.com/photo-1542273917363-3b1817f69a5d?auto=format&fit=crop&w=800&q=80", startTime: "06:00", endTime: "18:00" }, { url: "https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=800&q=80", startTime: "18:00", endTime: "06:00" }];
+            if (typeof db.settings.weekStartDate === 'undefined') { db.settings.weekStartDate = ""; db.settings.weekEndDate = ""; }
+            if (db.bins && db.bins.length > 0 && !db.bins[0].img) { db.bins.forEach(b => b.img = "https://cdn-icons-png.flaticon.com/512/3299/3299935.png"); }
+            if (db.wastes && db.wastes.length > 0 && !db.wastes[0].img) { db.wastes.forEach(w => w.img = "https://cdn-icons-png.flaticon.com/512/839/839088.png"); }
+            
+            Storage.set('wcw_db', JSON.stringify(db));
+
+            reindexWeeks();
+            evaluateCurrentWeek();
+            applySettings();
+            setInterval(updateLandingBackground, 60000);
+
+            const sessionEmpId = Storage.get('wcw_user_session');
+            if (sessionEmpId) {
+                if(sessionEmpId === 'admin') {
+                    currentUser = { empId: 'admin', name: 'Admin', role: 'admin', points: 9999, history: [], checkIn: { lastDate: null, streak: 0 }, playedWeek: 0, playCount: 0, scannedQRs: [] };
+                } else {
+                    currentUser = db.users.find(u => u.empId === sessionEmpId);
+                }
+                if(currentUser) {
+                    loadUserDashboard();
+                    showPage('page-main');
+                }
+            }
+
+            if (db.settings.gasUrl && db.settings.sheetId) { 
+                loadFromCloud().then((success) => {
+                    if(success) {
+                        reindexWeeks();
+                        evaluateCurrentWeek();
+                        applySettings(); 
+                        if(currentUser) loadUserDashboard();
+                    }
+                }); 
+            }
+
+            document.getElementById('lang-toggle').checked = false;
+            toggleLang();
+
+            const sliderWrapper = document.getElementById('popup-slider-wrapper');
+            if (sliderWrapper) {
+                sliderWrapper.addEventListener('touchstart', handlePopupTouchStart, false);
+                sliderWrapper.addEventListener('touchend', handlePopupTouchEnd, false);
+            }
+        }
+
+        function switchAdminTab(targetId, btnElement) {
+            document.querySelectorAll('.admin-tab').forEach(b => { 
+                b.classList.remove('bg-app-dark', 'text-white', 'shadow-md'); 
+                b.classList.add('bg-[#F8FAF9]', 'text-gray-600', 'border', 'border-gray-200'); 
+            });
+            btnElement.classList.remove('bg-[#F8FAF9]', 'text-gray-600', 'border', 'border-gray-200'); 
+            btnElement.classList.add('bg-app-dark', 'text-white', 'shadow-md');
+            
+            document.querySelectorAll('.admin-tab-content').forEach(c => c.classList.add('hidden'));
+            document.getElementById(targetId).classList.remove('hidden');
+        }
+
+        function toggleLang() {
+            const isEn = document.getElementById('lang-toggle').checked;
+            document.getElementById('lbl-en').className = isEn ? "text-gray-400 font-bold text-app-primary" : "text-gray-400";
+            document.getElementById('lbl-th').className = !isEn ? "text-gray-400 font-bold text-app-primary" : "text-gray-400";
+            slideWelcome(isEn ? 0 : 1);
+
+            if(isEn) {
+                document.getElementById('login-title').innerText = "Welcome Back";
+                document.getElementById('login-sub1').innerText = "Please enter your login information!";
+                document.getElementById('login-sub2').innerText = "We're glad to see you again.";
+                document.getElementById('lbl-nickname').innerText = "Nickname";
+                document.getElementById('lbl-empid').innerText = "Employee ID";
+                document.getElementById('lbl-hint').innerHTML = '<i class="fa-solid fa-circle-info mr-1"></i> For the next login, just enter your Employee ID.';
+                document.getElementById('btn-login').innerText = "Login";
+                document.getElementById('login-nickname').placeholder = "Enter your nickname";
+                document.getElementById('login-empid').placeholder = "Your Employee ID";
+            } else {
+                document.getElementById('login-title').innerText = "ยินดีต้อนรับกลับมา";
+                document.getElementById('login-sub1').innerText = "กรุณากรอกข้อมูลเข้าสู่ระบบของคุณ!";
+                document.getElementById('login-sub2').innerText = "ดีใจที่ได้พบคุณอีกครั้ง";
+                document.getElementById('lbl-nickname').innerText = "ชื่อเล่น (Nickname)";
+                document.getElementById('lbl-empid').innerText = "รหัสพนักงาน (Employee ID)";
+                document.getElementById('lbl-hint').innerHTML = '<i class="fa-solid fa-circle-info mr-1"></i> สำหรับการเข้าระบบครั้งถัดไป กรอกแค่รหัสพนักงาน';
+                document.getElementById('btn-login').innerText = "เข้าสู่ระบบ";
+                document.getElementById('login-nickname').placeholder = "ระบุชื่อเล่นของคุณ";
+                document.getElementById('login-empid').placeholder = "รหัสพนักงาน 7 หลัก";
+            }
+        }
+
+        function slideWelcome(idx) {
+            document.getElementById('welcome-slider').style.transform = `translateX(-${idx * 50}%)`;
+            document.getElementById('dot-0').className = idx === 0 ? 'w-2.5 h-2.5 rounded-full bg-app-primary transition-all duration-300' : 'w-2.5 h-2.5 rounded-full bg-gray-200 transition-all duration-300';
+            document.getElementById('dot-1').className = idx === 1 ? 'w-2.5 h-2.5 rounded-full bg-app-primary transition-all duration-300' : 'w-2.5 h-2.5 rounded-full bg-gray-200 transition-all duration-300';
+        }
+
+        function updateLandingBackground() {
+            if (!db.settings.mainImages || db.settings.mainImages.length === 0) return;
+            const now = new Date();
+            const currentStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+            let matchedImg = null;
+            for (let img of db.settings.mainImages) {
+                if (img.startTime <= img.endTime) {
+                    if (currentStr >= img.startTime && currentStr < img.endTime) { matchedImg = img.url; break; }
+                } else {
+                    if (currentStr >= img.startTime || currentStr < img.endTime) { matchedImg = img.url; break; }
+                }
+            }
+            if (!matchedImg) matchedImg = db.settings.mainImages[0].url;
+            document.getElementById('landing-bg').style.backgroundImage = `url('${matchedImg}')`;
+        }
+
+        function applySettings() {
+            updateLandingBackground();
+            
+            const loginLogo = document.getElementById('login-logo');
+            const dashLogo = document.getElementById('dashboard-logo');
+            const defaultLogo = 'https://cdn-icons-png.flaticon.com/512/2913/2913426.png';
+            if(loginLogo) loginLogo.src = db.settings.logoImg || defaultLogo;
+            if(dashLogo) dashLogo.src = db.settings.logoImg || defaultLogo;
+
+            const cfgLogo = document.getElementById('cfg-logo-img');
+            const cfgSheet = document.getElementById('cfg-sheet-id');
+            const cfgGas = document.getElementById('cfg-gas-url');
+            if(cfgLogo) cfgLogo.value = db.settings.logoImg || '';
+            if(cfgSheet) cfgSheet.value = db.settings.sheetId || '';
+            if(cfgGas) cfgGas.value = db.settings.gasUrl || '';
+            
+            let dateStr = "";
+            if (db.settings.currentWeek && db.settings.weekStartDate && db.settings.weekEndDate) {
+                dateStr = ` <span class="text-gray-500 font-normal ml-1 bg-white px-2 py-0.5 rounded border">(${formatDateThai(db.settings.weekStartDate)} - ${formatDateThai(db.settings.weekEndDate)})</span>`;
+            }
+            const weekDisplay = document.getElementById('current-week-display');
+            if(weekDisplay) {
+                weekDisplay.innerHTML = `<i class="fa-regular fa-calendar text-gray-400"></i> รอบปัจจุบัน: สัปดาห์ที่ ${db.settings.currentWeek || '-'}${dateStr}`;
+            }
+            
+            initPopupSlider();
+            renderAdminTables();
+        }
+
+        function showPage(pageId) {
+            document.querySelectorAll('#page-landing, #page-main, #game-container').forEach(el => el.classList.add('hidden-page'));
+            document.getElementById(pageId).classList.remove('hidden-page');
+        }
+
+        function openModal(modalId) {
+            document.querySelectorAll('.modal-bottom').forEach(m => m.classList.remove('active'));
+            document.getElementById('modal-backdrop').classList.add('active');
+            document.getElementById(modalId).classList.add('active');
+            
+            if(modalId === 'login-modal') {
+                document.getElementById('nickname-group').style.display = 'none';
+                document.getElementById('login-empid').value = '';
+                document.getElementById('login-nickname').value = '';
+            }
+            if(modalId === 'checkin-modal') {
+                if(db.settings.popupImages && db.settings.popupImages.length > 0) {
+                    initPopupSlider();
+                    document.getElementById('checkin-step-1').classList.remove('hidden');
+                    document.getElementById('checkin-step-1').classList.add('flex');
+                    document.getElementById('checkin-step-2').classList.add('hidden');
+                    document.getElementById('checkin-step-2').classList.remove('flex');
+                } else {
+                    document.getElementById('checkin-step-1').classList.add('hidden');
+                    document.getElementById('checkin-step-1').classList.remove('flex');
+                    document.getElementById('checkin-step-2').classList.remove('hidden');
+                    document.getElementById('checkin-step-2').classList.add('flex');
+                }
+                renderCheckIn();
+            }
+            if(modalId === 'point-modal') renderPointHistory();
+            if(modalId === 'ranking-modal') {
+                populateRankingWeeks();
+                renderRanking('weekly'); 
+            }
+            if(modalId === 'setting-modal') renderAdminTables();
+            if(modalId === 'weekly-summary-modal') renderWeeklySummary();
+            if(modalId === 'qr-scan-modal') initQRScanner();
+        }
+        
+        function closeAllModals() {
+            document.getElementById('modal-backdrop').classList.remove('active');
+            document.querySelectorAll('.modal-bottom').forEach(m => m.classList.remove('active'));
+            document.getElementById('nickname-group').style.display = 'none';
+            closeLightbox();
+            if(html5QrcodeScanner) {
+                html5QrcodeScanner.clear().catch(e => console.error("Failed to clear scanner", e));
+                html5QrcodeScanner = null;
+            }
+        }
+
+        // ================= AUTH =================
+        document.getElementById('login-empid').addEventListener('input', function(e) {
+            const val = this.value.trim();
+            if(!db.users) db.users = []; 
+            if(val !== 'admin123' && val.length > 0) {
+                let exists = db.users.find(u => String(u.empId) === val);
+                document.getElementById('nickname-group').style.display = exists ? 'none' : 'block';
+            } else {
+                 document.getElementById('nickname-group').style.display = 'block';
+            }
+        });
+
+        document.getElementById('login-nickname').addEventListener('keypress', function(e) { if(e.key === 'Enter') handleLogin(); });
+        document.getElementById('login-empid').addEventListener('keypress', function(e) { if(e.key === 'Enter') handleLogin(); });
+
+        async function handleLogin() {
+            const empId = document.getElementById('login-empid').value.trim();
+            const nickname = document.getElementById('login-nickname').value.trim();
+            const nicknameVisible = document.getElementById('nickname-group').style.display !== 'none';
+
+            if(!empId) return Swal.fire({title: 'Error', text:'กรุณากรอกรหัสพนักงาน', icon:'error', customClass:{confirmButton:'rounded-xl bg-app-primary'}});
+
+            if (empId === 'admin123') {
+                currentUser = { empId: 'admin', name: 'Admin', role: 'admin', points: 9999, history: [], checkIn: { lastDate: null, streak: 0 }, playedWeek: 0, playCount: 0, scannedQRs: [] };
+                completeLogin();
+                return;
+            }
+
+            const empIdRegex = /^\d{7}$/;
+            if (!empIdRegex.test(empId)) {
+                return Swal.fire({title: 'Error', text:'รหัสพนักงานต้องเป็นตัวเลข 7 หลักเท่านั้น', icon:'error', customClass:{confirmButton:'rounded-xl bg-app-primary'}});
+            }
+
+            Swal.fire({ title: 'กำลังตรวจสอบข้อมูล...', html: '<div class="tree-loader-container"><div class="tree-loader"></div></div>', allowOutsideClick: false, showConfirmButton: false });
+            
+            await loadFromCloud();
+            if(!db.users) db.users = [];
+
+            let existing = db.users.find(u => String(u.empId) === empId);
+
+            if (existing) {
+                currentUser = existing;
+                completeLogin();
+            } else {
+                if (nicknameVisible && nickname) {
+                    Swal.fire({ title: 'กำลังลงทะเบียน...', html: '<div class="tree-loader-container"><div class="tree-loader"></div></div>', allowOutsideClick: false, showConfirmButton: false });
+                    currentUser = { empId: String(empId), name: nickname, role: 'user', points: 0, history: [], checkIn: { lastDate: null, streak: 0 }, playedWeek: 0, playCount: 0, scannedQRs: [] };
+                    db.users.push(currentUser);
+                    await saveDB(); 
+                    completeLogin();
+                } else {
+                    Swal.close();
+                    document.getElementById('nickname-group').style.display = 'block';
+                    document.getElementById('login-nickname').focus();
+                }
+            }
+        }
+
+        function completeLogin() {
+            if(!currentUser) return Swal.fire('Error', 'เกิดข้อผิดพลาด ไม่สามารถโหลดข้อมูลผู้ใช้ได้', 'error');
+
+            Storage.set('wcw_user_session', currentUser.empId);
+            closeAllModals();
+            loadUserDashboard();
+            
+            Swal.fire({ title: 'Welcome Back!', text: `สวัสดีคุณ ${currentUser.name}`, icon: 'success', timer: 1500, showConfirmButton: false }).then(() => { showPage('page-main'); });
+        }
+
+        function logout() {
+            Storage.remove('wcw_user_session');
+            currentUser = null;
+            document.getElementById('login-empid').value = '';
+            document.getElementById('login-nickname').value = '';
+            closeAllModals(); 
+            showPage('page-landing');
+        }
+
+        function loadUserDashboard() {
+            if(!currentUser) return;
+            document.getElementById('user-nickname').innerText = currentUser.name;
+            document.getElementById('user-empid').innerText = `ID: ${currentUser.empId}`;
+            updatePointsUI();
+            document.getElementById('btn-setting').classList.toggle('hidden', currentUser.role !== 'admin');
+        }
+
+        function updatePointsUI() {
+            if(!currentUser) return;
+            document.getElementById('user-points').innerText = currentUser.points;
+            
+            if(!db.levels || db.levels.length === 0) db.levels = defaultData.levels;
+            
+            let currentLvl = db.levels[0];
+            let nextLvl = db.levels[1];
+            let progress = 0;
+
+            let sortedLvls = [...db.levels].sort((a,b)=>a.points - b.points);
+            for(let i=0; i<sortedLvls.length; i++) {
+                if(currentUser.points >= sortedLvls[i].points) {
+                    currentLvl = sortedLvls[i];
+                    nextLvl = sortedLvls[i+1] || null;
+                }
+            }
+
+            document.getElementById('tree-level-name').innerText = `Level: ${currentLvl.level}`;
+            const pageMain = document.getElementById('page-main');
+            pageMain.style.backgroundImage = `url('${currentLvl.img}')`;
+            pageMain.style.backgroundColor = currentLvl.bgColor || '#F2F7F4'; 
+
+            if(nextLvl) {
+                let range = nextLvl.points - currentLvl.points;
+                let earned = currentUser.points - currentLvl.points;
+                progress = (earned / range) * 100;
+                document.getElementById('level-text').innerText = `${currentUser.points} / ${nextLvl.points}`;
+            } else {
+                progress = 100;
+                document.getElementById('level-text').innerText = `Max Level!`;
+            }
+            document.getElementById('level-progress').style.width = `${progress}%`;
+        }
+
+        async function addPoints(pts, detail) {
+            currentUser.points += pts;
+            if(!currentUser.history) currentUser.history = [];
+            
+            let activeWeek = db.settings.currentWeek;
+            if (!activeWeek && db.settings.weeks && db.settings.weeks.length > 0) {
+                activeWeek = db.settings.weeks[db.settings.weeks.length - 1].weekNum;
+            }
+            
+            currentUser.history.unshift({ date: getThaiTimeStr(), pts, detail, week: activeWeek || 0 });
+            await saveUser();
+            updatePointsUI();
+        }
+
+        // ================= QR SCANNER =================
+        function initQRScanner() {
+            if(html5QrcodeScanner) return;
+            
+            setTimeout(() => {
+                html5QrcodeScanner = new Html5QrcodeScanner("reader", { 
+                    fps: 10, 
+                    qrbox: {width: 250, height: 250}
+                }, false);
+                html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+            }, 400); 
+        }
+
+        async function onScanSuccess(decodedText, decodedResult) {
+            if(html5QrcodeScanner) html5QrcodeScanner.pause(true);
+            
+            if(decodedText.startsWith("WCW_SCAN_")) {
+                let parts = decodedText.split('_');
+                let qrId = parts[2];
+
+                Swal.fire({ title: 'ตรวจสอบ QR...', html: '<div class="tree-loader-container"><div class="tree-loader"></div></div>', allowOutsideClick: false, showConfirmButton: false });
+                await loadFromCloud();
+                
+                let qrConfig = db.qrs.find(q => q.id === qrId);
+                if(qrConfig) {
+                    if(!currentUser.scannedQRs) currentUser.scannedQRs = [];
+                    
+                    if(qrConfig.scanType === 'single' && currentUser.scannedQRs.includes(qrId)) {
+                        Swal.fire({title: 'สแกนไปแล้ว!', text: 'QR Code นี้คุณเคยรับคะแนนไปแล้ว', icon: 'info', customClass:{confirmButton:'rounded-xl bg-app-primary'}}).then(()=> { if(html5QrcodeScanner) html5QrcodeScanner.resume(); });
+                        return;
+                    }
+
+                    currentUser.scannedQRs.push(qrId);
+                    await addPoints(qrConfig.pts, `สแกนแคมเปญ: ${qrConfig.name}`);
+                    
+                    Swal.fire({ title: 'สำเร็จ!', text: `คุณได้รับ ${qrConfig.pts} คะแนนจาก ${qrConfig.name}`, icon: 'success', customClass:{confirmButton:'rounded-[16px] px-8 bg-app-primary'} }).then(() => {
+                        closeAllModals();
+                    });
+                } else {
+                    Swal.fire({title: 'ไม่พบกิจกรรม!', text: 'QR Code นี้ถูกลบไปแล้วหรือหมดอายุ', icon: 'error', customClass:{confirmButton:'rounded-xl bg-app-primary'}}).then(()=> { if(html5QrcodeScanner) html5QrcodeScanner.resume(); });
+                }
+            } else {
+                Swal.fire({title: 'QR ไม่ถูกต้อง!', text: 'ไม่ใช่ QR Code ของระบบ Waste Care World', icon: 'error', customClass:{confirmButton:'rounded-xl bg-app-primary'}}).then(()=> { if(html5QrcodeScanner) html5QrcodeScanner.resume(); });
+            }
+        }
+
+        function onScanFailure(error) {}
+
+        // ================= POPUP SLIDER =================
+        function initPopupSlider() {
+            const slider = document.getElementById('popup-slider');
+            const dotsContainer = document.getElementById('popup-dots');
+            
+            if(!db.settings.popupImages || db.settings.popupImages.length === 0) return;
+
+            currentPopupSlide = 0;
+            hasReachedLastPopupSlide = false;
+            
+            slider.innerHTML = db.settings.popupImages.map(img => `
+                <div class="slider-item">
+                    <img src="${img.url}" onclick="openLightbox('${img.url}')" class="slider-img cursor-pointer transition-transform active:scale-95 hover:scale-105" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2913/2913426.png'">
+                </div>
+            `).join('');
+
+            dotsContainer.innerHTML = db.settings.popupImages.map((_, i) => `
+                <button onclick="goToPopupSlide(${i})" class="w-2.5 h-2.5 rounded-full transition-all duration-300 ${i === 0 ? 'bg-app-primary scale-110' : 'bg-gray-200'}"></button>
+            `).join('');
+
+            updatePopupUI();
+        }
+
+        function openLightbox(url) {
+            document.getElementById('lightbox-img').src = url;
+            document.getElementById('image-lightbox').classList.add('active');
+        }
+
+        function closeLightbox() {
+            const lightbox = document.getElementById('image-lightbox');
+            if (lightbox) {
+                lightbox.classList.remove('active');
+                setTimeout(() => { 
+                    const img = document.getElementById('lightbox-img');
+                    if(img) img.src = ''; 
+                }, 300);
+            }
+        }
+
+        function updatePopupUI() {
+            const slider = document.getElementById('popup-slider');
+            const dots = document.getElementById('popup-dots').children;
+            const btnAcknowledge = document.getElementById('btn-acknowledge-popup');
+            const totalSlides = db.settings.popupImages.length;
+
+            slider.style.transform = `translateX(-${currentPopupSlide * 100}%)`;
+
+            for(let i=0; i<dots.length; i++) {
+                dots[i].className = `w-2.5 h-2.5 rounded-full transition-all duration-300 ${i === currentPopupSlide ? 'bg-app-primary scale-110' : 'bg-gray-200'}`;
+            }
+
+            if(currentPopupSlide === totalSlides - 1) hasReachedLastPopupSlide = true;
+
+            if(hasReachedLastPopupSlide || totalSlides <= 1) {
+                btnAcknowledge.disabled = false;
+                btnAcknowledge.className = "w-full max-w-xs bg-app-primary text-white py-4 rounded-[16px] font-bold text-base shadow-soft hover:bg-opacity-90 transition-all active:scale-95 mb-4 mx-auto block";
+                btnAcknowledge.innerText = "รับทราบ";
+            } else {
+                btnAcknowledge.disabled = true;
+                btnAcknowledge.className = "w-full max-w-xs bg-gray-300 text-gray-500 py-4 rounded-[16px] font-bold text-base shadow-sm transition-all mb-4 mx-auto block cursor-not-allowed";
+                btnAcknowledge.innerText = `โปรดอ่านให้ครบ (${currentPopupSlide + 1}/${totalSlides})`;
+            }
+        }
+
+        function goToPopupSlide(index) { currentPopupSlide = index; updatePopupUI(); }
+
+        function handlePopupTouchStart(e) { popupStartX = e.changedTouches[0].screenX; }
+
+        function handlePopupTouchEnd(e) {
+            let popupEndX = e.changedTouches[0].screenX;
+            handlePopupSwipe(popupStartX, popupEndX);
+        }
+
+        function handlePopupSwipe(startX, endX) {
+            const threshold = 30;
+            const totalSlides = db.settings.popupImages.length;
+            if (startX - endX > threshold) {
+                if (currentPopupSlide < totalSlides - 1) { currentPopupSlide++; updatePopupUI(); }
+            } else if (endX - startX > threshold) {
+                if (currentPopupSlide > 0) { currentPopupSlide--; updatePopupUI(); }
+            }
+        }
+
+        // ================= CHECK-IN LOGIC =================
+        function acknowledgeCheckinPopup() {
+            document.getElementById('checkin-step-1').classList.add('hidden');
+            document.getElementById('checkin-step-1').classList.remove('flex');
+            document.getElementById('checkin-step-2').classList.remove('hidden');
+            document.getElementById('checkin-step-2').classList.add('flex');
+        }
+
+        const checkInPoints = [1, 2, 3, 4, 5, 6, 7];
+        function renderCheckIn() {
+            if(!currentUser.checkIn) currentUser.checkIn = { lastDate: null, streak: 0 };
+            const today = getThaiDateStr();
+            const isCheckedInToday = currentUser.checkIn.lastDate === today;
+            document.getElementById('streak-count').innerText = currentUser.checkIn.streak;
+            
+            let html = '';
+            for(let i=0; i<7; i++) {
+                let status = i < currentUser.checkIn.streak ? 'bg-app-primary border-2 border-app-primary text-white shadow-sm' : 'bg-white border-2 border-gray-200 text-gray-400';
+                let ptsText = i === 6 ? '<i class="fa-solid fa-gift"></i>' : checkInPoints[i];
+                html += `<div class="flex flex-col items-center"><div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${status} z-10 transition-all">${ptsText}</div><span class="text-[10px] mt-1.5 text-gray-400 font-medium">วันที่ ${i+1}</span></div>`;
+            }
+            document.getElementById('checkin-days').innerHTML = html;
+
+            const btn = document.getElementById('btn-do-checkin');
+            if(isCheckedInToday) {
+                btn.disabled = true; btn.className = "w-full max-w-xs bg-gray-200 text-gray-400 py-4 rounded-[16px] font-bold cursor-not-allowed mb-4 mx-auto block"; btn.innerText = "เช็คอินแล้ววันนี้";
+            } else {
+                btn.disabled = false; btn.className = "w-full max-w-xs bg-app-primary text-white py-4 rounded-[16px] font-bold text-base shadow-soft hover:bg-opacity-90 transition-all active:scale-95 mb-4 mx-auto block"; btn.innerText = "เช็คอินรับคะแนน";
+            }
+        }
+
+        async function doCheckIn() {
+            if(!currentUser.checkIn) currentUser.checkIn = { lastDate: null, streak: 0 };
+            
+            const today = getThaiDateStr();
+            const thTime = new Date(new Date().getTime() + (7 * 60 * 60 * 1000));
+            thTime.setDate(thTime.getDate() - 1);
+            const yStr = thTime.toISOString().split('T')[0];
+
+            Swal.fire({ title: 'กำลังบันทึกข้อมูล...', html: '<div class="tree-loader-container"><div class="tree-loader"></div></div>', allowOutsideClick: false, showConfirmButton: false });
+            
+            await loadFromCloud();
+
+            if(currentUser.checkIn.lastDate !== yStr && currentUser.checkIn.lastDate !== null) currentUser.checkIn.streak = 0;
+            
+            let ptsEarned = checkInPoints[currentUser.checkIn.streak % 7];
+            currentUser.checkIn.streak++;
+            currentUser.checkIn.lastDate = today;
+            
+            currentUser.points += ptsEarned;
+            if(!currentUser.history) currentUser.history = [];
+            
+            let activeWeek = db.settings.currentWeek;
+            if (!activeWeek && db.settings.weeks && db.settings.weeks.length > 0) {
+                activeWeek = db.settings.weeks[db.settings.weeks.length - 1].weekNum;
+            }
+            
+            currentUser.history.unshift({ 
+                date: getThaiTimeStr(), 
+                pts: ptsEarned, 
+                detail: `Check-in วันที่ ${currentUser.checkIn.streak}`,
+                week: activeWeek || 0 
+            });
+            
+            await saveUser();
+            updatePointsUI();
+            
+            Swal.fire({ icon: 'success', title: 'เยี่ยมมาก!', text: `คุณได้รับ ${ptsEarned} คะแนนโบนัส`, confirmButtonColor: '#5C8D67', customClass:{confirmButton:'rounded-[16px] px-8'} });
+            renderCheckIn();
+        }
+
+        function renderPointHistory() {
+            document.getElementById('history-total-points').innerText = currentUser.points;
+            let html = '';
+            if(currentUser.history && currentUser.history.length > 0) {
+                currentUser.history.forEach(item => {
+                    let isPos = item.pts >= 0;
+                    let colorClass = isPos ? 'text-app-primary bg-[#E6F0E8]' : 'text-[#E07A5F] bg-[#FFF0F0]';
+                    let iconClass = isPos ? 'fa-arrow-up text-app-primary' : 'fa-arrow-down text-[#E07A5F]';
+                    html += `<div class="bg-white border border-gray-100 p-4 rounded-[20px] flex justify-between items-center shadow-sm mb-2 hover:shadow-md transition-shadow"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full flex items-center justify-center ${colorClass} bg-opacity-50"><i class="fa-solid ${iconClass} text-sm"></i></div><div><p class="font-bold text-[13px] text-app-dark mb-0.5">${item.detail}</p><p class="text-[10px] text-gray-400 font-medium">${item.date}</p></div></div><div class="font-bold text-base ${isPos ? 'text-app-primary' : 'text-[#E07A5F]'}">${isPos ? '+' : ''}${item.pts}</div></div>`;
+                });
+            }
+            document.getElementById('point-history-list').innerHTML = html || '<div class="text-center py-10 opacity-50"><i class="fa-solid fa-box-open text-4xl mb-3 block"></i><p class="text-sm font-medium">ยังไม่มีประวัติคะแนน</p></div>';
+        }
+
+        // ================= RANKING LOGIC =================
+        function populateRankingWeeks() {
+            const selector = document.getElementById('rank-week-selector');
+            if(!selector) return;
+            
+            let currentVal = selector.value;
+            selector.innerHTML = '';
+            
+            if(db.settings.weeks && db.settings.weeks.length > 0) {
+                let weeksToDisplay = [...db.settings.weeks].sort((a,b) => b.weekNum - a.weekNum);
+                
+                if (currentUser && currentUser.role !== 'admin') {
+                    let activeWeekNum = db.settings.currentWeek;
+                    if (!activeWeekNum && weeksToDisplay.length > 0) {
+                        activeWeekNum = weeksToDisplay[0].weekNum; 
+                    }
+                    weeksToDisplay = weeksToDisplay.filter(w => w.weekNum === activeWeekNum);
+                }
+
+                if (weeksToDisplay.length > 0) {
+                    weeksToDisplay.forEach(w => {
+                        let opt = document.createElement('option');
+                        opt.value = w.weekNum;
+                        opt.text = `สัปดาห์ที่ ${w.weekNum} (${formatDateThai(w.start)} - ${formatDateThai(w.end)})`;
+                        selector.appendChild(opt);
+                    });
+                    
+                    if(currentVal && weeksToDisplay.find(w => w.weekNum == currentVal)) {
+                        selector.value = currentVal;
+                    } else {
+                        selector.value = weeksToDisplay[0].weekNum;
+                    }
+
+                    if (weeksToDisplay.length <= 1) {
+                        selector.disabled = true;
+                        selector.classList.add('bg-gray-100', 'cursor-not-allowed', 'opacity-80');
+                    } else {
+                        selector.disabled = false;
+                        selector.classList.remove('bg-gray-100', 'cursor-not-allowed', 'opacity-80');
+                    }
+
+                } else {
+                    selector.innerHTML = '<option value="">ไม่มีรอบกิจกรรม</option>';
+                    selector.disabled = true;
+                }
+            } else {
+                selector.innerHTML = '<option value="">ยังไม่มีข้อมูลสัปดาห์</option>';
+                selector.disabled = true;
+            }
+        }
+
+        function switchRankTab(type) {
+            const tabWeekly = document.getElementById('tab-rank-weekly');
+            const tabAllTime = document.getElementById('tab-rank-alltime');
+            
+            if (type === 'weekly') {
+                tabWeekly.className = "flex-1 py-2.5 text-[13px] font-bold rounded-full bg-white text-app-dark shadow-sm transition-all";
+                tabAllTime.className = "flex-1 py-2.5 text-[13px] font-bold rounded-full text-gray-500 hover:text-gray-700 transition-all";
+            } else {
+                tabAllTime.className = "flex-1 py-2.5 text-[13px] font-bold rounded-full bg-white text-app-dark shadow-sm transition-all";
+                tabWeekly.className = "flex-1 py-2.5 text-[13px] font-bold rounded-full text-gray-500 hover:text-gray-700 transition-all";
+            }
+            
+            renderRanking(type);
+        }
+
+        function renderRanking(type) {
+            currentRankTab = type;
+            if(!db.users) return;
+
+            const weekContainer = document.getElementById('rank-week-selector-container');
+            const rankList = document.getElementById('ranking-list');
+            
+            rankList.style.opacity = '0';
+
+            if (type === 'weekly') {
+                weekContainer.style.display = 'block';
+            } else {
+                weekContainer.style.display = 'none';
+            }
+
+            let selectedWeek = null;
+            if (type === 'weekly') {
+                const selector = document.getElementById('rank-week-selector');
+                if (selector && selector.options.length > 0 && db.settings.weeks) {
+                    let selectedWeekNum = parseInt(selector.value);
+                    selectedWeek = db.settings.weeks.find(w => w.weekNum === selectedWeekNum);
+                }
+            }
+
+            let validUsers = db.users.filter(u => u.empId !== 'admin' && u.empId !== 'admin123');
+
+            let usersWithScores = validUsers.map(u => {
+                let pts = 0;
+                if (type === 'alltime') {
+                    pts = Number(u.points) || 0; 
+                } else if (selectedWeek) {
+                    const start = selectedWeek.start;
+                    const end = selectedWeek.end;
+                    const targetWeekNum = selectedWeek.weekNum;
+                    
+                    if (u.history) {
+                        pts = u.history.reduce((sum, item) => {
+                            if (item.week !== undefined) return item.week === targetWeekNum ? sum + Number(item.pts) : sum;
+                            if (item.detail && item.detail.startsWith('กิจกรรมสัปดาห์ที่')) return item.detail === `กิจกรรมสัปดาห์ที่ ${targetWeekNum}` ? sum + Number(item.pts) : sum;
+                            let itemDate = item.date ? item.date.substring(0, 10) : "";
+                            if (itemDate >= start && itemDate <= end) return sum + Number(item.pts);
+                            return sum;
+                        }, 0);
+                    }
+                }
+                return { ...u, displayPts: pts };
+            });
+
+            let sorted = usersWithScores.sort((a,b) => b.displayPts - a.displayPts);
+            const myRankBanner = document.getElementById('my-rank-banner');
+            
+            if(currentUser && currentUser.role === 'admin') {
+                myRankBanner.style.display = 'none';
+            } else {
+                myRankBanner.style.display = 'flex';
+                let myUserData = sorted.find(u => String(u.empId) === String(currentUser.empId));
+                let myRank = sorted.findIndex(u => String(u.empId) === String(currentUser.empId)) + 1;
+
+                document.getElementById('my-rank-num').innerText = myRank > 0 ? myRank : '-';
+                document.getElementById('my-rank-pts').innerText = myUserData ? myUserData.displayPts : 0;
+                document.getElementById('my-rank-name').innerText = currentUser ? currentUser.name : 'User';
+            }
+
+            let html = '';
+            sorted.slice(0, 10).forEach((u, idx) => {
+                let rank = idx + 1;
+                let bgStyle = rank === 1 ? "bg-[#FFF3E0] border-[#F4B95F]" : rank === 2 ? "bg-gray-50 border-gray-200" : rank === 3 ? "bg-[#FFF0F0] border-[#E07A5F]" : "bg-white border-transparent";
+                let numStyle = rank === 1 ? "bg-app-accent text-white shadow-md transform scale-110" : rank === 2 ? "bg-gray-300 text-gray-700" : rank === 3 ? "bg-[#E07A5F] text-white" : "bg-gray-100 text-gray-500 font-bold";
+                let isMe = (currentUser && currentUser.empId !== 'admin' && String(u.empId) === String(currentUser.empId)) ? "border-app-secondary border" : "border border-gray-50";
+                html += `<div class="p-3.5 rounded-[20px] flex items-center justify-between shadow-sm mb-2 ${bgStyle} ${isMe} transition-all"><div class="flex items-center gap-4"><div class="w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm ${numStyle}">${rank}</div><div><p class="font-bold text-[13px] text-app-dark leading-tight mb-0.5">${u.name}</p><p class="text-[10px] text-gray-400">ID: ${String(u.empId).substring(0,3)}xxxx</p></div></div><div class="font-bold text-app-primary text-[15px]">${u.displayPts} <span class="text-[9px] text-gray-400 font-normal ml-0.5">pts</span></div></div>`;
+            });
+            rankList.innerHTML = html || '<div class="text-center text-sm text-gray-400 py-4">ยังไม่มีข้อมูลคะแนน</div>';
+            
+            setTimeout(() => {
+                rankList.style.transition = 'opacity 0.3s ease';
+                rankList.style.opacity = '1';
+            }, 50);
+        }
+
+        function getNextDayStr(dateStr) {
+            if(!dateStr) return 'รอประกาศรอบใหม่';
+            let d = new Date(dateStr);
+            d.setDate(d.getDate() + 1);
+            return formatDateThai(d.toISOString().split('T')[0]);
+        }
+
+        function renderWeeklySummary() {
+            let totalGamePts = 0;
+            if(currentUser.history) {
+                currentUser.history.forEach(item => {
+                    if(item.detail === `กิจกรรมสัปดาห์ที่ ${db.settings.currentWeek}`) totalGamePts += item.pts;
+                });
+            }
+            document.getElementById('ws-week-num').innerText = db.settings.currentWeek || '-';
+            document.getElementById('ws-total-score').innerText = totalGamePts;
+            document.getElementById('ws-next-date').innerText = getNextDayStr(db.settings.weekEndDate);
+        }
+
+        function formatDateThai(dateStr) {
+            if(!dateStr) return '-';
+            const [y, m, d] = dateStr.split('-');
+            const months = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+            return `${parseInt(d)} ${months[parseInt(m)-1]} ${parseInt(y)+543}`;
+        }
+
+        // ================= GAME LOGIC =================
+        let gameStage = 1, gameTimeLeft = 120, gameTimerInt = null, gameScore = 0;
+        let stageScores = {s1: 0, t1: 0, s2: 0, t2: 0};
+        let activeWaste = null;
+
+        function startGameFlow() {
+            closeAllModals(); 
+            
+            const today = getThaiDateStr();
+            let activeWeek = null;
+            if (db.settings.weeks) {
+                activeWeek = db.settings.weeks.find(w => today >= w.start && today <= w.end);
+            }
+
+            if (!activeWeek && currentUser.role !== 'admin') {
+                return Swal.fire({ title: 'อยู่นอกเวลากิจกรรม!', text: `ขณะนี้ยังไม่มีรอบกิจกรรมที่เปิดให้เล่น กรุณารอประกาศจากผู้ดูแลระบบ`, icon: 'warning', confirmButtonColor: '#E07A5F', customClass:{confirmButton:'rounded-xl px-6'} });
+            }
+
+            let weekToPlay = activeWeek ? activeWeek.weekNum : (db.settings.currentWeek || 0);
+
+            if(currentUser.playedWeek !== weekToPlay) {
+                currentUser.playedWeek = weekToPlay;
+                currentUser.playCount = 0;
+            }
+
+            if(currentUser.playCount >= 2 && currentUser.role !== 'admin') {
+                return openModal('weekly-summary-modal');
+            }
+
+            if(!db.bins || db.bins.length === 0 || !db.wastes || db.wastes.length === 0) return Swal.fire('Oops!', 'ยังไม่มีข้อมูลถังขยะหรือขยะในระบบ', 'error');
+            
+            Swal.fire({ title: 'ลากขยะลงถังให้ถูกต้อง พร้อมลุยไหม?', html: `<p class="text-sm text-gray-500 mb-2">ด่าน 1: ขยะในอาคารผลิต (2 นาที)</p><p class="text-xs text-app-primary font-bold mt-2">สิทธิ์การเล่นรอบนี้: ${currentUser.role === 'admin' ? 'ไม่จำกัด (Admin)' : (2 - currentUser.playCount) + ' ครั้ง'}</p>`, icon: 'question', showCancelButton: true, confirmButtonText: 'Start Game', cancelButtonText: 'Later', confirmButtonColor: '#5C8D67', cancelButtonColor:'#cbd5e1', customClass: { confirmButton: 'rounded-[16px] px-8', cancelButton: 'rounded-[16px] px-6 text-gray-600' } }).then((res) => {
+                if(res.isConfirmed) initGameStage(1);
+            });
+        }
+
+        function initGameStage(stage) {
+            gameStage = stage; gameTimeLeft = 120; gameScore = 0;
+            document.getElementById('game-stage-title').innerText = stage === 1 ? 'ด่าน 1: ในอาคารผลิต' : 'ด่าน 2: นอกอาคารผลิต';
+            document.getElementById('game-score').innerText = '0';
+            updateTimerUI();
+            showPage('game-container');
+            renderBinsForStage();
+            spawnWastes();
+
+            gameTimerInt = setInterval(() => {
+                gameTimeLeft--; updateTimerUI();
+                if(gameTimeLeft <= 0) endStage();
+            }, 1000);
+        }
+
+        function updateTimerUI() { document.getElementById('game-timer').innerText = `${Math.floor(gameTimeLeft / 60).toString().padStart(2, '0')}:${(gameTimeLeft % 60).toString().padStart(2, '0')}`; }
+
+        function renderBinsForStage() {
+            const container = document.getElementById('bins-area');
+            let activeBins = db.bins.filter(b => b.stage === 'all' || (gameStage === 1 && b.stage === 'indoor') || (gameStage === 2 && b.stage === 'outdoor'));
+            
+            container.innerHTML = activeBins.map(b => `
+                <div class="bin-target flex-1 min-w-[50px] max-w-[85px] sm:max-w-[120px] h-[75%] sm:h-[85%] rounded-t-[16px] sm:rounded-t-[20px] rounded-b-[6px] relative shadow-md transition-transform flex flex-col items-center justify-end" style="background-color: ${b.color}; border-top: 5px solid rgba(255,255,255,0.3);" data-binid="${b.id}">
+                    <div class="absolute -top-6 sm:-top-8 w-11 h-11 sm:w-16 sm:h-16 bg-white rounded-full p-1.5 sm:p-2 shadow-sm flex items-center justify-center border-[3px] border-[#F2F7F4]">
+                        <img src="${b.img || 'https://cdn-icons-png.flaticon.com/512/3299/3299935.png'}" class="w-full h-full object-contain">
+                    </div>
+                    <span class="text-[8px] sm:text-[13px] text-white font-bold mb-1.5 sm:mb-3 text-center leading-tight drop-shadow-md px-1 break-words line-clamp-2 w-full">${b.name}</span>
+                </div>
+            `).join('');
+        }
+
+        function spawnWastes() {
+            const container = document.getElementById('game-area');
+            container.innerHTML = '';
+            let stageWastes = db.wastes.filter(w => w.stage === 'all' || (gameStage === 1 && w.stage === 'indoor') || (gameStage === 2 && w.stage === 'outdoor'));
+            if(stageWastes.length === 0) return endStage();
+
+            let shuffledWastes = [...stageWastes];
+            for (let i = shuffledWastes.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffledWastes[i], shuffledWastes[j]] = [shuffledWastes[j], shuffledWastes[i]];
+            }
+
+            let spawnCount = Math.min(10, shuffledWastes.length);
+            let itemWidth = window.innerWidth < 600 ? 60 : 90;
+            let itemHeight = window.innerWidth < 600 ? 75 : 95;
+            
+            let areaWidth = container.clientWidth;
+            let areaHeight = container.clientHeight;
+
+            for(let i=0; i<spawnCount; i++) {
+                let wType = shuffledWastes[i];
+                let el = document.createElement('div');
+                
+                el.className = 'waste-item bg-white p-2 sm:p-3 rounded-[12px] sm:rounded-[16px] shadow-[0_5px_15px_rgba(0,0,0,0.08)] border border-gray-100 flex flex-col items-center justify-center min-w-[60px] max-w-[70px] sm:min-w-[90px] sm:max-w-[100px] h-auto';
+                el.innerHTML = `<img src="${wType.img || 'https://cdn-icons-png.flaticon.com/512/839/839088.png'}" class="w-8 h-8 sm:w-12 sm:h-12 object-contain mb-1 drop-shadow-sm"><span class="text-[9px] sm:text-[11px] font-bold text-gray-600 bg-gray-50 px-1.5 py-1 rounded-[8px] border border-gray-200 w-full whitespace-normal break-words leading-tight text-center shadow-sm">${wType.name}</span>`;
+                el.dataset.targetbin = wType.binId;
+                
+                let maxLeft = Math.max(0, areaWidth - itemWidth - 10);
+                let maxTop = Math.max(0, areaHeight - itemHeight - 20); 
+                
+                el.style.left = (10 + Math.random() * maxLeft) + 'px';
+                el.style.top = (10 + Math.random() * maxTop) + 'px';
+                let rot = Math.floor(Math.random() * 20) - 10;
+                el.style.transform = `rotate(${rot}deg)`;
+                
+                el.addEventListener('touchstart', dragStart, {passive: false}); el.addEventListener('touchmove', dragMove, {passive: false}); el.addEventListener('touchend', dragEnd);
+                el.addEventListener('mousedown', dragStart);
+                container.appendChild(el);
+            }
+        }
+
+        let dragOffsetX = 0, dragOffsetY = 0, originalTransform = '';
+        function dragStart(e) {
+            if(e.type === 'touchstart') e.preventDefault();
+            activeWaste = this; originalTransform = activeWaste.style.transform;
+            let clientX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX; let clientY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
+            let rect = activeWaste.getBoundingClientRect();
+            dragOffsetX = clientX - rect.left; dragOffsetY = clientY - rect.top;
+            activeWaste.style.zIndex = '100'; activeWaste.style.transform = 'scale(1.15) rotate(0deg)';
+            if(e.type === 'mousedown') { document.addEventListener('mousemove', dragMove); document.addEventListener('mouseup', dragEnd); }
+        }
+
+        function dragMove(e) {
+            if(!activeWaste) return;
+            if(e.type === 'touchmove') e.preventDefault();
+            let clientX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX; let clientY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
+            activeWaste.style.left = (clientX - dragOffsetX) + 'px'; activeWaste.style.top = (clientY - dragOffsetY) + 'px';
+        }
+
+        function dragEnd(e) {
+            if(!activeWaste) return;
+            let clientX = e.type.includes('mouse') ? e.clientX : e.changedTouches[0].clientX; let clientY = e.type.includes('mouse') ? e.clientY : e.changedTouches[0].clientY;
+            activeWaste.style.display = 'none'; let dropTarget = document.elementFromPoint(clientX, clientY); activeWaste.style.display = 'flex';
+            let binEl = dropTarget ? dropTarget.closest('.bin-target') : null;
+
+            if(binEl) {
+                binEl.style.transform = 'scale(1.1)'; setTimeout(()=>binEl.style.transform='scale(1)', 200);
+                if(activeWaste.dataset.targetbin === binEl.dataset.binid) {
+                    gameScore += 50; activeWaste.remove(); showFloatingText('+50', binEl, 'text-app-primary');
+                } else {
+                    gameScore -= 10; showFloatingText('-10', binEl, 'text-[#E07A5F]'); activeWaste.style.top = '20%'; activeWaste.style.transform = originalTransform;
+                }
+                document.getElementById('game-score').innerText = gameScore;
+                if(document.querySelectorAll('.waste-item').length === 0) endStage();
+            } else {
+                activeWaste.style.transform = originalTransform;
+            }
+            if(activeWaste) activeWaste.style.zIndex = '10'; activeWaste = null;
+            if(e.type === 'mouseup') { document.removeEventListener('mousemove', dragMove); document.removeEventListener('mouseup', dragEnd); }
+        }
+
+        function showFloatingText(txt, targetEl, colorClass) {
+            let rect = targetEl.getBoundingClientRect(); let fl = document.createElement('div');
+            fl.className = `absolute font-black text-2xl ${colorClass} drop-shadow-md z-50 pointer-events-none transition-all duration-700 ease-out`;
+            fl.innerText = txt; fl.style.left = (rect.left + rect.width/2 - 15) + 'px'; fl.style.top = (rect.top - 20) + 'px';
+            document.body.appendChild(fl);
+            setTimeout(() => { fl.style.transform = 'translateY(-60px) scale(1.2)'; fl.style.opacity = '0'; }, 50);
+            setTimeout(() => fl.remove(), 750);
+        }
+
+        function endStage() {
+            if (isStageEnding) return;
+            isStageEnding = true;
+            clearInterval(gameTimerInt);
+            
+            let timeBonus = Math.floor(gameTimeLeft * 0.5); 
+            let totalScore = gameScore + timeBonus;
+            
+            if(gameStage === 1) {
+                stageScores.s1 = totalScore; 
+                stageScores.t1 = 120 - gameTimeLeft;
+                Swal.fire({ 
+                    title: 'Stage Cleared!', 
+                    html: `<div class="text-sm text-gray-500 mt-2">คะแนนเก็บ: <b>${gameScore}</b><br>โบนัสเวลา: <b>${timeBonus}</b><br><span class="text-app-primary text-lg mt-2 block font-bold">รวม: ${totalScore}</span></div>`, 
+                    icon: 'success', 
+                    confirmButtonText: 'Next Stage', 
+                    confirmButtonColor: '#5C8D67', 
+                    customClass:{confirmButton:'rounded-[16px] px-8 py-3 w-full'}, 
+                    allowOutsideClick: false 
+                }).then(() => {
+                    isStageEnding = false;
+                    initGameStage(2);
+                });
+            } else {
+                stageScores.s2 = totalScore; 
+                stageScores.t2 = 120 - gameTimeLeft;
+                finishGame();
+            }
+        }
+
+        function quitGame() {
+            clearInterval(gameTimerInt);
+            Swal.fire({ title: 'ยอมแพ้ตอนนี้?', text: "คะแนนด่านนี้จะหายไปเลยนะ", icon: 'warning', showCancelButton: true, confirmButtonText: 'ใช่, ออก', cancelButtonText:'เล่นต่อ', confirmButtonColor: '#E07A5F', cancelButtonColor: '#cbd5e1', customClass:{confirmButton:'rounded-xl', cancelButton:'rounded-xl text-gray-700'} }).then((result) => {
+                if (result.isConfirmed) showPage('page-main');
+                else gameTimerInt = setInterval(() => { gameTimeLeft--; updateTimerUI(); if(gameTimeLeft<=0) endStage(); }, 1000);
+            });
+        }
+
+        async function finishGame() {
+            try {
+                Swal.fire({ title: 'กำลังบันทึกคะแนน...', html: '<div class="tree-loader-container"><div class="tree-loader"></div></div>', allowOutsideClick: false, showConfirmButton: false });
+                
+                await loadFromCloud();
+
+                let weekToRecord = db.settings.currentWeek;
+                if (!weekToRecord && db.settings.weeks && db.settings.weeks.length > 0) {
+                    weekToRecord = db.settings.weeks[db.settings.weeks.length - 1].weekNum;
+                }
+                
+                if(currentUser.playedWeek !== weekToRecord) {
+                    currentUser.playedWeek = weekToRecord;
+                    currentUser.playCount = 0;
+                }
+
+                if(currentUser.playCount >= 2 && currentUser.role !== 'admin') {
+                    isStageEnding = false;
+                    Swal.fire({title: 'โควต้าหมดแล้ว!', text: 'คุณเล่นครบ 2 รอบแล้วในสัปดาห์นี้ คะแนนในรอบนี้จะไม่ถูกบันทึก', icon: 'error', customClass:{confirmButton:'rounded-xl bg-app-primary'}}).then(() => {
+                        showPage('page-main');
+                    });
+                    return;
+                }
+
+                let total = stageScores.s1 + stageScores.s2;
+                const fmt = (sec) => `${Math.floor(sec/60).toString().padStart(2,'0')}:${(sec%60).toString().padStart(2,'0')}`;
+                
+                if(document.getElementById('res-s1-score')) document.getElementById('res-s1-score').innerText = `${stageScores.s1} pts`; 
+                if(document.getElementById('res-s1-time')) document.getElementById('res-s1-time').innerText = `เวลา: ${fmt(stageScores.t1)}`;
+                if(document.getElementById('res-s2-score')) document.getElementById('res-s2-score').innerText = `${stageScores.s2} pts`; 
+                if(document.getElementById('res-s2-time')) document.getElementById('res-s2-time').innerText = `เวลา: ${fmt(stageScores.t2)}`;
+                if(document.getElementById('res-total-score')) document.getElementById('res-total-score').innerText = total;
+
+                currentUser.points += total;
+                if(!currentUser.history) currentUser.history = [];
+                
+                currentUser.history.unshift({ 
+                    date: getThaiTimeStr(), 
+                    pts: total, 
+                    detail: `กิจกรรมสัปดาห์ที่ ${weekToRecord || 0}`, 
+                    week: weekToRecord || 0 
+                });
+                
+                currentUser.playedWeek = weekToRecord || 0;
+                currentUser.playCount = (currentUser.playCount || 0) + 1;
+                
+                await saveUser();
+                updatePointsUI();
+
+                isStageEnding = false;
+                Swal.close();
+                showPage('page-main'); 
+                openModal('game-result-modal');
+
+            } catch (err) {
+                console.error("Game Finish Error: ", err);
+                isStageEnding = false;
+                Swal.fire({
+                    title: 'เกิดข้อผิดพลาด!',
+                    text: 'ระบบเซิร์ฟเวอร์ตอบสนองช้า หรืออินเทอร์เน็ตมีปัญหา แต่ระบบได้พยายามบันทึกข้อมูลแล้ว',
+                    icon: 'warning',
+                    confirmButtonText: 'กลับหน้าหลัก',
+                    customClass: { confirmButton: 'rounded-xl bg-app-primary' }
+                }).then(() => {
+                    showPage('page-main');
+                });
+            }
+        }
+        function closeGameAndReturn() { closeAllModals(); updatePointsUI(); }
+
+        // ================= ADMIN FUNCTIONS =================
+        async function saveGeneralSettings() {
+            let logoUrl = document.getElementById('cfg-logo-img').value;
+            Swal.fire({ title: 'กำลังบันทึกข้อมูล...', html: '<div class="tree-loader-container"><div class="tree-loader"></div></div>', allowOutsideClick: false, showConfirmButton: false });
+            
+            await loadFromCloud(); 
+            db.settings.logoImg = logoUrl; 
+            
+            await saveDB(); 
+            applySettings();
+            Swal.fire({ title: 'บันทึกสำเร็จ', icon: 'success', timer: 1500, showConfirmButton:false });
+        }
+
+        async function connectDB() {
+            const sheetId = document.getElementById('cfg-sheet-id').value.trim();
+            const gasUrl = document.getElementById('cfg-gas-url').value.trim();
+            
+            if(!sheetId || !gasUrl) return Swal.fire({title: 'Error', text: 'กรุณากรอก Sheet ID และ GAS URL', icon: 'error', customClass: {confirmButton: 'bg-app-primary rounded-xl'}});
+
+            let btn = document.getElementById('btn-db-connect');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> เชื่อมต่อฐานข้อมูล...';
+            btn.disabled = true;
+
+            try {
+                let res1 = await fetch(gasUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: 'init', sheetId: sheetId }),
+                    mode: 'cors',
+                    credentials: 'omit'
+                }).then(r=>r.json());
+
+                if(res1.success) {
+                    db.settings.sheetId = sheetId;
+                    db.settings.gasUrl = gasUrl;
+                    
+                    let res2 = await fetch(gasUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify({ action: 'load', sheetId: sheetId }),
+                        mode: 'cors',
+                        credentials: 'omit'
+                    }).then(r=>r.json());
+                    
+                    if(res2.success && res2.data.users && res2.data.users.length > 0) {
+                        db = enforceDBStructure(res2.data); 
+                    } else {
+                        let dbToUpload = JSON.parse(JSON.stringify(db));
+                        dbToUpload.users = dbToUpload.users.filter(u => u.empId !== 'admin');
+                        await fetch(gasUrl, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                            body: JSON.stringify({ action: 'save', sheetId: sheetId, data: dbToUpload }),
+                            mode: 'cors',
+                            credentials: 'omit'
+                        });
+                    }
+                    
+                    Storage.set('wcw_db', JSON.stringify(db));
+                    applySettings();
+                    Swal.fire({title:'เชื่อมต่อสำเร็จ', text:'ระบบเชื่อมต่อและจัดการตารางใน Google Sheets เรียบร้อยแล้ว!', icon:'success', customClass:{confirmButton:'rounded-xl bg-app-primary px-6'}});
+                } else {
+                    Swal.fire('ข้อผิดพลาดจาก Backend', res1.message, 'error');
+                }
+            } catch(e) {
+                Swal.fire('เชื่อมต่อล้มเหลว', 'โปรดตรวจสอบสิทธิ์ หรือลิงก์ให้ถูกต้อง\n\n' + e.message, 'error');
+            }
+            btn.innerHTML = 'บันทึกและเชื่อมต่อ DB';
+            btn.disabled = false;
+        }
+
+        function renderAdminTables() {
+            if(!db.settings.mainImages) db.settings.mainImages = [];
+            let bgHtml = db.settings.mainImages.map((img, idx) => `<tr class="hover:bg-gray-50 transition-colors"><td class="p-3"><div class="w-14 h-9 rounded-lg bg-cover bg-center shadow-sm border border-gray-200" style="background-image: url('${img.url}')"></div></td><td class="p-3 text-app-dark font-mono text-[12px]">${img.startTime}</td><td class="p-3 text-app-dark font-mono text-[12px]">${img.endTime}</td><td class="p-3 text-right"><button onclick="crudMainImage('edit', ${idx})" class="w-7 h-7 bg-blue-50 text-blue-500 rounded-md hover:bg-blue-100 mr-1 transition-colors"><i class="fa-solid fa-pen text-[10px]"></i></button><button onclick="crudMainImage('delete', ${idx})" class="w-7 h-7 bg-red-50 text-red-500 rounded-md hover:bg-red-100 transition-colors"><i class="fa-solid fa-trash text-[10px]"></i></button></td></tr>`).join('');
+            document.getElementById('admin-table-main-images').innerHTML = bgHtml || '<tr><td colspan="4" class="p-5 text-center text-gray-400">ยังไม่มีข้อมูลรูปภาพ</td></tr>';
+
+            if(!db.settings.popupImages) db.settings.popupImages = [];
+            let popupHtml = db.settings.popupImages.map((img, idx) => `<tr class="hover:bg-gray-50 transition-colors"><td class="p-3"><div class="w-10 h-10 rounded-lg bg-cover bg-center shadow-sm border border-gray-200" style="background-image: url('${img.url}')"></div></td><td class="p-3 text-gray-500 text-[11px] truncate max-w-[150px]">${img.url}</td><td class="p-3 text-right"><button onclick="crudPopupImage('edit', ${idx})" class="w-7 h-7 bg-blue-50 text-blue-500 rounded-md hover:bg-blue-100 mr-1 transition-colors"><i class="fa-solid fa-pen text-[10px]"></i></button><button onclick="crudPopupImage('delete', ${idx})" class="w-7 h-7 bg-red-50 text-red-500 rounded-md hover:bg-red-100 transition-colors"><i class="fa-solid fa-trash text-[10px]"></i></button></td></tr>`).join('');
+            document.getElementById('admin-table-popup-images').innerHTML = popupHtml || '<tr><td colspan="3" class="p-5 text-center text-gray-400">ยังไม่มีรูปภาพ Popup</td></tr>';
+
+            if(!db.settings.weeks) db.settings.weeks = [];
+            document.getElementById('admin-weeks-list').innerHTML = [...db.settings.weeks].sort((a,b) => b.weekNum - a.weekNum).map(w => {
+                let isCurrent = w.weekNum === db.settings.currentWeek;
+                let badge = isCurrent ? `<span class="bg-app-primary text-white text-[9px] px-2 py-0.5 rounded-full ml-1">รอบปัจจุบัน</span>` : '';
+                return `
+                    <div class="flex justify-between items-center bg-[#F8FAF9] border ${isCurrent ? 'border-app-primary' : 'border-gray-200'} rounded-[16px] p-4 text-app-dark font-medium">
+                        <div class="text-[13px] flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                            <div><i class="fa-regular fa-calendar ${isCurrent ? 'text-app-primary' : 'text-gray-400'} mr-1"></i> สัปดาห์ที่ ${w.weekNum} ${badge}</div>
+                            <span class="text-gray-500 font-normal bg-white px-2 py-0.5 rounded border text-[11px] w-max">${formatDateThai(w.start)} - ${formatDateThai(w.end)}</span>
+                        </div>
+                        <div class="flex items-center gap-1 shrink-0">
+                            <button onclick="editWeek(${w.weekNum})" class="flex items-center gap-2 bg-white border border-blue-200 text-blue-600 px-3 py-1.5 rounded-xl hover:bg-blue-50 transition-colors text-[11px] font-bold shadow-sm"><i class="fa-solid fa-pen"></i> แก้ไข</button>
+                            <button onclick="deleteWeek(${w.weekNum})" class="flex items-center gap-2 bg-white border border-red-200 text-red-500 px-3 py-1.5 rounded-xl hover:bg-red-50 transition-colors text-[11px] font-bold shadow-sm"><i class="fa-solid fa-trash"></i> ลบ</button>
+                        </div>
+                    </div>
+                `;
+            }).join('') || '<div class="text-center text-sm text-gray-400 py-4">ยังไม่มีรอบเกม</div>';
+
+            if(!db.levels) db.levels = [];
+            document.getElementById('admin-table-levels').innerHTML = db.levels.sort((a,b)=>a.points-b.points).map(l => `<tr><td class="p-4 flex items-center gap-3 font-medium"><div class="w-4 h-4 rounded-full border border-gray-300 shadow-inner" style="background:${l.bgColor || '#F2F7F4'}"></div><img src="${l.img}" class="w-8 h-8 object-contain drop-shadow-sm">${l.level}</td><td class="p-4 text-app-primary font-bold text-[14px]">${l.points}</td><td class="p-4 text-right"><button onclick="crudLevel('edit','${l.id}')" class="w-8 h-8 bg-blue-50 text-blue-500 rounded-lg mr-1.5 hover:bg-blue-100 transition-colors"><i class="fa-solid fa-pen text-[11px]"></i></button><button onclick="crudLevel('delete','${l.id}')" class="w-8 h-8 bg-red-50 text-red-500 rounded-lg hover:bg-red-100 transition-colors"><i class="fa-solid fa-trash text-[11px]"></i></button></td></tr>`).join('');
+            
+            if(!db.bins) db.bins = [];
+            document.getElementById('admin-table-bins').innerHTML = db.bins.map(b => `<tr><td class="p-4 text-center"><div class="w-10 h-10 mx-auto rounded-full bg-gray-50 flex items-center justify-center border border-gray-200"><img src="${b.img || 'https://cdn-icons-png.flaticon.com/512/3299/3299935.png'}" class="w-6 h-6 object-contain"></div></td><td class="p-4"><div class="flex items-center gap-2 font-semibold text-app-dark"><div class="w-3 h-3 rounded-full shadow-inner" style="background:${b.color}"></div>${b.name}</div></td><td class="p-4 text-[11px] font-bold uppercase text-gray-500">${b.stage}</td><td class="p-4 text-right"><button onclick="crudBin('edit','${b.id}')" class="w-8 h-8 bg-blue-50 text-blue-500 rounded-lg mr-1.5 hover:bg-blue-100 transition-colors"><i class="fa-solid fa-pen text-[11px]"></i></button><button onclick="crudBin('delete','${b.id}')" class="w-8 h-8 bg-red-50 text-red-500 rounded-lg hover:bg-red-100 transition-colors"><i class="fa-solid fa-trash text-[11px]"></i></button></td></tr>`).join('');
+            
+            if(!db.wastes) db.wastes = [];
+            document.getElementById('admin-table-wastes').innerHTML = db.wastes.map(w => `<tr><td class="p-4 text-center"><img src="${w.img || 'https://cdn-icons-png.flaticon.com/512/839/839088.png'}" class="w-8 h-8 object-contain mx-auto"></td><td class="p-4 font-semibold text-app-dark">${w.name}</td><td class="p-4 text-gray-600 font-medium">${db.bins.find(b=>b.id===w.binId)?.name || '-'}</td><td class="p-4 text-right"><button onclick="crudWaste('edit','${w.id}')" class="w-8 h-8 bg-blue-50 text-blue-500 rounded-lg mr-1.5 hover:bg-blue-100 transition-colors"><i class="fa-solid fa-pen text-[11px]"></i></button><button onclick="crudWaste('delete','${w.id}')" class="w-8 h-8 bg-red-50 text-red-500 rounded-lg hover:bg-red-100 transition-colors"><i class="fa-solid fa-trash text-[11px]"></i></button></td></tr>`).join('');
+            
+            let validUsers = db.users.filter(u => u.empId !== 'admin' && u.empId !== 'admin123');
+            
+            const searchInput = document.getElementById('search-user-input');
+            const searchTerm = searchInput ? searchInput.value.trim() : '';
+            if (searchTerm) {
+                validUsers = validUsers.filter(u => String(u.empId).includes(searchTerm));
+            }
+
+            let sortedUsers = [...validUsers].sort((a,b)=>b.points-a.points);
+            
+            const totalItems = sortedUsers.length;
+            const totalPages = Math.ceil(totalItems / ADMIN_USERS_PER_PAGE) || 1;
+            
+            if (adminUsersCurrentPage > totalPages) adminUsersCurrentPage = totalPages;
+            if (adminUsersCurrentPage < 1) adminUsersCurrentPage = 1;
+            
+            const startIndex = (adminUsersCurrentPage - 1) * ADMIN_USERS_PER_PAGE;
+            const endIndex = startIndex + ADMIN_USERS_PER_PAGE;
+            const currentUsers = sortedUsers.slice(startIndex, endIndex);
+
+            document.getElementById('admin-table-users').innerHTML = currentUsers.map((u, i) => {
+                let absoluteRank = startIndex + i + 1;
+                return `<tr><td class="p-4 font-bold text-gray-400 text-center">${absoluteRank}</td><td class="p-4 text-gray-500 font-medium">${u.empId}</td><td class="p-4 font-bold text-app-dark">${u.name}</td><td class="p-4 font-black text-app-primary text-[14px]">${u.points}</td><td class="p-4 text-right"><button onclick="editUser('${u.empId}')" class="w-8 h-8 bg-blue-50 text-blue-500 rounded-lg mr-1.5 hover:bg-blue-100 transition-colors"><i class="fa-solid fa-pen text-[11px]"></i></button><button onclick="deleteUser('${u.empId}')" class="w-8 h-8 bg-red-50 text-red-500 rounded-lg hover:bg-red-100 transition-colors"><i class="fa-solid fa-trash text-[11px]"></i></button></td></tr>`;
+            }).join('') || `<tr><td colspan="5" class="p-5 text-center text-gray-400">${searchTerm ? 'ไม่พบรหัสพนักงานที่ค้นหา' : 'ยังไม่มีข้อมูลผู้เล่น'}</td></tr>`;
+            
+            let paginationHtml = '';
+            if (totalItems > 0) {
+                let displayedStart = startIndex + 1;
+                let displayedEnd = Math.min(endIndex, totalItems);
+                paginationHtml = `
+                    <div class="text-[12px] text-gray-500 font-medium">แสดง ${displayedStart}-${displayedEnd} จากทั้งหมด ${totalItems} รายการ</div>
+                    <div class="flex items-center gap-1.5">
+                        <button onclick="changeAdminUsersPage(${adminUsersCurrentPage - 1})" class="w-8 h-8 flex items-center justify-center rounded-[10px] border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all" ${adminUsersCurrentPage === 1 ? 'disabled' : ''}><i class="fa-solid fa-chevron-left text-[10px]"></i></button>
+                        <div class="px-3 py-1 text-[12px] font-bold text-app-dark bg-white border border-gray-200 rounded-[10px]">${adminUsersCurrentPage} / ${totalPages}</div>
+                        <button onclick="changeAdminUsersPage(${adminUsersCurrentPage + 1})" class="w-8 h-8 flex items-center justify-center rounded-[10px] border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all" ${adminUsersCurrentPage === totalPages ? 'disabled' : ''}><i class="fa-solid fa-chevron-right text-[10px]"></i></button>
+                    </div>
+                `;
+            }
+            const paginationContainer = document.getElementById('admin-users-pagination');
+            if(paginationContainer) paginationContainer.innerHTML = paginationHtml;
+
+            if(!db.qrs) db.qrs = [];
+            document.getElementById('admin-table-qrs').innerHTML = db.qrs.map(q => {
+                let scanText = q.scanType === 'multi' ? 'หลายครั้ง/คน' : '1 ครั้ง/คน';
+                return `<tr><td class="p-4 font-bold text-app-dark">${q.name}</td><td class="p-4 text-app-accent font-black text-[14px]">${q.pts}</td><td class="p-4"><span class="bg-[#E6F0E8] text-app-primary text-[11px] px-3 py-1.5 rounded-full font-bold">${scanText}</span></td><td class="p-4 text-right"><button onclick="viewQR('${q.url}')" class="w-8 h-8 bg-gray-100 text-gray-600 rounded-lg mr-1.5 hover:bg-gray-200 transition-colors"><i class="fa-solid fa-qrcode text-[11px]"></i></button><button onclick="crudQR('edit', '${q.id}')" class="w-8 h-8 bg-blue-50 text-blue-500 rounded-lg mr-1.5 hover:bg-blue-100 transition-colors"><i class="fa-solid fa-pen text-[11px]"></i></button><button onclick="deleteQR('${q.id}')" class="w-8 h-8 bg-red-50 text-red-500 rounded-lg hover:bg-red-100 transition-colors"><i class="fa-solid fa-trash text-[11px]"></i></button></td></tr>`
+            }).join('');
+        }
+
+        function generateId() { return Math.random().toString(36).substr(2, 9); }
+        
+        function changeAdminUsersPage(newPage) {
+            adminUsersCurrentPage = newPage;
+            renderAdminTables();
+        }
+
+        function exportCSV(type) {
+            let data = db[type];
+            if(type === 'users') data = data.filter(u => u.empId !== 'admin' && u.empId !== 'admin123');
+            
+            if(!data || data.length === 0) return Swal.fire({title:'Error', text:'ไม่มีข้อมูลให้ส่งออก', icon:'error', customClass:{confirmButton:'bg-app-primary rounded-xl'}});
+            let headers = Object.keys(data[0]);
+            let csvContent = "data:text/csv;charset=utf-8,\uFEFF" + headers.join(",") + "\n" + data.map(row => headers.map(h => `"${(row[h]||'').toString().replace(/"/g, '""')}"`).join(",")).join("\n");
+            let encodedUri = encodeURI(csvContent);
+            let link = document.createElement("a"); link.setAttribute("href", encodedUri); link.setAttribute("download", `WCW_${type}.csv`); document.body.appendChild(link); link.click(); document.body.removeChild(link);
+        }
+
+        function importCSV(e, type) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = async function(event) {
+                const text = event.target.result;
+                const rows = text.split('\n').filter(r => r.trim());
+                if(rows.length <= 1) return Swal.fire({title:'Error', text:'ไฟล์ว่าง หรือรูปแบบผิด', icon:'error', customClass:{confirmButton:'bg-app-primary rounded-xl'}});
+                const headers = rows[0].split(',').map(h=>h.replace(/"/g,'').trim());
+                let newArr = [];
+                for(let i=1; i<rows.length; i++) {
+                    let vals = rows[i].split(',').map(v=>v.replace(/"/g,'').trim());
+                    let obj = {}; headers.forEach((h, j) => obj[h] = vals[j]);
+                    if(!obj.id) obj.id = generateId();
+                    newArr.push(obj);
+                }
+                Swal.fire({ title: 'กำลังนำเข้าข้อมูล...', html: '<div class="tree-loader-container"><div class="tree-loader"></div></div>', allowOutsideClick: false, showConfirmButton: false });
+                
+                await loadFromCloud(); 
+                db[type] = newArr; 
+                await saveDB(); 
+                
+                renderAdminTables();
+                Swal.fire({title:'สำเร็จ', text:`นำเข้า ${type} เรียบร้อย`, icon:'success', customClass:{confirmButton:'bg-app-primary rounded-xl'}});
+            };
+            reader.readAsText(file); e.target.value = '';
+        }
+
+        function resetSystemData() {
+            Swal.fire({
+                title: 'ยืนยันการรีเซ็ต?',
+                text: "การรีเซ็ตจะล้างข้อมูลแคชในระบบของคุณทั้งหมด เพื่อเริ่มต้นดึงข้อมูลใหม่",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#E07A5F',
+                confirmButtonText: 'ใช่, รีเซ็ตเลย',
+                cancelButtonText: 'ยกเลิก',
+                customClass: { confirmButton: 'rounded-xl', cancelButton: 'rounded-xl bg-gray-200 text-gray-700 border-none' }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    localStorage.removeItem('wcw_db');
+                    localStorage.removeItem('wcw_user_session');
+                    location.reload();
+                }
+            });
+        }
+
+        async function editUser(empId) {
+            let user = db.users.find(u => String(u.empId) === String(empId));
+            if(!user) return;
+            const { value: newName } = await Swal.fire({
+                title: 'แก้ไขชื่อผู้เล่น',
+                input: 'text',
+                inputValue: user.name,
+                showCancelButton: true,
+                confirmButtonText: 'บันทึก',
+                cancelButtonText: 'ยกเลิก',
+                customClass: {
+                    confirmButton: 'rounded-xl bg-app-primary px-8 py-2.5 text-white font-bold',
+                    cancelButton: 'rounded-xl px-8 py-2.5 bg-gray-200 text-gray-700 font-bold',
+                    input: 'text-sm rounded-xl border-gray-200'
+                },
+                inputValidator: (value) => {
+                    if (!value || value.trim() === '') {
+                        return 'กรุณากรอกชื่อผู้เล่น'
+                    }
+                }
+            });
+            if(newName && newName.trim() !== '') {
+                Swal.fire({ title: 'กำลังบันทึก...', html: '<div class="tree-loader-container"><div class="tree-loader"></div></div>', allowOutsideClick: false, showConfirmButton: false });
+                
+                await loadFromCloud(); 
+                
+                let freshUser = db.users.find(u => String(u.empId) === String(empId));
+                if(freshUser) freshUser.name = newName.trim();
+                
+                await saveDB();
+                renderAdminTables();
+                Swal.fire({title: 'สำเร็จ!', text: 'อัปเดตชื่อผู้เล่นเรียบร้อยแล้ว', icon: 'success', timer: 1500, showConfirmButton: false});
+            }
+        }
+
+        async function deleteUser(empId) {
+            Swal.fire({
+                title: 'ยืนยันการลบ?',
+                text: "ข้อมูลผู้เล่นคนนี้ รวมถึงคะแนนและประวัติทั้งหมดจะถูกลบอย่างถาวร!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#E07A5F',
+                confirmButtonText: 'ใช่, ลบเลย',
+                cancelButtonText: 'ยกเลิก',
+                customClass: { confirmButton: 'rounded-xl', cancelButton: 'rounded-xl text-gray-700 bg-gray-200 border-none' }
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({ title: 'กำลังลบ...', html: '<div class="tree-loader-container"><div class="tree-loader"></div></div>', allowOutsideClick: false, showConfirmButton: false });
+                    
+                    await loadFromCloud(); 
+                    
+                    db.users = db.users.filter(u => String(u.empId) !== String(empId));
+                    await saveDB();
+                    renderAdminTables();
+                    Swal.fire({title: 'ลบแล้ว!', text: 'ข้อมูลผู้เล่นถูกลบเรียบร้อย', icon: 'success', timer: 1500, showConfirmButton: false});
+                }
+            });
+        }
+
+        async function deleteAllUsers() {
+            Swal.fire({
+                title: 'ล้างข้อมูลผู้เล่นทั้งหมด?',
+                text: "โปรดระวัง! ข้อมูลผู้เล่น, คะแนน และประวัติการเล่นทั้งหมด (ยกเว้นแอดมิน) จะถูกลบอย่างถาวร ไม่สามารถกู้คืนได้!",
+                icon: 'error',
+                showCancelButton: true,
+                confirmButtonColor: '#E07A5F',
+                confirmButtonText: 'ยืนยันลบทั้งหมด',
+                cancelButtonText: 'ยกเลิก',
+                customClass: { confirmButton: 'rounded-xl', cancelButton: 'rounded-xl text-gray-700 bg-gray-200 border-none' }
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({ title: 'กำลังลบ...', html: '<div class="tree-loader-container"><div class="tree-loader"></div></div>', allowOutsideClick: false, showConfirmButton: false });
+                    
+                    await loadFromCloud(); 
+                    
+                    db.users = db.users.filter(u => u.empId === 'admin' || u.empId === 'admin123');
+                    await saveDB();
+                    renderAdminTables();
+                    Swal.fire({title: 'สำเร็จ!', text: 'รีเซ็ตข้อมูลผู้เล่นทั้งหมดเรียบร้อยแล้ว', icon: 'success', timer: 1500, showConfirmButton: false});
+                }
+            });
+        }
+
+        async function crudMainImage(action, idx) {
+            if(action === 'delete') { 
+                if(db.settings.mainImages.length <= 1) return Swal.fire('ไม่สามารถลบได้', 'ต้องมีรูปพื้นหลังอย่างน้อย 1 รูป', 'warning');
+                
+                Swal.fire({ title: 'กำลังลบ...', html: '<div class="tree-loader-container"><div class="tree-loader"></div></div>', allowOutsideClick: false, showConfirmButton: false });
+                
+                await loadFromCloud(); 
+                
+                db.settings.mainImages.splice(idx, 1); 
+                await saveDB(); renderAdminTables(); updateLandingBackground(); 
+                Swal.close();
+                return; 
+            }
+            let item = action === 'edit' ? db.settings.mainImages[idx] : {url: '', startTime: '06:00', endTime: '18:00'};
+            const { value: formValues } = await Swal.fire({
+                title: action==='add'?'เพิ่มรูปพื้นหลัง':'แก้ไขรูปพื้นหลัง',
+                html: `<input id="swal-mi-url" class="swal2-input text-sm rounded-xl border-gray-200 w-[95%]" placeholder="Image URL (ลิงก์รูปภาพ)" value="${item.url}"><div class="flex gap-4 mt-5 px-3 w-[95%] mx-auto"><div class="flex-1 text-left"><label class="text-[12px] font-bold text-gray-600 pl-1">เวลาเริ่ม (HH:MM)</label><input type="time" id="swal-mi-start" class="swal2-input w-full text-sm rounded-xl border-gray-200 mt-1.5" value="${item.startTime}"></div><div class="flex-1 text-left"><label class="text-[12px] font-bold text-gray-600 pl-1">เวลาสิ้นสุด</label><input type="time" id="swal-mi-end" class="swal2-input w-full text-sm rounded-xl border-gray-200 mt-1.5" value="${item.endTime}"></div></div>`,
+                focusConfirm: false,
+                preConfirm: () => {
+                    let url = document.getElementById('swal-mi-url').value;
+                    let start = document.getElementById('swal-mi-start').value;
+                    let end = document.getElementById('swal-mi-end').value;
+                    if(!url || !start || !end) { Swal.showValidationMessage('กรุณากรอกข้อมูลให้ครบถ้วน'); return false; }
+                    return { url, startTime: start, endTime: end };
+                },
+                customClass: {confirmButton: 'rounded-xl bg-app-primary w-[95%] py-3 text-white font-bold text-lg'}
+            });
+            if (formValues) {
+                Swal.fire({ title: 'กำลังบันทึก...', html: '<div class="tree-loader-container"><div class="tree-loader"></div></div>', allowOutsideClick: false, showConfirmButton: false });
+                
+                await loadFromCloud(); 
+                
+                if(action === 'add') db.settings.mainImages.push(formValues); else db.settings.mainImages[idx] = formValues;
+                await saveDB(); renderAdminTables(); updateLandingBackground();
+                Swal.close();
+            }
+        }
+
+        async function crudPopupImage(action, idx) {
+            if(action === 'delete') { 
+                Swal.fire({ title: 'กำลังลบ...', html: '<div class="tree-loader-container"><div class="tree-loader"></div></div>', allowOutsideClick: false, showConfirmButton: false });
+                
+                await loadFromCloud(); 
+                
+                db.settings.popupImages.splice(idx, 1); 
+                await saveDB(); renderAdminTables(); 
+                Swal.close();
+                return; 
+            }
+            let item = action === 'edit' ? db.settings.popupImages[idx] : {url: ''};
+            const { value: formValues } = await Swal.fire({
+                title: action==='add'?'เพิ่มรูป Popup':'แก้ไขรูป Popup',
+                html: `<input id="swal-popup-url" class="swal2-input text-sm rounded-xl border-gray-200 w-[95%]" placeholder="Image URL (ลิงก์รูปภาพ)" value="${item.url}">`,
+                focusConfirm: false,
+                preConfirm: () => {
+                    let url = document.getElementById('swal-popup-url').value;
+                    if(!url) { Swal.showValidationMessage('กรุณากรอกลิงก์รูปภาพ'); return false; }
+                    return { url };
+                },
+                customClass: {confirmButton: 'rounded-xl bg-app-primary w-[95%] py-3 text-white font-bold text-lg'}
+            });
+            if (formValues) {
+                Swal.fire({ title: 'กำลังบันทึก...', html: '<div class="tree-loader-container"><div class="tree-loader"></div></div>', allowOutsideClick: false, showConfirmButton: false });
+                
+                await loadFromCloud(); 
+                
+                if(!db.settings.popupImages) db.settings.popupImages = [];
+                if(action === 'add') db.settings.popupImages.push(formValues); else db.settings.popupImages[idx] = formValues;
+                await saveDB(); renderAdminTables();
+                Swal.close();
+            }
+        }
+
+        async function crudLevel(action, id) {
+            if(action === 'delete') { 
+                Swal.fire({ title: 'กำลังลบ...', html: '<div class="tree-loader-container"><div class="tree-loader"></div></div>', allowOutsideClick: false, showConfirmButton: false });
+                
+                await loadFromCloud(); 
+                
+                db.levels = db.levels.filter(x => x.id !== id); 
+                await saveDB(); renderAdminTables(); 
+                Swal.close();
+                return; 
+            }
+            let item = action === 'edit' ? db.levels.find(x => x.id === id) : {level:'', points:0, img:'', bgColor:'#F2F7F4'};
+            const { value: formValues } = await Swal.fire({ 
+                title: action==='add'?'เพิ่มระดับผู้เล่น':'แก้ไขระดับผู้เล่น', 
+                html: `<input id="swal-l1" class="swal2-input text-sm rounded-xl border-gray-200 w-[95%]" placeholder="ชื่อ Level" value="${item.level}"><input id="swal-l2" type="number" class="swal2-input text-sm rounded-xl border-gray-200 mt-4 w-[95%]" placeholder="คะแนนเริ่มต้น" value="${item.points}"><input id="swal-l3" class="swal2-input text-sm rounded-xl border-gray-200 mt-4 w-[95%]" placeholder="Image URL (ลิงก์รูปด่าน)" value="${item.img}"><div class="flex items-center gap-4 mt-6 px-3 justify-center bg-gray-50 p-4 rounded-[16px] w-[95%] mx-auto"><span class="text-[13px] font-bold text-gray-700">สีพื้นหลังด่านนี้:</span><input id="swal-l4" type="color" class="h-10 w-24 rounded-lg cursor-pointer border-0 p-0 shadow-sm" value="${item.bgColor || '#F2F7F4'}"></div>`, 
+                focusConfirm: false, 
+                preConfirm: () => { return { level: document.getElementById('swal-l1').value, points: parseInt(document.getElementById('swal-l2').value), img: document.getElementById('swal-l3').value, bgColor: document.getElementById('swal-l4').value } }, customClass: {confirmButton: 'rounded-xl bg-app-primary w-[95%] py-3 text-white font-bold text-lg'} 
+            });
+            if (formValues) { 
+                Swal.fire({ title: 'กำลังบันทึก...', html: '<div class="tree-loader-container"><div class="tree-loader"></div></div>', allowOutsideClick: false, showConfirmButton: false });
+                
+                await loadFromCloud(); 
+                
+                if(action==='add') db.levels.push({id: generateId(), ...formValues}); 
+                else {
+                    let freshItem = db.levels.find(x => x.id === id);
+                    if(freshItem) Object.assign(freshItem, formValues); 
+                }
+                await saveDB(); renderAdminTables(); if(currentUser) loadUserDashboard();
+                Swal.close();
+            }
+        }
+
+        async function crudBin(action, id) {
+            if(action === 'delete') { 
+                Swal.fire({ title: 'กำลังลบ...', html: '<div class="tree-loader-container"><div class="tree-loader"></div></div>', allowOutsideClick: false, showConfirmButton: false });
+                
+                await loadFromCloud(); 
+                
+                db.bins = db.bins.filter(x => x.id !== id); 
+                await saveDB(); renderAdminTables(); 
+                Swal.close();
+                return; 
+            }
+            let item = action === 'edit' ? db.bins.find(x => x.id === id) : {name:'', color:'#5C8D67', stage:'all', img:''};
+            const { value: formValues } = await Swal.fire({ 
+                title: action==='add'?'เพิ่มถังขยะ':'แก้ไขถังขยะ', 
+                html: `
+                    <input id="swal-b1" class="swal2-input text-sm rounded-xl border-gray-200 w-[95%]" placeholder="ชื่อถังขยะ" value="${item.name}">
+                    <input id="swal-b4" class="swal2-input text-sm rounded-xl border-gray-200 mt-4 w-[95%]" placeholder="Image URL (ลิงก์รูปถังขยะ)" value="${item.img || ''}">
+                    <div class="flex items-center gap-4 mt-5 px-3 bg-gray-50 p-3 rounded-[16px] w-[95%] mx-auto">
+                        <span class="text-[13px] font-bold text-gray-700">สีฐานถังขยะ:</span>
+                        <input id="swal-b2" type="color" class="h-10 w-24 rounded-lg cursor-pointer border-0 p-0 shadow-sm" value="${item.color}">
+                    </div>
+                    <select id="swal-b3" class="swal2-select text-sm rounded-xl border-gray-200 mt-4 w-[95%]">
+                        <option value="all" ${item.stage==='all'?'selected':''}>แสดงทุกด่าน</option>
+                        <option value="indoor" ${item.stage==='indoor'?'selected':''}>เฉพาะด่านในอาคารผลิต</option>
+                        <option value="outdoor" ${item.stage==='outdoor'?'selected':''}>เฉพาะด่านนอกอาคารผลิต</option>
+                    </select>
+                `, 
+                focusConfirm: false, 
+                preConfirm: () => { return { name: document.getElementById('swal-b1').value, color: document.getElementById('swal-b2').value, stage: document.getElementById('swal-b3').value, img: document.getElementById('swal-b4').value } }, customClass: {confirmButton: 'rounded-xl bg-app-primary w-[95%] py-3 text-white font-bold text-lg'} 
+            });
+            if (formValues) { 
+                Swal.fire({ title: 'กำลังบันทึก...', html: '<div class="tree-loader-container"><div class="tree-loader"></div></div>', allowOutsideClick: false, showConfirmButton: false });
+                
+                await loadFromCloud(); 
+                
+                if(action==='add') db.bins.push({id: generateId(), ...formValues}); 
+                else {
+                    let freshItem = db.bins.find(x => x.id === id);
+                    if(freshItem) Object.assign(freshItem, formValues); 
+                }
+                await saveDB(); renderAdminTables(); 
+                Swal.close();
+            }
+        }
+
+        async function crudWaste(action, id) {
+            if(action === 'delete') { 
+                Swal.fire({ title: 'กำลังลบ...', html: '<div class="tree-loader-container"><div class="tree-loader"></div></div>', allowOutsideClick: false, showConfirmButton: false });
+                
+                await loadFromCloud(); 
+                
+                db.wastes = db.wastes.filter(x => x.id !== id); 
+                await saveDB(); renderAdminTables(); 
+                Swal.close();
+                return; 
+            }
+            let item = action === 'edit' ? db.wastes.find(x => x.id === id) : {name:'', binId: db.bins[0]?.id, stage:'all', img:''};
+            let binOptions = db.bins.map(b => `<option value="${b.id}" ${item.binId===b.id?'selected':''}>ทิ้งลงถัง: ${b.name}</option>`).join('');
+            const { value: formValues } = await Swal.fire({ 
+                title: action==='add'?'เพิ่มชนิดขยะ':'แก้ไขชนิดขยะ', 
+                html: `
+                    <input id="swal-w1" class="swal2-input text-sm rounded-xl border-gray-200 w-[95%]" placeholder="ชื่อขยะ" value="${item.name}">
+                    <input id="swal-w4" class="swal2-input text-sm rounded-xl border-gray-200 mt-4 w-[95%]" placeholder="Image URL (ลิงก์รูปขยะ)" value="${item.img || ''}">
+                    <select id="swal-w2" class="swal2-select text-sm rounded-xl border-gray-200 mt-4 w-[95%]">${binOptions}</select>
+                    <select id="swal-w3" class="swal2-select text-sm rounded-xl border-gray-200 mt-4 w-[95%]">
+                        <option value="all" ${item.stage==='all'?'selected':''}>โผล่ทุกด่าน</option>
+                        <option value="indoor" ${item.stage==='indoor'?'selected':''}>โผล่เฉพาะด่านในอาคารผลิต</option>
+                        <option value="outdoor" ${item.stage==='outdoor'?'selected':''}>โผล่เฉพาะด่านนอกอาคารผลิต</option>
+                    </select>
+                `, 
+                focusConfirm: false, 
+                preConfirm: () => { return { name: document.getElementById('swal-w1').value, binId: document.getElementById('swal-w2').value, stage: document.getElementById('swal-w3').value, img: document.getElementById('swal-w4').value } }, customClass: {confirmButton: 'rounded-xl bg-app-primary w-[95%] py-3 text-white font-bold text-lg'} 
+            });
+            if (formValues) { 
+                Swal.fire({ title: 'กำลังบันทึก...', html: '<div class="tree-loader-container"><div class="tree-loader"></div></div>', allowOutsideClick: false, showConfirmButton: false });
+                
+                await loadFromCloud(); 
+                
+                if(action==='add') db.wastes.push({id: generateId(), ...formValues}); 
+                else {
+                    let freshItem = db.wastes.find(x => x.id === id);
+                    if(freshItem) Object.assign(freshItem, formValues); 
+                }
+                await saveDB(); renderAdminTables(); 
+                Swal.close();
+            }
+        }
+
+        async function startNewWeek() {
+            promptWeekDates('new', 'เพิ่มรอบใหม่', '', '');
+        }
+
+        async function editWeek(weekNum) {
+            let w = db.settings.weeks.find(x => Number(x.weekNum) === Number(weekNum));
+            if(w) promptWeekDates(weekNum, `แก้ไขสัปดาห์ที่ ${weekNum}`, w.start, w.end);
+        }
+        
+        function deleteWeek(weekNum) {
+            Swal.fire({
+                title: `ลบสัปดาห์ที่ ${weekNum}?`, text: "คุณต้องการลบรอบเวลานี้ใช่หรือไม่?", icon: 'warning',
+                showCancelButton: true, confirmButtonColor: '#E07A5F', confirmButtonText: 'ลบ', cancelButtonText: 'ยกเลิก',
+                customClass: { confirmButton: 'rounded-xl', cancelButton: 'rounded-xl bg-gray-200 text-gray-700 border-none' }
+            }).then(async (res) => {
+                if(res.isConfirmed) {
+                    Swal.fire({ title: 'กำลังลบ...', html: '<div class="tree-loader-container"><div class="tree-loader"></div></div>', allowOutsideClick: false, showConfirmButton: false });
+                    
+                    await loadFromCloud(); 
+                    
+                    let backupWeeks = JSON.parse(JSON.stringify(db.settings.weeks));
+                    db.settings.weeks = db.settings.weeks.filter(w => Number(w.weekNum) !== Number(weekNum));
+                    
+                    reindexWeeks();
+                    
+                    const success = await saveDB(); 
+                    if(success) {
+                        evaluateCurrentWeek(); 
+                        applySettings();
+                        Swal.fire({title: 'ลบแล้ว!', text: 'ข้อมูลสัปดาห์ถูกลบและจัดเรียงใหม่เรียบร้อย', icon: 'success', timer: 1500, showConfirmButton: false});
+                    } else {
+                        db.settings.weeks = backupWeeks; 
+                        Swal.fire({title:'ข้อผิดพลาด', text:'ไม่สามารถเชื่อมต่อฐานข้อมูลได้', icon:'error', customClass:{confirmButton:'bg-app-primary rounded-xl px-6'}});
+                    }
+                }
+            });
+        }
+
+        async function promptWeekDates(weekNumOrNew, titleStr, defaultStart, defaultEnd) {
+            const today = getThaiDateStr();
+            const { value: formValues } = await Swal.fire({
+                title: titleStr, html: `<p class="text-sm text-gray-500 mb-6">กำหนดระยะเวลา (ระบบจะจัดเรียงสัปดาห์ตามวันที่อัตโนมัติ)</p><div class="flex flex-col gap-4 text-left w-[95%] mx-auto bg-gray-50 p-5 rounded-[20px] border border-gray-100"><div><label class="text-[13px] font-bold text-gray-700 pl-1">วันที่เริ่มต้น</label><input type="date" id="swal-week-start" class="swal2-input text-sm rounded-xl border-gray-200 mt-2 w-full" value="${defaultStart || today}"></div><div><label class="text-[13px] font-bold text-gray-700 pl-1">วันที่สิ้นสุด</label><input type="date" id="swal-week-end" class="swal2-input text-sm rounded-xl border-gray-200 mt-2 w-full" value="${defaultEnd || ''}"></div></div>`,
+                focusConfirm: false, showCancelButton: true, confirmButtonText: 'บันทึก', cancelButtonText: 'ยกเลิก', customClass: {confirmButton: 'rounded-xl bg-app-primary px-8 py-3', cancelButton: 'rounded-xl px-8 py-3 text-gray-700 bg-gray-200 border-none'},
+                preConfirm: () => {
+                    let start = document.getElementById('swal-week-start').value; let end = document.getElementById('swal-week-end').value;
+                    if(!start || !end) { Swal.showValidationMessage('กรุณาเลือกวันที่ให้ครบถ้วน'); return false; }
+                    if(start > end) { Swal.showValidationMessage('วันที่เริ่มต้นต้องน้อยกว่าหรือเท่ากับวันที่สิ้นสุด'); return false; }
+                    return { start, end };
+                }
+            });
+            if(formValues) {
+                Swal.fire({ title: 'กำลังบันทึกและจัดเรียงข้อมูล...', html: '<div class="tree-loader-container"><div class="tree-loader"></div></div>', allowOutsideClick: false, showConfirmButton: false });
+
+                await loadFromCloud(); 
+
+                if (!db.settings.weeks) db.settings.weeks = [];
+                
+                let backupWeeks = JSON.parse(JSON.stringify(db.settings.weeks));
+                let backupUsers = JSON.parse(JSON.stringify(db.users));
+                
+                if (weekNumOrNew === 'new') {
+                    db.settings.weeks.push({ weekNum: Date.now(), start: formValues.start, end: formValues.end });
+                } else {
+                    let existing = db.settings.weeks.find(x => Number(x.weekNum) === Number(weekNumOrNew));
+                    if (existing) {
+                        existing.start = formValues.start;
+                        existing.end = formValues.end;
+                    }
+                }
+                
+                reindexWeeks();
+                
+                if (weekNumOrNew === 'new') {
+                    let newCreatedWeek = db.settings.weeks.find(w => w.start === formValues.start && w.end === formValues.end);
+                    if (newCreatedWeek) {
+                         db.users.forEach(u => {
+                            u.playCount = 0;
+                            u.playedWeek = newCreatedWeek.weekNum;
+                        });
+                    }
+                }
+                
+                const success = await saveDB(); 
+                if (success) {
+                    evaluateCurrentWeek(); 
+                    applySettings(); 
+                    Swal.fire({title:'บันทึกสำเร็จ!', text:`ข้อมูลถูกตั้งเวลาและจัดเรียงลำดับใหม่เรียบร้อยแล้ว`, icon:'success', customClass:{confirmButton:'bg-app-primary rounded-xl px-6'}});
+                } else {
+                    db.settings.weeks = backupWeeks;
+                    db.users = backupUsers;
+                    Swal.fire({title:'ข้อผิดพลาด', text:'ไม่สามารถบันทึกข้อมูลลงฐานข้อมูลได้ โปรดลองอีกครั้ง', icon:'error', customClass:{confirmButton:'bg-app-primary rounded-xl px-6'}});
+                }
+            }
+        }
+
+        async function crudQR(action, id) {
+            let item = action === 'edit' ? db.qrs.find(q => q.id === id) : { name:'', pts:'', scanType:'single' };
+            const { value: formValues } = await Swal.fire({ 
+                title: `<h2 class="text-2xl font-bold text-gray-700">${action==='add'?'สร้าง':'แก้ไข'} QR Code</h2>`, 
+                html: `
+                    <div class="space-y-4 mt-2 text-left">
+                        <input id="swal-q1" class="swal2-input text-sm rounded-xl border-gray-200 w-full mx-0" placeholder="ชื่อกิจกรรม/แคมเปญ" value="${item.name}">
+                        <input id="swal-q2" type="number" class="swal2-input text-sm rounded-xl border-gray-200 w-full mx-0" placeholder="คะแนนที่แจก (Pts)" value="${item.pts}">
+                        <select id="swal-q3" class="swal2-select text-sm rounded-xl border-gray-200 w-full mx-0">
+                            <option value="single" ${item.scanType==='single'?'selected':''}>1 คนสแกนได้ 1 ครั้ง</option>
+                            <option value="multi" ${item.scanType==='multi'?'selected':''}>1 คนสแกนได้หลายครั้ง</option>
+                        </select>
+                        <div class="h-1 w-full bg-[#A5C7A9] rounded-full mt-6 mb-2"></div>
+                    </div>
+                `, 
+                focusConfirm: false, 
+                showCancelButton: true,
+                confirmButtonText: 'บันทึก',
+                cancelButtonText: 'ยกเลิก',
+                customClass: {
+                    popup: 'rounded-[24px] px-6 py-8',
+                    confirmButton: 'rounded-xl bg-app-primary px-8 py-2.5 text-white font-bold text-sm hover:bg-opacity-90 transition-all',
+                    cancelButton: 'rounded-xl px-8 py-2.5 text-gray-600 bg-gray-200 font-bold text-sm border-none'
+                },
+                preConfirm: () => { 
+                    return { 
+                        name: document.getElementById('swal-q1').value, 
+                        pts: parseInt(document.getElementById('swal-q2').value),
+                        scanType: document.getElementById('swal-q3').value
+                    } 
+                } 
+            });
+
+            if (formValues && formValues.name && formValues.pts) {
+                Swal.fire({ title: 'กำลังบันทึก...', html: '<div class="tree-loader-container"><div class="tree-loader"></div></div>', allowOutsideClick: false, showConfirmButton: false });
+                
+                await loadFromCloud(); 
+                
+                if(action === 'add') {
+                    let newId = generateId();
+                    let url = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=WCW_SCAN_${newId}_${formValues.pts}`;
+                    db.qrs.unshift({ id: newId, name: formValues.name, pts: formValues.pts, scanType: formValues.scanType, url });
+                } else {
+                    let freshItem = db.qrs.find(q => q.id === id);
+                    if(freshItem) {
+                        freshItem.name = formValues.name;
+                        freshItem.pts = formValues.pts;
+                        freshItem.scanType = formValues.scanType;
+                        freshItem.url = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=WCW_SCAN_${freshItem.id}_${formValues.pts}`; 
+                    }
+                }
+                await saveDB(); renderAdminTables();
+                Swal.close();
+            }
+        }
+
+        function viewQR(url) { Swal.fire({ imageUrl: url, imageWidth: 200, imageHeight: 200, title: 'สแกนเพื่อรับคะแนน', customClass:{confirmButton:'bg-app-primary rounded-xl px-8'} }); }
+        
+        async function deleteQR(id) { 
+            Swal.fire({ title: 'กำลังลบ...', html: '<div class="tree-loader-container"><div class="tree-loader"></div></div>', allowOutsideClick: false, showConfirmButton: false });
+            
+            await loadFromCloud(); 
+            
+            db.qrs = db.qrs.filter(q => q.id !== id); 
+            await saveDB(); renderAdminTables(); 
+            Swal.close();
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
 </body>
 </html>
