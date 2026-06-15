@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Waste Care World V.2</title>
+    <title>Waste Care World V2.1.1</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -305,7 +305,7 @@
                 </div>
                 <div>
                     <label id="lbl-empid" class="block text-[13px] font-semibold text-app-dark mb-2 pl-1">รหัสพนักงาน (Employee ID)</label>
-                    <input type="text" id="login-empid" maxlength="8" class="w-full bg-[#F8FAF9] border border-gray-200 rounded-[16px] px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-app-secondary focus:border-app-primary transition-all placeholder-gray-400" placeholder="กรอกรหัสพนักงาน 7 หลัก">
+                    <input type="text" id="login-empid" maxlength="8" class="w-full bg-[#F8FAF9] border border-gray-200 rounded-[16px] px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-app-secondary focus:border-app-primary transition-all placeholder-gray-400" placeholder="รหัสพนักงาน 7 หลัก">
                     <p id="lbl-hint" class="text-[11px] text-gray-400 mt-2 pl-1 font-light"><i class="fa-solid fa-circle-info mr-1"></i> สำหรับการเข้าระบบครั้งถัดไป กรอกแค่รหัสพนักงาน</p>
                 </div>
             </div>
@@ -745,18 +745,9 @@
 
         // ================= STORAGE WRAPPER =================
         const Storage = {
-            get: (key) => {
-                try { return localStorage.getItem(key); }
-                catch(e) { return null; }
-            },
-            set: (key, val) => {
-                try { localStorage.setItem(key, val); }
-                catch(e) { console.warn("Storage restricted:", e); }
-            },
-            remove: (key) => {
-                try { localStorage.removeItem(key); }
-                catch(e) {}
-            }
+            get: (key) => { try { return localStorage.getItem(key); } catch(e) { return null; } },
+            set: (key, val) => { try { localStorage.setItem(key, val); } catch(e) { console.warn("Storage restricted:", e); } },
+            remove: (key) => { try { localStorage.removeItem(key); } catch(e) {} }
         };
 
         // ================= UTILS =================
@@ -786,28 +777,9 @@
             },
             levels: [
                 { id: "l1", level: "Seed", points: 0, img: "https://cdn-icons-png.flaticon.com/512/2619/2619163.png", bgColor: "#F2F7F4" },
-                { id: "l2", level: "Sprout", points: 500, img: "https://cdn-icons-png.flaticon.com/512/2990/2990860.png", bgColor: "#FDF8E7" },
-                { id: "l3", level: "Small Tree", points: 1500, img: "https://cdn-icons-png.flaticon.com/512/414/414825.png", bgColor: "#E8F4F8" },
-                { id: "l4", level: "Big Tree", points: 3000, img: "https://cdn-icons-png.flaticon.com/512/2555/2555021.png", bgColor: "#EEF4E8" },
-                { id: "l5", level: "Forest Guardian", points: 5000, img: "https://cdn-icons-png.flaticon.com/512/12020/12020358.png", bgColor: "#F4EEE8" }
+                { id: "l2", level: "Sprout", points: 500, img: "https://cdn-icons-png.flaticon.com/512/2990/2990860.png", bgColor: "#FDF8E7" }
             ],
-            bins: [
-                { id: "b1", name: "ทั่วไป", color: "#3A5A40", stage: "all", img: "https://cdn-icons-png.flaticon.com/512/3299/3299935.png" }, 
-                { id: "b2", name: "รีไซเคิล", color: "#F4B95F", stage: "all", img: "https://cdn-icons-png.flaticon.com/512/3299/3299935.png" }, 
-                { id: "b3", name: "อันตราย", color: "#E07A5F", stage: "all", img: "https://cdn-icons-png.flaticon.com/512/3299/3299935.png" }, 
-                { id: "b4", name: "เศษอาหาร", color: "#5C8D67", stage: "indoor", img: "https://cdn-icons-png.flaticon.com/512/3299/3299935.png" }, 
-                { id: "b5", name: "น้ำแข็ง", color: "#A5C7A9", stage: "indoor", img: "https://cdn-icons-png.flaticon.com/512/3299/3299935.png" } 
-            ],
-            wastes: [
-                { id: "w1", name: "กระดาษ", binId: "b2", stage: "all", img: "https://cdn-icons-png.flaticon.com/512/839/839088.png" },
-                { id: "w2", name: "ขวดพลาสติก", binId: "b2", stage: "all", img: "https://cdn-icons-png.flaticon.com/512/823/823330.png" },
-                { id: "w3", name: "ถุงพลาสติก", binId: "b1", stage: "all", img: "https://cdn-icons-png.flaticon.com/512/3037/3037061.png" },
-                { id: "w4", name: "กระป๋องสี", binId: "b3", stage: "outdoor", img: "https://cdn-icons-png.flaticon.com/512/2830/2830305.png" },
-                { id: "w5", name: "เศษผักผลไม้", binId: "b4", stage: "indoor", img: "https://cdn-icons-png.flaticon.com/512/415/415682.png" },
-                { id: "w6", name: "ก้อนน้ำแข็ง", binId: "b5", stage: "indoor", img: "https://cdn-icons-png.flaticon.com/512/2316/2316999.png" }
-            ],
-            users: [],
-            qrs: []
+            bins: [], wastes: [], users: [], qrs: []
         };
 
         function enforceDBStructure(database) {
@@ -815,9 +787,9 @@
             if (!database.settings) database.settings = defaultData.settings;
             if (!database.users) database.users = [];
             if (!database.levels || database.levels.length === 0) database.levels = defaultData.levels;
-            if (!database.bins || database.bins.length === 0) database.bins = defaultData.bins;
-            if (!database.wastes || database.wastes.length === 0) database.wastes = defaultData.wastes;
-            if (!database.qrs) database.qrs = defaultData.qrs;
+            if (!database.bins) database.bins = [];
+            if (!database.wastes) database.wastes = [];
+            if (!database.qrs) database.qrs = [];
             
             if (!database.settings.weeks) {
                 database.settings.weeks = [];
@@ -836,9 +808,7 @@
                 if(typeof u.playCount === 'undefined') u.playCount = 0;
                 if(typeof u.scannedQRs === 'undefined') u.scannedQRs = [];
             });
-            database.qrs.forEach(q => {
-                if(!q.scanType) q.scanType = 'single';
-            });
+            database.qrs.forEach(q => { if(!q.scanType) q.scanType = 'single'; });
             return database;
         }
 
@@ -849,15 +819,12 @@
         let currentRankTab = 'weekly'; 
         let loginStep = 1;
         let html5QrcodeScanner = null;
-        
         let adminUsersCurrentPage = 1;
         const ADMIN_USERS_PER_PAGE = 20;
-
         let currentPopupSlide = 0;
         let hasReachedLastPopupSlide = false;
         let popupStartX = 0;
-        
-        let isStageEnding = false; // ป้องกันการเรียกจบด่านซ้ำซ้อน
+        let isStageEnding = false;
 
         // ================= CLOUD SYNC LOGIC =================
         async function syncToCloud() {
@@ -906,6 +873,11 @@
                 const res = await response.json();
                 if(res.success) {
                     db = enforceDBStructure(res.data);
+                    
+                    // บังคับประเมินสัปดาห์ใหม่ทุกครั้งที่โหลดข้อมูล
+                    reindexWeeks();
+                    evaluateCurrentWeek();
+
                     Storage.set('wcw_db', JSON.stringify(db));
                     
                     if(currentUser && currentUser.empId !== 'admin') {
@@ -925,20 +897,14 @@
 
         async function saveUser() {
             if(!currentUser || currentUser.empId === 'admin') return; 
-            
             let userToSave = JSON.parse(JSON.stringify(currentUser));
-            
             await loadFromCloud();
             
             let idx = db.users.findIndex(u => u.empId === userToSave.empId);
-            if(idx > -1) {
-                db.users[idx] = userToSave;
-            } else {
-                db.users.push(userToSave);
-            }
+            if(idx > -1) { db.users[idx] = userToSave; } 
+            else { db.users.push(userToSave); }
             
             currentUser = db.users.find(u => u.empId === userToSave.empId);
-            
             await saveDB();
         }
 
@@ -947,8 +913,6 @@
             if(btn) btn.classList.add('animate-spin');
             
             await loadFromCloud();
-            reindexWeeks(); 
-            evaluateCurrentWeek();
             applySettings();
             loadUserDashboard();
             if(document.getElementById('ranking-modal').classList.contains('active')) renderRanking(currentRankTab);
@@ -977,7 +941,6 @@
                     });
                 }
             });
-            Storage.set('wcw_db', JSON.stringify(db));
         }
 
         function evaluateCurrentWeek() {
@@ -1012,15 +975,10 @@
                 db.settings.gasUrl = GLOBAL_GAS_URL;
             }
 
-            if (!db.settings.mainImages || db.settings.mainImages.length === 0) db.settings.mainImages = [{ url: db.settings.mainImg || "https://images.unsplash.com/photo-1542273917363-3b1817f69a5d?auto=format&fit=crop&w=800&q=80", startTime: "06:00", endTime: "18:00" }, { url: "https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=800&q=80", startTime: "18:00", endTime: "06:00" }];
-            if (typeof db.settings.weekStartDate === 'undefined') { db.settings.weekStartDate = ""; db.settings.weekEndDate = ""; }
-            if (db.bins && db.bins.length > 0 && !db.bins[0].img) { db.bins.forEach(b => b.img = "https://cdn-icons-png.flaticon.com/512/3299/3299935.png"); }
-            if (db.wastes && db.wastes.length > 0 && !db.wastes[0].img) { db.wastes.forEach(w => w.img = "https://cdn-icons-png.flaticon.com/512/839/839088.png"); }
-            
-            Storage.set('wcw_db', JSON.stringify(db));
-
             reindexWeeks();
             evaluateCurrentWeek();
+            Storage.set('wcw_db', JSON.stringify(db));
+            
             applySettings();
             setInterval(updateLandingBackground, 60000);
 
@@ -1040,8 +998,6 @@
             if (db.settings.gasUrl && db.settings.sheetId) { 
                 loadFromCloud().then((success) => {
                     if(success) {
-                        reindexWeeks();
-                        evaluateCurrentWeek();
                         applySettings(); 
                         if(currentUser) loadUserDashboard();
                     }
@@ -1474,7 +1430,7 @@
             document.getElementById('checkin-step-2').classList.add('flex');
         }
 
-        const checkInPoints = [1, 2, 3, 4, 5, 6, 7];
+        const checkInPoints = [20, 20, 30, 30, 50, 50, 100];
         function renderCheckIn() {
             if(!currentUser.checkIn) currentUser.checkIn = { lastDate: null, streak: 0 };
             const today = getThaiDateStr();
@@ -1753,7 +1709,7 @@
 
             if(!db.bins || db.bins.length === 0 || !db.wastes || db.wastes.length === 0) return Swal.fire('Oops!', 'ยังไม่มีข้อมูลถังขยะหรือขยะในระบบ', 'error');
             
-            Swal.fire({ title: 'ลากขยะลงถังให้ถูกต้อง พร้อมลุยไหม?', html: `<p class="text-sm text-gray-500 mb-2">ด่าน 1: ขยะในอาคารผลิต (2 นาที)</p><p class="text-xs text-app-primary font-bold mt-2">สิทธิ์การเล่นรอบนี้: ${currentUser.role === 'admin' ? 'ไม่จำกัด (Admin)' : (2 - currentUser.playCount) + ' ครั้ง'}</p>`, icon: 'question', showCancelButton: true, confirmButtonText: 'Start Game', cancelButtonText: 'Later', confirmButtonColor: '#5C8D67', cancelButtonColor:'#cbd5e1', customClass: { confirmButton: 'rounded-[16px] px-8', cancelButton: 'rounded-[16px] px-6 text-gray-600' } }).then((res) => {
+            Swal.fire({ title: 'พร้อมลุยไหม?', html: `<p class="text-sm text-gray-500 mb-2">ด่าน 1: ขยะในอาคารผลิต (2 นาที)</p><p class="text-xs text-app-primary font-bold mt-2">สิทธิ์การเล่นรอบนี้: ${currentUser.role === 'admin' ? 'ไม่จำกัด (Admin)' : (2 - currentUser.playCount) + ' ครั้ง'}</p>`, icon: 'question', showCancelButton: true, confirmButtonText: 'Start Game', cancelButtonText: 'Later', confirmButtonColor: '#5C8D67', cancelButtonColor:'#cbd5e1', customClass: { confirmButton: 'rounded-[16px] px-8', cancelButton: 'rounded-[16px] px-6 text-gray-600' } }).then((res) => {
                 if(res.isConfirmed) initGameStage(1);
             });
         }
